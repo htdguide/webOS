@@ -26,15 +26,19 @@ jobs:
         id: push-docker-image
         run: docker push ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
 
-      - name: Set Up SSH Key
-        env:
-          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }} # Reference the private key stored in GitHub Secrets
+      - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H $VPS_HOSTNAME >> ~/.ssh/known_hosts
+          eval $(ssh-agent -s)
+          echo "$SSH_PRIVATE_KEY" | ssh-add -
 
       - name: Connect to server via SSH
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no opc@${{secrets.VPS_HOST}}
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o GSSAPIAuthentication=no username@VPS_HOSTNAME "echo 'Connected successfully!'"
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SERVER_HOSTNAME: ${{ secrets.VPS_HOSTNAME }}
         
