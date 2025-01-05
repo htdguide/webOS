@@ -32,7 +32,7 @@ jobs:
       - name: Connect to server via SSH
         run: |
           sshpass -p ${{secrets.VPS_PASSWORD}} ssh -o StrictHostKeyChecking=no ${{secrets.VPS_USERNAME}}@${{secrets.VPS_HOST}}
-          sudo docker stop $(sudo docker ps -aq)
-          sudo docker rm $(sudo docker ps -aq)
+          sudo docker stop $(sudo docker ps -aq) || true
+          sudo docker rm $(sudo docker ps -aq) || true
           sudo docker pull htdguide/webportfolio
           sudo docker run -p 5173:5173 webportfolio
