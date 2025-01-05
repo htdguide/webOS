@@ -23,4 +23,4 @@ jobs:
             docker build . -f Dockerfile -t htdguide/webportfolio:latest
         - name: push the docker image
           id: push-docker-image
-          run: docker push ${{secrets.DOCKERHUB_USERNAME}}/webportfolio:latest
+          run: docker push ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
