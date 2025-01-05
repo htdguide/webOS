@@ -31,4 +31,5 @@ jobs:
 
       - name: Connect to server via SSH
         run: |
-          sshpass -p ${{secrets.VPS_PASSWORD}} ssh -o StrictHostKeyChecking=no ${{secrets.VPS_USERNAME}}@${{secrets.VPS_HOST}} "your deployment commands here"
+          sshpass -p ${{secrets.VPS_PASSWORD}} ssh -o StrictHostKeyChecking=no ${{secrets.VPS_USERNAME}}@${{secrets.VPS_HOST}}
+          sudo docker pull htdguide/webportfolio
