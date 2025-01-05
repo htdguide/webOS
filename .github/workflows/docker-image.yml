@@ -28,9 +28,10 @@ jobs:
 
       - name: Connect to server via SSH and deploy
         run: |
-          ssh ${{secrets.VPS_USERNAME}}@${{secrets.VPS_HOST}} ${{secrets.VPS_PASSWORD}}
-          sudo docker pull ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
-          sudo docker stop webportfolio || true
-          sudo docker rm webportfolio || true
-          sudo docker run -d -p 5173:5173 --name webportfolio ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
-          
+          ssh -o StrictHostKeyChecking=no ${{secrets.VPS_USERNAME}}@${{secrets.VPS_HOST}} << 'EOF'
+            sudo docker pull ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
+            sudo docker stop webportfolio || true
+            sudo docker rm webportfolio || true
+            sudo docker run -d -p 5173:5173 --name webportfolio ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
+          EOF
+
