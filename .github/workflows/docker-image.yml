@@ -29,8 +29,13 @@ jobs:
       - name: Install sshpass
         run: sudo apt-get install sshpass
 
-      - name: Connect to server via SSH
+      - name: Connect to server via SSH and deploy
         run: |
-          sshpass -p ${{secrets.VPS_PASSWORD}} ssh -o StrictHostKeyChecking=no ${{secrets.VPS_USERNAME}}@${{secrets.VPS_HOST}}
-          sudo docker pull htdguide/webportfolio
-          sudo docker run -p 5173:5173 htdguide/webportfolio
+          sshpass -p ${{secrets.VPS_PASSWORD}} ssh -o StrictHostKeyChecking=no ${{secrets.VPS_USERNAME}}@${{secrets.VPS_HOST}} << 'EOF'
+          # Navigate to your directory (if needed)
+          cd /path/to/your/project
+          docker pull ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
+          docker stop webportfolio || true
+          docker rm webportfolio || true
+          docker run -d -p 5173:5173 --name webportfolio ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
+          EOF
