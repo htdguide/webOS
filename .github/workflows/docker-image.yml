@@ -24,7 +24,7 @@ jobs:
       # Step 3: Build the Docker image
       - name: Build Docker image
         run: |
-          docker build --file Dockerfile --tag ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest .
+          docker build --tag ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest .
           
       # Step 5: Log in to Docker Hub
       - name: Log in to Docker Hub
