@@ -24,8 +24,6 @@ jobs:
       # Step 3: Build the Docker image
       - name: Build Docker image
         run: |
-          npm cache clean --force
-          npm install --legacy-peer-deps
           docker build --file Dockerfile --tag ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest .
           
       # Step 5: Log in to Docker Hub
