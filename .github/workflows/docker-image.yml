@@ -26,29 +26,9 @@ jobs:
         id: push-docker-image
         run: docker push ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
 
-      - name: Set up SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          
-          # Ensure VPS_HOSTNAME is set correctly
-          echo "Checking VPS_HOSTNAME: $VPS_HOSTNAME"
-          
-          # Add the server to known hosts using ssh-keyscan
-          ssh-keyscan -H $VPS_HOSTNAME >> ~/.ssh/known_hosts
-          
-          # Start the SSH agent and add the private key
-          eval $(ssh-agent -s)
-          echo "$SSH_PRIVATE_KEY" | ssh-add -
-
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          VPS_HOSTNAME: ${{ secrets.VPS_HOSTNAME }}  # Make sure you have this secret
+      - name: Install sshpass
+        run: sudo apt-get install sshpass
 
       - name: Connect to server via SSH
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -o GSSAPIAuthentication=no username@$VPS_HOSTNAME "echo 'Connected successfully!'"
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          VPS_HOSTNAME: ${{ secrets.VPS_HOSTNAME }}
+          sshpass -p ${{secrets.VPS_PASSWORD}} ssh -o StrictHostKeyChecking=no ${{secrets.VPS_USERNAME}}@${{secrets.VPS_HOST}} "your deployment commands here"
