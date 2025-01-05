@@ -36,5 +36,5 @@ jobs:
 
       - name: Connect to server via SSH
         run: |
-          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no opc@${{secrets.VPS_HOST}} "echo 'Connected successfully!'"
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no opc@${{secrets.VPS_HOST}}
         
