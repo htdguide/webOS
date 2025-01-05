@@ -17,7 +17,7 @@ jobs:
           id: build-docker-image
           run: |
             ls -la 
-            docker build . -f Dockerfile -t dhruvin30/webportfolio:latest
+            docker build . -f Dockerfile -t ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
         - name: push the docker image
           id: push-docker-image
           run: docker push ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
