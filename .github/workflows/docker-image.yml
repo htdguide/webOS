@@ -33,9 +33,8 @@ jobs:
         run: |
           sshpass -p ${{secrets.VPS_PASSWORD}} ssh -o StrictHostKeyChecking=no ${{secrets.VPS_USERNAME}}@${{secrets.VPS_HOST}} << 'EOF'
           # Navigate to your directory (if needed)
-          cd /path/to/your/project
-          docker pull ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
-          docker stop webportfolio || true
-          docker rm webportfolio || true
-          docker run -d -p 5173:5173 --name webportfolio ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
+          sudo docker pull ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
+          sudo docker stop webportfolio || true
+          sudo docker rm webportfolio || true
+          sudo docker run -d -p 5173:5173 --name webportfolio ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
           EOF
