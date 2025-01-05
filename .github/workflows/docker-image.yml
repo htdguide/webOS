@@ -33,4 +33,4 @@ jobs:
         run: |
           sshpass -p ${{secrets.VPS_PASSWORD}} ssh -o StrictHostKeyChecking=no ${{secrets.VPS_USERNAME}}@${{secrets.VPS_HOST}}
           sudo docker pull htdguide/webportfolio
-          sudo docker run -d -p 5173:5173 htdguide/webportfolio
+          sudo docker run -p 5173:5173 htdguide/webportfolio
