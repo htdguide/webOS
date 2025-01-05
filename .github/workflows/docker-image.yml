@@ -32,7 +32,13 @@ jobs:
         run: |
           echo "$PRIVATE_KEY" > private_key.pem # Write the private key to a file
           chmod 600 private_key.pem # Set the appropriate permissions for the key file
+          
+          # Add the private key to the SSH agent
+          eval $(ssh-agent -s)
+          ssh-add private_key.pem
 
           # Establish an SSH connection and execute commands on the remote server
-          ssh -o StrictHostKeyChecking=no -i private_key.pem opc@158.179.29.35 <<EOF
+          ssh -o StrictHostKeyChecking=no opc@158.179.29.35 <<EOF
           echo "Hello"
+          # Your commands here
+          EOF
