@@ -14,29 +14,31 @@ jobs:
       - name: Login to Docker Hub
         id: docker-hub
         run: |
-          docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build the Docker Image
         id: build-docker-image
         run: |
           ls -la
-          docker build . -f Dockerfile -t ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
+          docker build . -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
 
       - name: Push the Docker Image
         id: push-docker-image
-        run: docker push ${{secrets.DOCKER_USERNAME}}/webportfolio:latest
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
 
-      - name: Save SSH keys for VPS connection
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          
+      - name: Set up SSH key for server connection
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: Connect to server via SSH and deploy
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} << 'EOF'
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
             sudo docker stop $(sudo docker ps -aq) || true
             sudo docker rm $(sudo docker ps -aq) || true
             sudo docker run -d -p 5173:5173 --name webportfolio ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
-          EOF
