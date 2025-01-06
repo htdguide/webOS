@@ -11,26 +11,33 @@ function App() {
   useEffect(() => {
     // Load the WASM-related JavaScript file dynamically when modal is shown
     if (showModal) {
-      const script = document.createElement('script');
-      script.src = '/wasm/sorting_algorithms.js'; // Path to your WASM JS file
-      script.async = true;
-      script.onload = () => {
-        console.log("WASM script loaded successfully.");
+      const existingScript = document.querySelector('script[src="/wasm/sorting_algorithms.js"]');
+      if (!existingScript) {
+        const script = document.createElement('script');
+        script.src = '/wasm/sorting_algorithms.js'; // Path to your WASM JS file
+        script.async = true;
+        script.onload = () => {
+          console.log("WASM script loaded successfully.");
 
-        // Ensure the canvas is available before initializing WebAssembly
-        const canvasElement = document.getElementById('canvas');
-        if (canvasElement) {
-          console.log("Canvas element is available.");
-          // Initialize the WASM module here, ensuring it works with the canvas
-          if (window.Module) {
-            window.Module.canvas = canvasElement;
+          // Ensure the canvas is available before initializing WebAssembly
+          const canvasElement = document.getElementById('canvas');
+          if (canvasElement) {
+            console.log("Canvas element is available.");
+            // Initialize the WASM module here, ensuring it works with the canvas
+            if (window.Module) {
+              window.Module.canvas = canvasElement;
+            }
           }
-        }
-      };
-      document.body.appendChild(script);
+        };
+        document.body.appendChild(script);
+      }
 
       return () => {
-        document.body.removeChild(script); // Cleanup the script tag when modal is closed
+        // Cleanup the script tag when modal is closed
+        const scriptToRemove = document.querySelector('script[src="/wasm/sorting_algorithms.js"]');
+        if (scriptToRemove) {
+          document.body.removeChild(scriptToRemove);
+        }
       };
     }
   }, [showModal]);
