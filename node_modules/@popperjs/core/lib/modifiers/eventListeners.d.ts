@@ -1,4 +1,4 @@
-import type { Modifier } from "../types";
+import type { Modifier } from "@popperjs/core/lib/types";
 export declare type Options = {
     scroll: boolean;
     resize: boolean;

@@ -1,5 +1,5 @@
-import type { PositioningStrategy, Offsets, Modifier, Rect } from "../types";
-import { BasePlacement, Variation } from "../enums";
+import type { PositioningStrategy, Offsets, Modifier, Rect } from "@popperjs/core/lib/types";
+import { BasePlacement, Variation } from "@popperjs/core/lib/enums";
 export declare type RoundOffsets = (offsets: Partial<{
     x: number;
     y: number;

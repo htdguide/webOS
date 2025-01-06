@@ -1,5 +1,5 @@
-import type { Placement } from "../enums";
-import type { Modifier, Rect, Offsets } from "../types";
+import type { Placement } from "@popperjs/core/lib/enums";
+import type { Modifier, Rect, Offsets } from "@popperjs/core/lib/types";
 export declare type OffsetsFunction = (arg0: {
     popper: Rect;
     reference: Rect;

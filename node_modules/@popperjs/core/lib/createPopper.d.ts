@@ -1,5 +1,5 @@
-import type { OptionsGeneric, Modifier, Instance, VirtualElement } from "./types";
-import detectOverflow from "./utils/detectOverflow";
+import type { OptionsGeneric, Modifier, Instance, VirtualElement } from "@popperjs/core/lib/types";
+import detectOverflow from "@popperjs/core/lib/utils/detectOverflow";
 declare type PopperGeneratorArgs = {
     defaultModifiers?: Array<Modifier<any, any>>;
     defaultOptions?: Partial<OptionsGeneric<any>>;

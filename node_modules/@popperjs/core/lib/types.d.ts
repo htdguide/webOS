@@ -1,13 +1,13 @@
-import type { Placement, ModifierPhases } from "./enums";
-import type { PopperOffsetsModifier } from "./modifiers/popperOffsets";
-import type { FlipModifier } from "./modifiers/flip";
-import type { HideModifier } from "./modifiers/hide";
-import type { OffsetModifier } from "./modifiers/offset";
-import type { EventListenersModifier } from "./modifiers/eventListeners";
-import type { ComputeStylesModifier } from "./modifiers/computeStyles";
-import type { ArrowModifier } from "./modifiers/arrow";
-import type { PreventOverflowModifier } from "./modifiers/preventOverflow";
-import type { ApplyStylesModifier } from "./modifiers/applyStyles";
+import type { Placement, ModifierPhases } from "@popperjs/core/lib/enums";
+import type { PopperOffsetsModifier } from "@popperjs/core/lib/modifiers/popperOffsets";
+import type { FlipModifier } from "@popperjs/core/lib/modifiers/flip";
+import type { HideModifier } from "@popperjs/core/lib/modifiers/hide";
+import type { OffsetModifier } from "@popperjs/core/lib/modifiers/offset";
+import type { EventListenersModifier } from "@popperjs/core/lib/modifiers/eventListeners";
+import type { ComputeStylesModifier } from "@popperjs/core/lib/modifiers/computeStyles";
+import type { ArrowModifier } from "@popperjs/core/lib/modifiers/arrow";
+import type { PreventOverflowModifier } from "@popperjs/core/lib/modifiers/preventOverflow";
+import type { ApplyStylesModifier } from "@popperjs/core/lib/modifiers/applyStyles";
 export declare type Obj = {
     [key: string]: any;
 };

@@ -1,5 +1,5 @@
-import type { Modifier, Padding, Rect } from "../types";
-import type { Placement } from "../enums";
+import type { Modifier, Padding, Rect } from "@popperjs/core/lib/types";
+import type { Placement } from "@popperjs/core/lib/enums";
 export declare type Options = {
     element: HTMLElement | string | null;
     padding: Padding | ((arg0: {

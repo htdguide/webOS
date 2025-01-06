@@ -1,1 +1,1 @@
-export * from './lib';
+export * from '@popperjs/core/lib';

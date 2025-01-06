@@ -1,5 +1,5 @@
-import type { Placement, Boundary, RootBoundary } from "../enums";
-import type { Rect, Modifier, Padding } from "../types";
+import type { Placement, Boundary, RootBoundary } from "@popperjs/core/lib/enums";
+import type { Rect, Modifier, Padding } from "@popperjs/core/lib/types";
 declare type TetherOffset = ((arg0: {
     popper: Rect;
     reference: Rect;

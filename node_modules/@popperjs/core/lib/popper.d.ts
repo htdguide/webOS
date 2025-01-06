@@ -1,7 +1,7 @@
-import { popperGenerator, detectOverflow } from "./createPopper";
-export * from "./types";
-declare const defaultModifiers: (import("./modifiers/popperOffsets").PopperOffsetsModifier | import("./modifiers/flip").FlipModifier | import("./modifiers/hide").HideModifier | import("./modifiers/offset").OffsetModifier | import("./modifiers/eventListeners").EventListenersModifier | import("./modifiers/computeStyles").ComputeStylesModifier | import("./modifiers/arrow").ArrowModifier | import("./modifiers/preventOverflow").PreventOverflowModifier | import("./modifiers/applyStyles").ApplyStylesModifier)[];
-declare const createPopper: <TModifier extends Partial<import("./types").Modifier<any, any>>>(reference: Element | import("./types").VirtualElement, popper: HTMLElement, options?: Partial<import("./types").OptionsGeneric<TModifier>>) => import("./types").Instance;
+import { popperGenerator, detectOverflow } from "@popperjs/core/lib/createPopper";
+export * from "@popperjs/core/lib/types";
+declare const defaultModifiers: (import("@popperjs/core/lib/modifiers/popperOffsets").PopperOffsetsModifier | import("@popperjs/core/lib/modifiers/flip").FlipModifier | import("@popperjs/core/lib/modifiers/hide").HideModifier | import("@popperjs/core/lib/modifiers/offset").OffsetModifier | import("@popperjs/core/lib/modifiers/eventListeners").EventListenersModifier | import("@popperjs/core/lib/modifiers/computeStyles").ComputeStylesModifier | import("@popperjs/core/lib/modifiers/arrow").ArrowModifier | import("@popperjs/core/lib/modifiers/preventOverflow").PreventOverflowModifier | import("@popperjs/core/lib/modifiers/applyStyles").ApplyStylesModifier)[];
+declare const createPopper: <TModifier extends Partial<import("@popperjs/core/lib/types").Modifier<any, any>>>(reference: Element | import("@popperjs/core/lib/types").VirtualElement, popper: HTMLElement, options?: Partial<import("@popperjs/core/lib/types").OptionsGeneric<TModifier>>) => import("@popperjs/core/lib/types").Instance;
 export { createPopper, popperGenerator, defaultModifiers, detectOverflow };
-export { createPopper as createPopperLite } from "./popper-lite";
-export * from "./modifiers";
+export { createPopper as createPopperLite } from "@popperjs/core/lib/popper-lite";
+export * from "@popperjs/core/lib/modifiers";

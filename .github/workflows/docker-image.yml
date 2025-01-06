@@ -41,4 +41,4 @@ jobs:
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
             sudo docker stop $(sudo docker ps -aq) || true
             sudo docker rm $(sudo docker ps -aq) || true
-            sudo docker run -d -p 5173:5173 --name webportfolio ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+            sudo docker run -d -p 3000:3000 --name webportfolio ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
