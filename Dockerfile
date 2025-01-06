@@ -13,8 +13,8 @@ RUN npm install
 # Copy the rest of the application files
 COPY . .
 
-# Expose port 5173 (Vite default port)
-EXPOSE 80
+# Expose port 3000
+EXPOSE 3000
 
 # Run the development server
-CMD ["PORT=80","npm", "start"]
+CMD ["npm", "start"]
