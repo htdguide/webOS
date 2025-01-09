@@ -1,39 +1,65 @@
 import React, { useState, useEffect } from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS
-import { Modal, Button } from 'react-bootstrap'; // Import React Bootstrap components
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Modal, Button } from 'react-bootstrap';
 
 function App() {
   const [showModal, setShowModal] = useState(false);
+  const [wasmScriptLoaded, setWasmScriptLoaded] = useState(false);
 
-  const handleModalClose = () => setShowModal(false);
-  const handleModalShow = () => setShowModal(true);
+  const handleModalClose = () => {
+    setShowModal(false);
+    cleanupCanvas(); // Cleanup when the modal is closed
+  };
+
+  const handleModalShow = () => {
+    setShowModal(true);
+    if (!wasmScriptLoaded) {
+      loadWasmScript(); // Load the WASM script only once
+    } else {
+      reassignCanvas(); // Reassign the canvas when the modal is opened
+    }
+  };
+
+  const loadWasmScript = () => {
+    const script = document.createElement('script');
+    script.src = '/wasm/sorting_algorithms.js'; // Path to your WASM JS file
+    script.async = true;
+    script.onload = () => {
+      console.log("WASM script loaded successfully.");
+      setWasmScriptLoaded(true); // Mark the script as loaded
+      reassignCanvas(); // Initialize the WebAssembly after loading
+    };
+    document.body.appendChild(script);
+  };
+
+  const reassignCanvas = () => {
+    const canvasElement = document.getElementById('canvas');
+    if (canvasElement && window.Module) {
+      console.log("Reassigning canvas to WASM module.");
+      // Set the canvas dimensions
+      canvasElement.width = window.innerWidth;
+      canvasElement.height = 510;
+
+      window.Module.canvas = canvasElement; // Reassign the canvas
+    }
+  };
+
+  const cleanupCanvas = () => {
+    const canvasElement = document.getElementById('canvas');
+    if (canvasElement) {
+      canvasElement.width = 0;
+      canvasElement.height = 0;
+    }
+    if (window.Module) {
+      window.Module.canvas = null; // Remove the canvas from the module
+    }
+  };
 
   useEffect(() => {
-    // Load the WASM-related JavaScript file dynamically when modal is shown
-    if (showModal) {
-      const script = document.createElement('script');
-      script.src = '/wasm/sorting_algorithms.js'; // Path to your WASM JS file
-      script.async = true;
-      script.onload = () => {
-        console.log("WASM script loaded successfully.");
-
-        // Ensure the canvas is available before initializing WebAssembly
-        const canvasElement = document.getElementById('canvas');
-        if (canvasElement) {
-          console.log("Canvas element is available.");
-          // Initialize the WASM module here, ensuring it works with the canvas
-          if (window.Module) {
-            window.Module.canvas = canvasElement;
-          }
-        }
-      };
-      document.body.appendChild(script);
-
-      return () => {
-        document.body.removeChild(script); // Cleanup the script tag when modal is closed
-      };
+    if (showModal && wasmScriptLoaded) {
+      reassignCanvas(); // Reassign the canvas when the modal is opened
     }
-  }, [showModal]);
+  }, [showModal, wasmScriptLoaded]);
 
   return (
     <div className="App">
