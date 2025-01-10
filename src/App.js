@@ -2,26 +2,31 @@ import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, Button } from 'react-bootstrap';
 
+const script = document.createElement('script');
+var isCanvasClosed = false;
+
 function App() {
   const [showModal, setShowModal] = useState(false);
   const [wasmScriptLoaded, setWasmScriptLoaded] = useState(false);
 
   const handleModalClose = () => {
     setShowModal(false);
-    cleanupCanvas(); // Cleanup when the modal is closed
+    window.Module._cancelLoop();
+    isCanvasClosed = true;
   };
+
+  const load = () => {
+    window.Module._initializeWindow();
+  }
 
   const handleModalShow = () => {
     setShowModal(true);
     if (!wasmScriptLoaded) {
       loadWasmScript(); // Load the WASM script only once
-    } else {
-      reassignCanvas(); // Reassign the canvas when the modal is opened
     }
   };
 
   const loadWasmScript = () => {
-    const script = document.createElement('script');
     script.src = '/wasm/sorting_algorithms.js'; // Path to your WASM JS file
     script.async = true;
     script.onload = () => {
@@ -39,27 +44,19 @@ function App() {
       // Set the canvas dimensions
       canvasElement.width = window.innerWidth;
       canvasElement.height = 510;
-
       window.Module.canvas = canvasElement; // Reassign the canvas
-    }
-  };
-
-  const cleanupCanvas = () => {
-    const canvasElement = document.getElementById('canvas');
-    if (canvasElement) {
-      canvasElement.width = 0;
-      canvasElement.height = 0;
-    }
-    if (window.Module) {
-      window.Module.canvas = null; // Remove the canvas from the module
     }
   };
 
   useEffect(() => {
     if (showModal && wasmScriptLoaded) {
       reassignCanvas(); // Reassign the canvas when the modal is opened
+      document.body.appendChild(script);
+      console.log("useeffect");
+      if (isCanvasClosed) load();
     }
   }, [showModal, wasmScriptLoaded]);
+
 
   return (
     <div className="App">
@@ -73,13 +70,13 @@ function App() {
           <nav>
             <ul className="nav justify-content-center">
               <li className="nav-item">
-                <a href="#" className="nav-link">Home</a>
+                <a href="http://htdguide.com/" className="nav-link">Home</a>
               </li>
               <li className="nav-item">
-                <a href="#" className="nav-link">LinkedIn</a>
+                <a href="https://www.linkedin.com/in/htdguide/" className="nav-link">LinkedIn</a>
               </li>
               <li className="nav-item">
-                <a href="#" className="nav-link">Github</a>
+                <a href="https://github.com/htdguide" className="nav-link">Github</a>
               </li>
             </ul>
           </nav>
