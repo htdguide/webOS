@@ -19,37 +19,26 @@ const Draggable = () => {
   let initialHeight = 0;
   let isResizing = false;
 
-  /* --------------------------------------------------------
-     1) Handle window/orientation changes
-  -------------------------------------------------------- */
   useEffect(() => {
     const handleWindowResize = () => {
       if (!cardRef.current) return;
-
-      // Clamp the window so it doesn't go off-screen
       clampWindowPosition();
+      updateCanvasSize();
     };
 
-    // Listen for browser window resizing (also fires on phone orientation changes)
     window.addEventListener('resize', handleWindowResize);
-
-    // Cleanup listener on unmount
-    return () => {
-      window.removeEventListener('resize', handleWindowResize);
-    };
+    return () => window.removeEventListener('resize', handleWindowResize);
   }, []);
 
+  // Ensure the window (and canvas) stays in view if the screen changes size
   const clampWindowPosition = () => {
     if (!cardRef.current) return;
-
     const card = cardRef.current;
     const rect = card.getBoundingClientRect();
 
-    // Constrain left and top within the new viewport
     const clampedLeft = Math.min(rect.left, window.innerWidth - rect.width);
     const clampedTop = Math.min(rect.top, window.innerHeight - rect.height);
 
-    // Also clamp them to a minimum of 0
     const finalLeft = Math.max(clampedLeft, 0);
     const finalTop = Math.max(clampedTop, 0);
 
@@ -57,9 +46,23 @@ const Draggable = () => {
     card.style.top = `${finalTop}px`;
   };
 
-  /* --------------------------------------------------------
-     2) Drag Handlers
-  -------------------------------------------------------- */
+  // Make the canvas exactly fill its parent `.content` each time we resize or clamp
+  const updateCanvasSize = () => {
+    if (!cardRef.current) return;
+
+    const content = cardRef.current.querySelector('.content');
+    if (!content) return;
+
+    const canvas = content.querySelector('canvas');
+    if (!canvas) return;
+
+    // Match the canvas element size (in px) to the content area
+    canvas.width = content.clientWidth;
+    canvas.height = content.clientHeight;
+  };
+
+  /* ------------------------ DRAG HANDLERS ------------------------ */
+
   const onDragStart = (e) => {
     e.preventDefault();
 
@@ -93,7 +96,6 @@ const Draggable = () => {
     const card = cardRef.current;
     const rect = card.getBoundingClientRect();
 
-    // Calculate clamped new position
     const newTop = Math.min(
       Math.max(card.offsetTop - deltaY, 0),
       window.innerHeight - rect.height
@@ -109,15 +111,13 @@ const Draggable = () => {
 
   const onDragEnd = (e) => {
     isDragging = false;
-
     const isTouch = e.type.includes('touch');
     document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onDragMove);
     document.removeEventListener(isTouch ? 'touchend' : 'mouseup', onDragEnd);
   };
 
-  /* --------------------------------------------------------
-     3) Resize Handlers
-  -------------------------------------------------------- */
+  /* ------------------------ RESIZE HANDLERS ------------------------ */
+
   const onResizeStart = (e) => {
     e.preventDefault();
 
@@ -134,7 +134,6 @@ const Draggable = () => {
     resizeStartX = clientX;
     resizeStartY = clientY;
 
-    // Get the card's initial width and height
     const { width, height } = card.getBoundingClientRect();
     initialWidth = width;
     initialHeight = height;
@@ -151,15 +150,12 @@ const Draggable = () => {
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
 
-    // Distance from initial pointer down
     const deltaX = clientX - resizeStartX;
     const deltaY = clientY - resizeStartY;
 
-    // Proposed new sizes
     let newWidth = initialWidth + deltaX;
     let newHeight = initialHeight + deltaY;
 
-    // Current bounding rect for boundary checks
     const rect = card.getBoundingClientRect();
 
     // Right boundary
@@ -177,39 +173,33 @@ const Draggable = () => {
 
     card.style.width = `${newWidth}px`;
     card.style.height = `${newHeight}px`;
+
+    // Update canvas dimension on-the-fly
+    updateCanvasSize();
   };
 
   const onResizeEnd = (e) => {
     isResizing = false;
-
     const isTouch = e.type.includes('touch');
     document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onResizeMove);
     document.removeEventListener(isTouch ? 'touchend' : 'mouseup', onResizeEnd);
   };
 
-  /* --------------------------------------------------------
-     4) Close Handler
-  -------------------------------------------------------- */
+  /* ------------------------ CLOSE HANDLER ------------------------ */
+
   const closeWindow = () => {
     if (cardRef.current) {
       cardRef.current.style.display = 'none';
     }
   };
 
-  /* --------------------------------------------------------
-     5) Render
-  -------------------------------------------------------- */
+  /* ------------------------ RENDER ------------------------ */
+
   return (
     <div
       ref={cardRef}
       className="draggable-card"
-      style={{
-        top: '100px',
-        left: '100px',
-        width: '300px',
-        height: '200px',
-      }}
-      // If not clicking on the resize handle, allow drag
+      style={{ top: '100px', left: '100px', width: '300px', height: '200px' }}
       onMouseDown={(e) => {
         if (e.target.classList.contains('resize-handle')) return;
         onDragStart(e);
@@ -221,17 +211,24 @@ const Draggable = () => {
     >
       {/* Title bar / drag handle */}
       <div className="drag-handle">
-        <div className="close-button" onClick={closeWindow}></div>
+        <div className="close-button" onClick={closeWindow} />
       </div>
+
+      {/* Content area with canvas */}
       <div className="content">
-        <p>macOS Window Content</p>
+        <canvas
+          style={{ width: '100%', height: '100%', display: 'block' }}
+          width={300}
+          height={170}
+        />
       </div>
+
       {/* Resize handle in the bottom-right corner */}
       <div
         className="resize-handle"
         onMouseDown={onResizeStart}
         onTouchStart={onResizeStart}
-      ></div>
+      />
     </div>
   );
 };
