@@ -2,7 +2,7 @@
 
 Welcome to my portfolio and playground for experimentation! This project is built using **React** and **JavaScript**, running inside a **Docker container**. It serves as a space for me to showcase my skills and explore various technologies, including **WebAssembly**, **C++**, and **Raylib**. Feel free to dive into the details below to understand how everything comes together.
 
-[Link for the website](http://www.htdguide.com)
+[Link to the website](http://www.htdguide.com)
 
 ## Features
 
