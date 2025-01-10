@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Modal, Button } from 'react-bootstrap';
 import "./App.css";
+import Draggable from './Draggable';
+import './Draggable.css';
 
 const script = document.createElement('script');
 var isCanvasClosed = false;
@@ -82,7 +84,7 @@ function App() {
             </ul>
           </nav>
         </div>
-
+        <Draggable />
         {/* Modal Trigger Button */}
         <Button variant="primary" onClick={handleModalShow}>
           Sorting Algorithms

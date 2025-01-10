@@ -1,0 +1,9 @@
+  .draggable-card {
+    width: 100px;
+    height: 100px;
+    background-color: #afda9f;
+    border-radius: 5px;
+    cursor: pointer;
+    position: fixed;
+  }
+  
