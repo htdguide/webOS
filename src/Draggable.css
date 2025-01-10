@@ -36,10 +36,12 @@
   }
   
   .content {
-    padding: 10px;
-    height: calc(100% - 30px);
-    overflow: auto;
+    margin: 0;
+    padding: 0; 
+    position: relative;  /* so we can pin the canvas absolutely */
+    background-color: #333;  /* or any color */
   }
+  
   
   /* Resize handle in the bottom-right corner */
   .resize-handle {
