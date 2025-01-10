@@ -1,65 +1,75 @@
-import React, { useState, useEffect } from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { Modal, Button } from 'react-bootstrap';
+import React, { useState, useEffect, useRef } from 'react';
 import "./App.css";
-import Draggable from './Draggable';
+import DraggableWindow from './DraggableWindow';  // Our macOS-like window
 import './Draggable.css';
 
 const script = document.createElement('script');
-var isCanvasClosed = false;
 
 function App() {
-  const [showModal, setShowModal] = useState(false);
+  const [sortingWindowOpen, setSortingWindowOpen] = useState(false);
   const [wasmScriptLoaded, setWasmScriptLoaded] = useState(false);
+  const [scriptAppended, setScriptAppended] = useState(false);
 
-  const handleModalClose = () => {
-    setShowModal(false);
-    window.Module._cancelLoop();
-    isCanvasClosed = true;
-  };
+  const canvasRef = useRef(null);
 
-  const load = () => {
-    window.Module._initializeWindow();
-  }
-
-  const handleModalShow = () => {
-    setShowModal(true);
-    if (!wasmScriptLoaded) {
-      loadWasmScript(); // Load the WASM script only once
-    }
-  };
-
+  // Load WASM script once
   const loadWasmScript = () => {
-    script.src = '/wasm/sorting_algorithms.js'; // Path to your WASM JS file
+    if (scriptAppended) return; // only load once
+    script.src = '/wasm/sorting_algorithms.js'; 
     script.async = true;
     script.onload = () => {
       console.log("WASM script loaded successfully.");
-      setWasmScriptLoaded(true); // Mark the script as loaded
-      reassignCanvas(); // Initialize the WebAssembly after loading
+      setWasmScriptLoaded(true);
     };
     document.body.appendChild(script);
+    setScriptAppended(true);
   };
 
-  const reassignCanvas = () => {
-    const canvasElement = document.getElementById('canvas');
-    if (canvasElement && window.Module) {
-      console.log("Reassigning canvas to WASM module.");
-      // Set the canvas dimensions
-      canvasElement.width = window.innerWidth;
-      canvasElement.height = 510;
-      window.Module.canvas = canvasElement; // Reassign the canvas
+  // Called when user clicks "Sorting Algorithms" button
+  const openSortingWindow = () => {
+    // If already open, do nothing
+    if (sortingWindowOpen) return;
+
+    // Cancel existing loop if any
+    if (window.Module && window.Module._cancelLoop) {
+      window.Module._cancelLoop();
+    }
+
+    // Open the draggable window
+    setSortingWindowOpen(true);
+
+    // If script not yet loaded, load it
+    if (!wasmScriptLoaded) {
+      loadWasmScript();
     }
   };
 
+  // Close the window
+  const closeSortingWindow = () => {
+    // Cancel the WASM loop
+    if (window.Module && window.Module._cancelLoop) {
+      window.Module._cancelLoop();
+    }
+    setSortingWindowOpen(false);
+  };
+
+  // The crucial part: when the window is open AND the script is loaded, 
+  // assign the canvas to Module and call _initializeWindow().
   useEffect(() => {
-    if (showModal && wasmScriptLoaded) {
-      reassignCanvas(); // Reassign the canvas when the modal is opened
-      document.body.appendChild(script);
-      console.log("useeffect");
-      if (isCanvasClosed) load();
+    if (sortingWindowOpen && wasmScriptLoaded && canvasRef.current) {
+      // Delay slightly so the canvas is definitely in DOM
+      setTimeout(() => {
+        if (window.Module) {
+          // Re-assign the canvas
+          window.Module.canvas = canvasRef.current;
+          // Re-init the sorting window
+          if (window.Module._initializeWindow) {
+            window.Module._initializeWindow();
+          }
+        }
+      }, 50);
     }
-  }, [showModal, wasmScriptLoaded]);
-
+  }, [sortingWindowOpen, wasmScriptLoaded]);
 
   return (
     <div className="App">
@@ -84,33 +94,28 @@ function App() {
             </ul>
           </nav>
         </div>
-        <Draggable />
-        {/* Modal Trigger Button */}
-        <Button variant="primary" onClick={handleModalShow}>
+
+        <button className="btn btn-primary" onClick={openSortingWindow}>
           Sorting Algorithms
-        </Button>
+        </button>
 
-        {/* Modal */}
-        <Modal show={showModal} onHide={handleModalClose} size="lg">
-          <Modal.Header closeButton>
-            <Modal.Title>Sorting Program</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-          <div id="canvas-container" style={{ width: '100%', height: '510px', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
-          <canvas className="emscripten" id="canvas" tabIndex="-1" style={{ maxWidth: '100%', maxHeight: '100%' }}></canvas>
-          </div>
-
-            <p className="lead my-2">C++ practice with the help of raylib library compiled into WebAssembly by emscripten to run in a browser! [Supports touchscreen!]</p>
-            <Button variant="primary" onClick={() => window.open('https://github.com/htdguide/Sorting-Algorithms', '_blank')}>
-              Github Repo
-            </Button>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={handleModalClose}>
-              Close
-            </Button>
-          </Modal.Footer>
-        </Modal>
+        {sortingWindowOpen && (
+          <DraggableWindow onClose={closeSortingWindow}>
+            {/* This <canvas> is used by WASM */}
+            <canvas
+              ref={canvasRef}
+              id="canvas"
+              className="emscripten"
+              tabIndex="-1"
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'block',
+                backgroundColor: '#000',
+              }}
+            />
+          </DraggableWindow>
+        )}
       </header>
     </div>
   );

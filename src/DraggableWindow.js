@@ -1,73 +1,52 @@
 import React, { useRef, useEffect } from 'react';
 import './Draggable.css';
 
-/**
- * DraggableWindow (Free-Resize Version)
- *
- * - Allows the user to resize the window in any aspect ratio (no locked ratio).
- * - Keeps the draggable window and canvas inside the screen on both desktop and mobile.
- * - Prevents background scrolling on mobile while dragging/resizing the window.
- *
- * Props (optional):
- *  - wasmWidth  : The native width for WASM content (not enforced; just informational).
- *  - wasmHeight : The native height for WASM content (not enforced; just informational).
- *
- * Usage example:
- *   <DraggableWindow wasmWidth={640} wasmHeight={480} />
- */
+const MIN_WIDTH = 200;
+const MIN_HEIGHT = 150;
 
-const MIN_WIDTH = 200;   // Minimum width of the window (px)
-const MIN_HEIGHT = 150;  // Minimum height of the window (px)
-
-const DraggableWindow = ({ wasmWidth = 640, wasmHeight = 480 }) => {
+function DraggableWindow({ children, onClose }) {
   const cardRef = useRef(null);
 
-  // ---------------------- Dragging Variables ----------------------
-  let dragStartX = 0;
-  let dragStartY = 0;
-  let isDragging = false;
+  // Refs to track drag/resize states
+  const isDraggingRef = useRef(false);
+  const isResizingRef = useRef(false);
 
-  // ---------------------- Resizing Variables ----------------------
-  let resizeStartX = 0;
-  let resizeStartY = 0;
-  let initialWidth = 0;
-  let initialHeight = 0;
-  let isResizing = false;
+  // Starting points for dragging
+  const dragStartX = useRef(0);
+  const dragStartY = useRef(0);
+
+  // Starting points for resizing
+  const resizeStartX = useRef(0);
+  const resizeStartY = useRef(0);
+  const initialWidth = useRef(0);
+  const initialHeight = useRef(0);
 
   useEffect(() => {
     const handleWindowResize = () => {
-      if (!cardRef.current) return;
       clampWindowPosition();
-      updateCanvasSize();
     };
 
     window.addEventListener('resize', handleWindowResize);
 
-    // Prevent the background from scrolling when dragging on mobile
-    const preventScrollOnDrag = (e) => {
-      if (isDragging || isResizing) {
-        // Prevent scrolling if the user is dragging or resizing
+    const preventScroll = (e) => {
+      if (isDraggingRef.current || isResizingRef.current) {
         e.preventDefault();
       }
     };
-
-    document.addEventListener('touchmove', preventScrollOnDrag, { passive: false });
+    document.addEventListener('touchmove', preventScroll, { passive: false });
 
     return () => {
       window.removeEventListener('resize', handleWindowResize);
-      document.removeEventListener('touchmove', preventScrollOnDrag);
+      document.removeEventListener('touchmove', preventScroll);
     };
   }, []);
 
-  /**
-   * Keep the draggable window within the viewport
-   */
+  /** Ensure window stays in view if the screen is resized */
   const clampWindowPosition = () => {
     if (!cardRef.current) return;
     const card = cardRef.current;
     const rect = card.getBoundingClientRect();
 
-    // Clamp left/top so we don't move off-screen
     const clampedLeft = Math.min(rect.left, window.innerWidth - rect.width);
     const clampedTop = Math.min(rect.top, window.innerHeight - rect.height);
 
@@ -78,36 +57,18 @@ const DraggableWindow = ({ wasmWidth = 640, wasmHeight = 480 }) => {
     card.style.top = `${finalTop}px`;
   };
 
-  /**
-   * Make the canvas element always fit the .content area
-   */
-  const updateCanvasSize = () => {
-    if (!cardRef.current) return;
-
-    const content = cardRef.current.querySelector('.content');
-    const canvas = content?.querySelector('canvas');
-
-    if (!canvas || !content) return;
-
-    canvas.width = content.clientWidth;
-    canvas.height = content.clientHeight;
-  };
-
-  // ----------------------------------------------------------
-  // 1) Drag Handlers
-  // ----------------------------------------------------------
+  /** Drag handlers */
   const onDragStart = (e) => {
     e.preventDefault();
-
-    isDragging = true;
-    isResizing = false;
+    isDraggingRef.current = true;
+    isResizingRef.current = false;
 
     const isTouch = e.type.includes('touch');
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
 
-    dragStartX = clientX;
-    dragStartY = clientY;
+    dragStartX.current = clientX;
+    dragStartY.current = clientY;
 
     document.addEventListener(isTouch ? 'touchmove' : 'mousemove', onDragMove, {
       passive: false,
@@ -116,18 +77,18 @@ const DraggableWindow = ({ wasmWidth = 640, wasmHeight = 480 }) => {
   };
 
   const onDragMove = (e) => {
-    if (!isDragging || !cardRef.current) return;
+    if (!isDraggingRef.current || !cardRef.current) return;
     e.preventDefault();
 
     const isTouch = e.type.includes('touch');
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
 
-    const deltaX = dragStartX - clientX;
-    const deltaY = dragStartY - clientY;
+    const deltaX = dragStartX.current - clientX;
+    const deltaY = dragStartY.current - clientY;
 
-    dragStartX = clientX;
-    dragStartY = clientY;
+    dragStartX.current = clientX;
+    dragStartY.current = clientY;
 
     const card = cardRef.current;
     const rect = card.getBoundingClientRect();
@@ -146,35 +107,31 @@ const DraggableWindow = ({ wasmWidth = 640, wasmHeight = 480 }) => {
   };
 
   const onDragEnd = (e) => {
-    isDragging = false;
+    isDraggingRef.current = false;
     const isTouch = e.type.includes('touch');
 
     document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onDragMove);
     document.removeEventListener(isTouch ? 'touchend' : 'mouseup', onDragEnd);
   };
 
-  // ----------------------------------------------------------
-  // 2) Resize Handlers (No Aspect Ratio)
-  // ----------------------------------------------------------
+  /** Resize handlers (no aspect ratio lock) */
   const onResizeStart = (e) => {
     e.preventDefault();
+    isDraggingRef.current = false;
+    isResizingRef.current = true;
 
-    isDragging = false;
-    isResizing = true;
-
-    const card = cardRef.current;
-    if (!card) return;
+    if (!cardRef.current) return;
 
     const isTouch = e.type.includes('touch');
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
 
-    resizeStartX = clientX;
-    resizeStartY = clientY;
+    resizeStartX.current = clientX;
+    resizeStartY.current = clientY;
 
-    const { width, height } = card.getBoundingClientRect();
-    initialWidth = width;
-    initialHeight = height;
+    const { width, height } = cardRef.current.getBoundingClientRect();
+    initialWidth.current = width;
+    initialHeight.current = height;
 
     document.addEventListener(isTouch ? 'touchmove' : 'mousemove', onResizeMove, {
       passive: false,
@@ -183,7 +140,7 @@ const DraggableWindow = ({ wasmWidth = 640, wasmHeight = 480 }) => {
   };
 
   const onResizeMove = (e) => {
-    if (!isResizing || !cardRef.current) return;
+    if (!isResizingRef.current || !cardRef.current) return;
     e.preventDefault();
 
     const card = cardRef.current;
@@ -191,16 +148,14 @@ const DraggableWindow = ({ wasmWidth = 640, wasmHeight = 480 }) => {
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
 
-    // Calculate raw deltas
-    const deltaX = clientX - resizeStartX;
-    const deltaY = clientY - resizeStartY;
+    const deltaX = clientX - resizeStartX.current;
+    const deltaY = clientY - resizeStartY.current;
 
-    let newWidth = initialWidth + deltaX;
-    let newHeight = initialHeight + deltaY;
+    let newWidth = initialWidth.current + deltaX;
+    let newHeight = initialHeight.current + deltaY;
 
     const rect = card.getBoundingClientRect();
 
-    // Boundary checks
     if (rect.left + newWidth > window.innerWidth) {
       newWidth = window.innerWidth - rect.left;
     }
@@ -208,49 +163,38 @@ const DraggableWindow = ({ wasmWidth = 640, wasmHeight = 480 }) => {
       newHeight = window.innerHeight - rect.top;
     }
 
-    // Enforce minimum sizes
     newWidth = Math.max(newWidth, MIN_WIDTH);
     newHeight = Math.max(newHeight, MIN_HEIGHT);
 
-    // Apply final size
     card.style.width = `${newWidth}px`;
     card.style.height = `${newHeight}px`;
-
-    updateCanvasSize();
   };
 
   const onResizeEnd = (e) => {
-    isResizing = false;
+    isResizingRef.current = false;
     const isTouch = e.type.includes('touch');
 
     document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onResizeMove);
     document.removeEventListener(isTouch ? 'touchend' : 'mouseup', onResizeEnd);
   };
 
-  // ----------------------------------------------------------
-  // 3) Close Handler
-  // ----------------------------------------------------------
+  /** Close the window entirely */
   const closeWindow = () => {
-    if (cardRef.current) {
-      cardRef.current.style.display = 'none';
-    }
+    onClose?.(); // let parent know if needed
   };
 
-  // ----------------------------------------------------------
-  // 4) Render
-  // ----------------------------------------------------------
   return (
     <div
       ref={cardRef}
       className="draggable-card"
       style={{
+        position: 'fixed',
         top: '100px',
         left: '100px',
         width: '300px',
         height: '200px',
       }}
       onMouseDown={(e) => {
-        // If user is clicking on the resize handle, don't start a drag
         if (e.target.classList.contains('resize-handle')) return;
         onDragStart(e);
       }}
@@ -264,16 +208,12 @@ const DraggableWindow = ({ wasmWidth = 640, wasmHeight = 480 }) => {
         <div className="close-button" onClick={closeWindow} />
       </div>
 
-      {/* Content area with a canvas. This will hold the WASM-rendered image. */}
-      <div className="content">
-        <canvas
-          style={{ width: '100%', height: '100%', display: 'block' }}
-          width={300}
-          height={170}
-        />
+      {/* Content area. We'll display children (canvas, etc.) inside here */}
+      <div className="content" style={{ width: '100%', height: 'calc(100% - 30px)' }}>
+        {children}
       </div>
 
-      {/* Resize handle in the bottom-right corner */}
+      {/* Resize handle in bottom-right corner */}
       <div
         className="resize-handle"
         onMouseDown={onResizeStart}
@@ -281,6 +221,6 @@ const DraggableWindow = ({ wasmWidth = 640, wasmHeight = 480 }) => {
       />
     </div>
   );
-};
+}
 
 export default DraggableWindow;
