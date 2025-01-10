@@ -103,7 +103,7 @@ function App() {
           id="background-video"
           playsInline
         >
-          <source src="/wallpaper/SequoiaSunrise.webm" type="video/webm" />
+          <source src="/wallpaper/SequoiaSunrise.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
       </div>
