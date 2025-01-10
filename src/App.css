@@ -1,3 +1,7 @@
+body > iframe {
+  display: none;
+}
+
 /* macOS Menu Bar */
 .menu-bar {
   position: fixed;
