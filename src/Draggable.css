@@ -1,9 +1,62 @@
+
+  /* Draggable card styling */
   .draggable-card {
-    width: 100px;
-    height: 100px;
-    background-color: #afda9f;
-    border-radius: 5px;
-    cursor: pointer;
     position: fixed;
+    top: 100px;
+    left: 100px;
+    background: #f3f4f6;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    resize: none;
+  }
+  
+  /* Drag handle bar */
+  .drag-handle {
+    width: 100%;
+    height: 30px;
+    background: #e5e5e5;
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    cursor: grab;
+  }
+  
+  /* Close button in the top-left corner */
+  .close-button {
+    width: 12px;
+    height: 12px;
+    background: #ff5f57;
+    border-radius: 50%;
+    margin-left: 10px;
+    cursor: pointer;
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
+    transition: background 0.2s ease-in-out;
+  }
+  
+  .close-button:hover {
+    background: #bf4943;
+  }
+  
+  /* Content area */
+  .content {
+    padding: 10px;
+    height: calc(100% - 30px);
+    overflow: auto;
+  }
+  
+  /* Resize handle */
+  .resize-handle {
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border-right: 2px solid #ccc;
+    border-bottom: 2px solid #ccc;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    cursor: nwse-resize;
   }
   
