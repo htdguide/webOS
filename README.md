@@ -16,20 +16,5 @@ Welcome to my portfolio and playground for experimentation! This project is buil
 - **Containerization**: Docker
 - **CI/CD**: GitHub Actions
 - **Backend**: WebAssembly, C++ (Raylib)
-- **Build Tool**: Makefile
+- **Build Tool**: Makefile, Emscripten
 
-## How It Works
-
-### 1. **React Application**
-
-The frontend is built with React and serves as the main interface for the portfolio. It dynamically loads content and interacts with the user, allowing them to explore various projects and experiments I've worked on.
-
-### 2. **Docker Setup**
-
-The entire application, including the React frontend and WebAssembly-generated code, is containerized using Docker. This ensures consistency and simplifies deployment on any environment.
-
-To build and run the Docker container locally, use the following commands:
-
-```bash
-docker build -t my-portfolio .
-docker run -p 8080:80 my-portfolio
