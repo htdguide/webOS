@@ -35,18 +35,15 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
   
-  /* Ensure no additional square is added */
-  .desktop-icon .icon-image::before {
-    content: none; /* Prevent extra square */
-  }
-  
   /* Icon Label */
   .icon-label {
     text-align: center;
     font-size: 12px;
+    font-weight: 500; /* Slightly bolder text, mimicking macOS */
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     color: white;
     line-height: 1.2; /* Line spacing for multiline text */
+    text-shadow: 0px 2px 4px rgba(0, 0, 0, 1); /* Stronger shadow */
     padding: 0;
     margin: 0;
   }
@@ -57,6 +54,7 @@
     border-radius: 4px;
     padding: 2px 4px;
     margin: 0; /* Ensure proper alignment */
+    text-shadow: none; /* Remove shadow for better readability when highlighted */
   }
   
   /* Prevent resizing effects */
