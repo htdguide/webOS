@@ -1,3 +1,98 @@
-body > iframe {
-    display: none;
+/* macOS Menu Bar */
+.menu-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.7); /* Transparent white */
+  backdrop-filter: blur(10px); /* Adds the frosted glass effect */
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #333;
+  padding: 0 10px;
+}
+
+/* Menu Items on the Left */
+.menu-left {
+  display: flex;
+  align-items: center;
+}
+
+.menu-item {
+  padding: 0 15px;
+  font-size: 14px;
+  color: #333;
+  text-decoration: none;
+  line-height: 40px;
+  cursor: pointer;
+}
+
+.menu-item:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #000;
+  border-radius: 4px;
+}
+
+/* Sorting Button and Username on the Right */
+.menu-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.sorting-button {
+  background: #007aff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 15px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.sorting-button:hover {
+  background: #005bb5;
+}
+
+.menu-username {
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Fullscreen Video Background */
+.video-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+  background: black;
+}
+
+#background-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  #background-video {
+    object-fit: cover;
+    height: 100%;
+    width: auto;
   }
+}

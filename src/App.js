@@ -44,104 +44,82 @@ function App() {
     setSortingWindowOpen(false);
   };
 
-  const initializeWasm = (retryCount = 0) => {
-    if (!canvasRef.current || !window.Module) return;
-
-    const canvas = canvasRef.current;
-
-    // Ensure the canvas is ready
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
-
-    console.log('Canvas initialized for WASM:', {
-      width: canvas.width,
-      height: canvas.height,
-      clientWidth: canvas.clientWidth,
-      clientHeight: canvas.clientHeight,
-    });
-
-    // Add a dummy event listener to ensure the canvas is "active"
-    canvas.addEventListener('click', () => {}, { once: true });
-
-    try {
-      // Assign the canvas to Emscripten and initialize the WASM application
-      window.Module.canvas = canvas;
-
-      if (window.Module._initializeWindow) {
-        window.Module._initializeWindow();
-      }
-    } catch (err) {
-      console.error('Error during WASM initialization:', err);
-
-      // Retry initialization if the error is due to `_glfwInit`
-      if (retryCount < 3) {
-        console.log(`Retrying WASM initialization (attempt ${retryCount + 1})...`);
-        setTimeout(() => initializeWasm(retryCount + 1), 200); // Retry after 200ms
-      }
-    }
-  };
-
   useEffect(() => {
-    if (sortingWindowOpen && wasmScriptLoaded) {
-      setTimeout(() => initializeWasm(), 100); // Slight delay ensures DOM readiness
+    if (sortingWindowOpen && wasmScriptLoaded && canvasRef.current) {
+      setTimeout(() => {
+        if (window.Module) {
+          const canvas = canvasRef.current;
+          canvas.width = canvas.clientWidth;
+          canvas.height = canvas.clientHeight;
+
+          console.log('Canvas initialized for WASM:', {
+            width: canvas.width,
+            height: canvas.height,
+            clientWidth: canvas.clientWidth,
+            clientHeight: canvas.clientHeight,
+          });
+
+          window.Module.canvas = canvas;
+
+          if (window.Module._initializeWindow) {
+            window.Module._initializeWindow();
+          }
+        }
+      }, 100);
     }
   }, [sortingWindowOpen, wasmScriptLoaded]);
 
   return (
     <div className="App">
-      <header className="App-header">
-        <div className="container text-center my-5">
-          <h1>htdguide's playground</h1>
-          <p className="lead">Practice and share new skills</p>
+      {/* macOS-style Menu Bar */}
+      <div className="menu-bar">
+        <div className="menu-left">
+          <a href="/" className="menu-item">Home</a>
+          <a href="https://www.linkedin.com/in/htdguide/" className="menu-item">LinkedIn</a>
+          <a href="https://github.com/htdguide" className="menu-item">GitHub</a>
         </div>
-
-        <div className="container">
-          <nav>
-            <ul className="nav justify-content-center">
-              <li className="nav-item">
-                <a href="http://htdguide.com/" className="nav-link">
-                  Home
-                </a>
-              </li>
-              <li className="nav-item">
-                <a href="https://www.linkedin.com/in/htdguide/" className="nav-link">
-                  LinkedIn
-                </a>
-              </li>
-              <li className="nav-item">
-                <a href="https://github.com/htdguide" className="nav-link">
-                  Github
-                </a>
-              </li>
-            </ul>
-          </nav>
+        <div className="menu-right">
+          <button className="sorting-button" onClick={openSortingWindow}>
+            Sorting Algorithms
+          </button>
+          <span className="menu-username">htdguide</span>
         </div>
+      </div>
 
-        <button className="btn btn-primary" onClick={openSortingWindow}>
-          Sorting Algorithms
-        </button>
+      {/* Fullscreen Video Background */}
+      <div className="video-background">
+        <video
+          autoPlay
+          muted
+          loop
+          id="background-video"
+          playsInline
+        >
+          <source src="/wallpaper/SequoiaSunrise.webm" type="video/webm" />
+          Your browser does not support the video tag.
+        </video>
+      </div>
 
-        {sortingWindowOpen && (
-          <DraggableWindow
-            wasmWidth={400}
-            wasmHeight={500}
-            onClose={closeSortingWindow}
-          >
-            <canvas
-              ref={canvasRef}
-              id="canvas"
-              className="emscripten"
-              tabIndex="-1"
-              style={{
-                width: '400px',
-                height: '500px',
-                backgroundColor: '#000',
-                display: 'block',
-              }}
-            />
-          </DraggableWindow>
-        )}
-      </header>
+      {sortingWindowOpen && (
+        <DraggableWindow
+          wasmWidth={400}
+          wasmHeight={500}
+          onClose={closeSortingWindow}
+        >
+          <canvas
+            ref={canvasRef}
+            id="canvas"
+            className="emscripten"
+            tabIndex="-1"
+            style={{
+              width: '400px',
+              height: '500px',
+              backgroundColor: '#000',
+              display: 'block',
+            }}
+          />
+        </DraggableWindow>
+      )}
     </div>
   );
 }
