@@ -1,119 +1,196 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import './Draggable.css';
 
 const Draggable = () => {
   const cardRef = useRef(null);
-  const handleRef = useRef(null);
-  const resizeRef = useRef(null);
-  let startX = 0, startY = 0, newWidth = 0, newHeight = 0;
 
-  const [dimensions, setDimensions] = useState({ width: 300, height: 200 });
+  // We use these to store initial positions/sizes for dragging or resizing.
+  let dragStartX = 0;
+  let dragStartY = 0;
 
-  const mouseDown = (e) => {
-    if (e.target === handleRef.current) {
-      startX = e.clientX;
-      startY = e.clientY;
+  let resizeStartX = 0;
+  let resizeStartY = 0;
+  let initialWidth = 0;
+  let initialHeight = 0;
 
-      document.addEventListener('mousemove', mouseMove);
-      document.addEventListener('mouseup', mouseUp);
-    }
+  // Flags to know which mode is active: "drag" or "resize"
+  let isDragging = false;
+  let isResizing = false;
+
+  /* ------------------------ DRAG HANDLERS ------------------------ */
+
+  const onDragStart = (e) => {
+    e.preventDefault();
+
+    isDragging = true;
+    isResizing = false;
+
+    const isTouch = e.type.includes('touch');
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+
+    dragStartX = clientX;
+    dragStartY = clientY;
+
+    // Add appropriate move/end listeners depending on mouse or touch
+    document.addEventListener(isTouch ? 'touchmove' : 'mousemove', onDragMove);
+    document.addEventListener(isTouch ? 'touchend' : 'mouseup', onDragEnd);
   };
 
-  const mouseMove = (e) => {
-    if (cardRef.current) {
-      const card = cardRef.current;
-      const cardRect = card.getBoundingClientRect();
-
-      const deltaX = startX - e.clientX;
-      const deltaY = startY - e.clientY;
-
-      startX = e.clientX;
-      startY = e.clientY;
-
-      const newTop = Math.min(
-        Math.max(card.offsetTop - deltaY, 0),
-        window.innerHeight - cardRect.height
-      );
-      const newLeft = Math.min(
-        Math.max(card.offsetLeft - deltaX, 0),
-        window.innerWidth - cardRect.width
-      );
-
-      card.style.top = `${newTop}px`;
-      card.style.left = `${newLeft}px`;
-    }
-  };
-
-  const mouseUp = () => {
-    document.removeEventListener('mousemove', mouseMove);
-    document.removeEventListener('mouseup', mouseUp);
-  };
-
-  const resizeMouseDown = (e) => {
-    startX = e.clientX;
-    startY = e.clientY;
+  const onDragMove = (e) => {
+    if (!isDragging || !cardRef.current) return;
 
     const card = cardRef.current;
+    const isTouch = e.type.includes('touch');
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+
+    // Calculate how far the cursor has moved
+    const deltaX = dragStartX - clientX;
+    const deltaY = dragStartY - clientY;
+
+    // Update for next move event
+    dragStartX = clientX;
+    dragStartY = clientY;
+
+    // Current position of the card
     const cardRect = card.getBoundingClientRect();
 
-    newWidth = cardRect.width;
-    newHeight = cardRect.height;
+    // Calculate new top/left, clamped to viewport boundaries
+    const newTop = Math.min(
+      Math.max(card.offsetTop - deltaY, 0),
+      window.innerHeight - cardRect.height
+    );
+    const newLeft = Math.min(
+      Math.max(card.offsetLeft - deltaX, 0),
+      window.innerWidth - cardRect.width
+    );
 
-    document.addEventListener('mousemove', resizeMouseMove);
-    document.addEventListener('mouseup', resizeMouseUp);
+    card.style.top = `${newTop}px`;
+    card.style.left = `${newLeft}px`;
   };
 
-  const resizeMouseMove = (e) => {
-    const deltaX = e.clientX - startX;
-    const deltaY = e.clientY - startY;
+  const onDragEnd = (e) => {
+    isDragging = false;
+    const isTouch = e.type.includes('touch');
+    document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onDragMove);
+    document.removeEventListener(isTouch ? 'touchend' : 'mouseup', onDragEnd);
+  };
+
+  /* ------------------------ RESIZE HANDLERS ------------------------ */
+
+  const onResizeStart = (e) => {
+    e.preventDefault();
+
+    isDragging = false;
+    isResizing = true;
 
     const card = cardRef.current;
+    if (!card) return;
+
+    const isTouch = e.type.includes('touch');
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+
+    resizeStartX = clientX;
+    resizeStartY = clientY;
+
+    // Get the card's initial width and height
+    const { width, height } = card.getBoundingClientRect();
+    initialWidth = width;
+    initialHeight = height;
+
+    // Add appropriate move/end listeners depending on mouse or touch
+    document.addEventListener(isTouch ? 'touchmove' : 'mousemove', onResizeMove);
+    document.addEventListener(isTouch ? 'touchend' : 'mouseup', onResizeEnd);
+  };
+
+  const onResizeMove = (e) => {
+    if (!isResizing || !cardRef.current) return;
+
+    const card = cardRef.current;
+    const isTouch = e.type.includes('touch');
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+
+    // Calculate total distance from the initial resize click
+    const deltaX = clientX - resizeStartX;
+    const deltaY = clientY - resizeStartY;
+
+    // Proposed new width/height
+    let newWidth = initialWidth + deltaX;
+    let newHeight = initialHeight + deltaY;
+
+    // Read current bounding rectangle for boundary checks
     const cardRect = card.getBoundingClientRect();
 
-    const updatedWidth = Math.max(200, newWidth + deltaX);
-    const updatedHeight = Math.max(150, newHeight + deltaY);
-
-    // Prevent resizing beyond the viewport boundaries
-    if (
-      cardRect.left + updatedWidth <= window.innerWidth &&
-      cardRect.top + updatedHeight <= window.innerHeight
-    ) {
-      card.style.width = `${updatedWidth}px`;
-      card.style.height = `${updatedHeight}px`;
+    // Check boundary: if the right side + (proposed change) stays within window
+    if (cardRect.left + newWidth > window.innerWidth) {
+      newWidth = window.innerWidth - cardRect.left;
     }
+    // If the bottom + (proposed change) stays within window
+    if (cardRect.top + newHeight > window.innerHeight) {
+      newHeight = window.innerHeight - cardRect.top;
+    }
+
+    // Enforce minimum dimensions
+    newWidth = Math.max(newWidth, 200);
+    newHeight = Math.max(newHeight, 150);
+
+    // Apply new sizes
+    card.style.width = `${newWidth}px`;
+    card.style.height = `${newHeight}px`;
   };
 
-  const resizeMouseUp = () => {
-    document.removeEventListener('mousemove', resizeMouseMove);
-    document.removeEventListener('mouseup', resizeMouseUp);
+  const onResizeEnd = (e) => {
+    isResizing = false;
+    const isTouch = e.type.includes('touch');
+    document.removeEventListener(isTouch ? 'touchmove' : 'mousemove', onResizeMove);
+    document.removeEventListener(isTouch ? 'touchend' : 'mouseup', onResizeEnd);
   };
+
+  /* ------------------------ CLOSE HANDLER ------------------------ */
 
   const closeWindow = () => {
-    cardRef.current.style.display = 'none';
+    if (cardRef.current) {
+      cardRef.current.style.display = 'none';
+    }
   };
 
   return (
     <div
       ref={cardRef}
       className="draggable-card"
-      style={{
-        width: `${dimensions.width}px`,
-        height: `${dimensions.height}px`,
+      // We only need to start a drag from the card if it's NOT the resize handle area 
+      onMouseDown={(e) => {
+        // If the user clicked the resize area, don't start a drag here
+        if (e.target.classList.contains('resize-handle')) return;
+        onDragStart(e);
       }}
-      onMouseDown={mouseDown}
+      onTouchStart={(e) => {
+        if (e.target.classList.contains('resize-handle')) return;
+        onDragStart(e);
+      }}
     >
-      {/* Drag handle */}
-      <div ref={handleRef} className="drag-handle">
-        <div className="close-button" onClick={closeWindow}></div>
+      {/* Title bar / drag handle */}
+      <div
+        className="drag-handle"
+        onMouseDown={(e) => onDragStart(e)}
+        onTouchStart={(e) => onDragStart(e)}
+      >
+        <div className="close-button" onClick={closeWindow} />
       </div>
+
       <div className="content">
         <p>macOS Window Content</p>
       </div>
+
+      {/* Resize handle in the bottom-right corner */}
       <div
-        ref={resizeRef}
         className="resize-handle"
-        onMouseDown={resizeMouseDown}
-      ></div>
+        onMouseDown={onResizeStart}
+        onTouchStart={onResizeStart}
+      />
     </div>
   );
 };
