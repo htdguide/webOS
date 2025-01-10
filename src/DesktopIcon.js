@@ -2,11 +2,10 @@ import React, { useState, useRef } from 'react';
 import './DesktopIcon.css';
 
 const GRID_SIZE = 80; // Size of each grid cell
-const DOUBLE_TAP_DELAY = 300; // Maximum time between taps to register as a double-tap
 
 function DesktopIcon({ name, onDoubleClick, onClick, isSelected, icon }) {
-  const [position, setPosition] = useState({ x: 100, y: 100 }); // Initial position
-  const [lastTap, setLastTap] = useState(0); // Tracks the last tap timestamp for double-tap detection
+  const [position, setPosition] = useState({ x: 100, y: 100 }); // Snapped position
+  const [isDragging, setIsDragging] = useState(false); // Track dragging state
   const iconRef = useRef(null);
 
   const handleMouseDown = (e) => {
@@ -20,6 +19,8 @@ function DesktopIcon({ name, onDoubleClick, onClick, isSelected, icon }) {
   };
 
   const startDragging = (startX, startY) => {
+    setIsDragging(true);
+
     const rect = iconRef.current.getBoundingClientRect();
     const offsetX = startX - rect.left;
     const offsetY = startY - rect.top;
@@ -37,13 +38,21 @@ function DesktopIcon({ name, onDoubleClick, onClick, isSelected, icon }) {
         Math.min(window.innerHeight - GRID_SIZE, clientY - offsetY)
       );
 
-      setPosition({
-        x: Math.round(newX / GRID_SIZE) * GRID_SIZE,
-        y: Math.round(newY / GRID_SIZE) * GRID_SIZE,
-      });
+      iconRef.current.style.left = `${newX}px`; // Update real-time position
+      iconRef.current.style.top = `${newY}px`;
     };
 
     const handleEnd = () => {
+      setIsDragging(false);
+
+      // Snap to the grid
+      const rect = iconRef.current.getBoundingClientRect();
+      const snappedX = Math.round(rect.left / GRID_SIZE) * GRID_SIZE;
+      const snappedY = Math.round(rect.top / GRID_SIZE) * GRID_SIZE;
+
+      // Smoothly move the icon to the snapped position
+      setPosition({ x: snappedX, y: snappedY });
+
       window.removeEventListener('mousemove', handleMove);
       window.removeEventListener('mouseup', handleEnd);
       window.removeEventListener('touchmove', handleMove);
@@ -56,27 +65,24 @@ function DesktopIcon({ name, onDoubleClick, onClick, isSelected, icon }) {
     window.addEventListener('touchend', handleEnd);
   };
 
-  const handleTap = () => {
-    const now = Date.now();
-    if (now - lastTap < DOUBLE_TAP_DELAY) {
-      onDoubleClick(); // Trigger double-tap action
-    } else {
-      onClick(); // Highlight the icon
-    }
-    setLastTap(now);
-  };
-
   return (
     <div
       ref={iconRef}
-      className={`desktop-icon ${isSelected ? 'selected' : ''}`}
-      style={{ left: position.x, top: position.y }}
+      className={`desktop-icon ${isSelected ? 'selected' : ''} ${
+        isDragging ? 'dragging' : ''
+      }`}
+      style={{
+        left: isDragging ? undefined : position.x,
+        top: isDragging ? undefined : position.y,
+        transition: isDragging ? 'none' : 'left 0.3s, top 0.3s', // Smooth snap animation
+      }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       onClick={(e) => {
         e.stopPropagation(); // Prevent deselecting on wallpaper click
-        handleTap();
+        onClick();
       }}
+      onDoubleClick={onDoubleClick}
     >
       <div className="icon-image" style={{ backgroundImage: `url(${icon})` }}></div>
       <div className="icon-label">{name}</div>
