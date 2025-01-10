@@ -78,7 +78,8 @@ body > iframe {
   height: 100%;
   z-index: -1; /* Push video behind all content */
   overflow: hidden;
-  background: black;
+  background: url('/public/wallpaper/SequoiaSunrise.jpg') no-repeat center center fixed; /* Fallback image */
+  background-size: cover; /* Ensure the image covers the entire screen */
 }
 
 #background-video {
