@@ -1,6 +1,7 @@
+/* Desktop Icon Container */
 .desktop-icon {
     position: absolute;
-    width: 64px;
+    width: 64px; /* Fixed container size */
     height: 80px;
     cursor: pointer;
     display: flex;
@@ -8,12 +9,12 @@
     align-items: center;
     justify-content: flex-start;
     user-select: none;
-    transition: box-shadow 0.2s, transform 0.2s;
-    z-index: 1;
+    z-index: 5;
+    transition: box-shadow 0.2s; /* Smooth shadow transitions */
   }
   
   .desktop-icon.selected {
-    z-index: 10;
+    z-index: 6; /* Slightly higher when selected */
   }
   
   /* Icon Image */
@@ -25,13 +26,18 @@
     background-position: center;
     margin-bottom: 5px;
     border-radius: 5px;
-    background-color: transparent; /* Hidden by default */
-    border: none; /* No border when not selected */
+    position: relative; /* Ensures square appears behind the icon */
   }
   
   .desktop-icon.selected .icon-image {
-    background-color: rgba(0, 0, 0, 0.4); /* Dark transparent square */
-    border: 1px solid rgba(255, 255, 255, 0.2); /* Thin gray border */
+    /* Dark transparent square appears only when selected */
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  /* Ensure no additional square is added */
+  .desktop-icon .icon-image::before {
+    content: none; /* Prevent extra square */
   }
   
   /* Icon Label */
@@ -45,23 +51,16 @@
     margin: 0;
   }
   
-  /* Highlighted Text for Selected Icon */
   .desktop-icon.selected .icon-label {
-    position: relative;
     color: white;
-  }
-  
-  .desktop-icon.selected .icon-label::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
     background-color: rgb(34, 91, 201); /* Opaque blue */
     border-radius: 4px;
-    z-index: -1; /* Place behind the text */
-    padding: 2px 6px; /* Padding for better alignment */
-    margin: -2px -6px; /* Matches padding to keep highlight aligned */
+    padding: 2px 4px;
+    margin: 0; /* Ensure proper alignment */
+  }
+  
+  /* Prevent resizing effects */
+  .desktop-icon, .icon-image, .icon-label {
+    transition: none; /* Disable scaling transitions */
   }
   
