@@ -95,8 +95,8 @@ function App() {
           </Modal.Header>
           <Modal.Body>
           <div id="canvas-container" style={{ width: '100%', height: '510px', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
-  <canvas className="emscripten" id="canvas" tabIndex="-1" style={{ maxWidth: '100%', maxHeight: '100%' }}></canvas>
-</div>
+          <canvas className="emscripten" id="canvas" tabIndex="-1" style={{ maxWidth: '100%', maxHeight: '100%' }}></canvas>
+          </div>
 
             <p className="lead my-2">C++ practice with the help of raylib library compiled into WebAssembly by emscripten to run in a browser! [Supports touchscreen!]</p>
             <Button variant="primary" onClick={() => window.open('https://github.com/htdguide/Sorting-Algorithms', '_blank')}>
