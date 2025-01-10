@@ -11,7 +11,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  z-index: 1000;
+  z-index: 1000; /* Ensure menu bar is always on top */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color: #333;
   padding: 0 10px;
@@ -72,7 +72,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: -1;
+  z-index: -1; /* Push video behind all content */
   overflow: hidden;
   background: black;
 }
@@ -89,10 +89,92 @@
   object-fit: cover;
 }
 
+/* Additional adjustments for smaller devices */
 @media (max-width: 768px) {
   #background-video {
     object-fit: cover;
     height: 100%;
     width: auto;
   }
+}
+
+/* Prevent scrolling */
+body, html {
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Disable scrolling */
+  height: 100%;
+}
+
+/* Desktop */
+.desktop {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  background: transparent;
+  z-index: 5; /* Lower than draggable window */
+}
+
+/* Desktop Icons */
+.desktop-icon {
+  position: absolute;
+  width: 64px;
+  height: 80px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  user-select: none;
+  z-index: 5; /* Lower than draggable window */
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.desktop-icon.selected {
+  z-index: 6; /* Slightly higher when selected */
+}
+
+/* Icon Image */
+.icon-image {
+  width: 48px;
+  height: 48px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-bottom: 5px;
+  border-radius: 5px;
+  background-color: transparent; /* Hidden by default */
+  border: none;
+}
+
+.desktop-icon.selected .icon-image {
+  background-color: rgba(0, 0, 0, 0.4); /* Dark transparent square when selected */
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Thin gray border when selected */
+}
+
+/* Icon Label */
+.icon-label {
+  text-align: center;
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: white;
+  line-height: 1.2; /* Line spacing for multiline text */
+  padding: 0;
+  margin: 0;
+}
+
+.desktop-icon.selected .icon-label {
+  position: relative;
+  color: white;
+  background-color: rgb(34, 91, 201); /* Opaque blue */
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+/* Hide React error overlay */
+#react-error-overlay {
+  display: none !important;
 }

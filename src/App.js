@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
+import Desktop from './Desktop';
 import DraggableWindow from './DraggableWindow';
-import './Draggable.css';
 
 const script = document.createElement('script');
 
@@ -69,6 +69,17 @@ function App() {
     }
   }, [sortingWindowOpen, wasmScriptLoaded]);
 
+  useEffect(() => {
+    const preventScroll = (e) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('touchmove', preventScroll, { passive: false });
+    return () => {
+      window.removeEventListener('touchmove', preventScroll);
+    };
+  }, []);
+
   return (
     <div className="App">
       {/* macOS-style Menu Bar */}
@@ -79,9 +90,6 @@ function App() {
           <a href="https://github.com/htdguide" className="menu-item">GitHub</a>
         </div>
         <div className="menu-right">
-          <button className="sorting-button" onClick={openSortingWindow}>
-            Sorting Algorithms
-          </button>
           <span className="menu-username">htdguide</span>
         </div>
       </div>
@@ -100,25 +108,31 @@ function App() {
         </video>
       </div>
 
+      {/* Desktop Icons */}
+      <Desktop onOpenSortingWindow={openSortingWindow} />
+
+      {/* Draggable WASM Window */}
       {sortingWindowOpen && (
-        <DraggableWindow
-          wasmWidth={400}
-          wasmHeight={500}
-          onClose={closeSortingWindow}
-        >
-          <canvas
-            ref={canvasRef}
-            id="canvas"
-            className="emscripten"
-            tabIndex="-1"
-            style={{
-              width: '400px',
-              height: '500px',
-              backgroundColor: '#000',
-              display: 'block',
-            }}
-          />
-        </DraggableWindow>
+        <div style={{ position: 'absolute', zIndex: 100 }}>
+          <DraggableWindow
+            wasmWidth={400}
+            wasmHeight={500}
+            onClose={closeSortingWindow}
+          >
+            <canvas
+              ref={canvasRef}
+              id="canvas"
+              className="emscripten"
+              tabIndex="-1"
+              style={{
+                width: '400px',
+                height: '500px',
+                backgroundColor: '#000',
+                display: 'block',
+              }}
+            />
+          </DraggableWindow>
+        </div>
       )}
     </div>
   );
