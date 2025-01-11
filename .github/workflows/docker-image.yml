@@ -41,4 +41,5 @@ jobs:
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
             sudo docker stop $(sudo docker ps -aq) || true
             sudo docker rm $(sudo docker ps -aq) || true
-            sudo docker run -d -p 80:3000 --name webportfolio ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+            sudo docker run -d -p 80:3000 -p 443:443 --name webportfolio ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+
