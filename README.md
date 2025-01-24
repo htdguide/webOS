@@ -74,3 +74,7 @@ A **Makefile** streamlines building C++ code into WebAssembly, making it easy to
 - Optimize builds for browser performance.
 - Automate repetitive development tasks.
 
+## **Screenshots**
+<img width="950" alt="Screenshot 2025-01-24 at 8 29 42 PM" src="https://github.com/user-attachments/assets/4ea658f1-1b8a-4194-9a5e-0da7e2658376" />
+<img width="951" alt="Screenshot 2025-01-24 at 8 29 58 PM" src="https://github.com/user-attachments/assets/f9ac9e0a-3c75-4043-b805-bd78fa2b8077" />
+
