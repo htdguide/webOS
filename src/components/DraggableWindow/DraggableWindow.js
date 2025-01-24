@@ -10,48 +10,61 @@ function DraggableWindow({ title, wasmWidth, wasmHeight, onClose, children }) {
   const resizeStartSize = useRef({ width: wasmWidth, height: wasmHeight });
 
   useEffect(() => {
-    const handleMouseMove = (event) => {
+    const handleMove = (event) => {
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+      const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+
       if (isDragging) {
-        const newX = windowStartPos.current.x + (event.clientX - dragStartPos.current.x);
-        const newY = windowStartPos.current.y + (event.clientY - dragStartPos.current.y);
+        const newX = windowStartPos.current.x + (clientX - dragStartPos.current.x);
+        const newY = windowStartPos.current.y + (clientY - dragStartPos.current.y);
 
         windowRef.current.style.left = `${newX}px`;
         windowRef.current.style.top = `${newY}px`;
       }
 
       if (isResizing) {
-        const newWidth = Math.max(resizeStartSize.current.width + (event.clientX - dragStartPos.current.x), 200);
-        const newHeight = Math.max(resizeStartSize.current.height + (event.clientY - dragStartPos.current.y), 200);
+        const newWidth = Math.max(resizeStartSize.current.width + (clientX - dragStartPos.current.x), 200);
+        const newHeight = Math.max(resizeStartSize.current.height + (clientY - dragStartPos.current.y), 200);
 
         windowRef.current.style.width = `${newWidth}px`;
         windowRef.current.style.height = `${newHeight}px`;
       }
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       setIsDragging(false);
       setIsResizing(false);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
     };
   }, [isDragging, isResizing]);
 
-  const handleMouseDown = (event) => {
+  const handleDragStart = (event) => {
+    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+
     setIsDragging(true);
-    dragStartPos.current = { x: event.clientX, y: event.clientY };
+    dragStartPos.current = { x: clientX, y: clientY };
     const rect = windowRef.current.getBoundingClientRect();
     windowStartPos.current = { x: rect.left, y: rect.top };
   };
 
   const handleResizeStart = (event) => {
+    const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+    const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+
     setIsResizing(true);
-    dragStartPos.current = { x: event.clientX, y: event.clientY };
+    dragStartPos.current = { x: clientX, y: clientY };
     const rect = windowRef.current.getBoundingClientRect();
     resizeStartSize.current = { width: rect.width, height: rect.height };
   };
@@ -67,7 +80,11 @@ function DraggableWindow({ title, wasmWidth, wasmHeight, onClose, children }) {
         left: '50px',
       }}
     >
-      <div className="window-header" onMouseDown={handleMouseDown}>
+      <div
+        className="window-header"
+        onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
+      >
         <div className="header-left">
           <button className="close-button" onClick={onClose}></button>
         </div>
@@ -75,7 +92,11 @@ function DraggableWindow({ title, wasmWidth, wasmHeight, onClose, children }) {
         <div className="header-right"></div>
       </div>
       <div className="window-content">{children}</div>
-      <div className="resize-handle" onMouseDown={handleResizeStart}></div>
+      <div
+        className="resize-handle"
+        onMouseDown={handleResizeStart}
+        onTouchStart={handleResizeStart}
+      ></div>
     </div>
   );
 }

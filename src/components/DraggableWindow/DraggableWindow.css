@@ -43,7 +43,7 @@
   font-size: 14px;
   font-weight: bold;
   color: #333;
-  pointer-events: none; /* Prevent interactions */
+  pointer-events: none;
 }
 
 .close-button {
