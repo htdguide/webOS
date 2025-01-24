@@ -1,13 +1,21 @@
 import React, { useRef, useEffect, useState } from 'react';
 import './DraggableWindow.css';
 
-function DraggableWindow({ title, wasmWidth, wasmHeight, onClose, children }) {
+function DraggableWindow({ title, wasmWidth, wasmHeight, onClose, onMount, onUnmount, children }) {
   const windowRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
   const windowStartPos = useRef({ x: 50, y: 50 });
   const resizeStartSize = useRef({ width: wasmWidth, height: wasmHeight });
+
+  // Trigger lifecycle events for mount and unmount
+  useEffect(() => {
+    if (onMount) onMount();
+    return () => {
+      if (onUnmount) onUnmount();
+    };
+  }, [onMount, onUnmount]);
 
   useEffect(() => {
     const handleMove = (event) => {

@@ -1,28 +1,32 @@
 import React, { useState } from 'react';
 import DesktopIcon from '../DesktopIcon/DesktopIcon';
-import folderIcon from '../../media/icons/macos-folder-icon.webp'; // Replace with your folder icon path
+import DesktopIconsController from '../../controllers/DesktopIcons';
 import './Desktop.css';
 
-function Desktop({ onOpenSortingWindow }) {
+function Desktop({ onOpenApp }) {
   const [selectedIcon, setSelectedIcon] = useState(null); // Track selected icon
 
   const handleWallpaperClick = () => {
-    setSelectedIcon(null); // Deselect icon
+    setSelectedIcon(null); // Deselect all icons when clicking on the wallpaper
   };
 
-  const handleIconClick = (iconName) => {
-    setSelectedIcon(iconName); // Highlight the clicked icon
+  const handleIconClick = (iconId) => {
+    setSelectedIcon(iconId); // Highlight the clicked icon
   };
 
   return (
     <div className="desktop" onClick={handleWallpaperClick}>
-      <DesktopIcon
-        name="Sorting Algorithms"
-        icon={folderIcon}
-        isSelected={selectedIcon === 'Sorting Algorithms'}
-        onClick={() => handleIconClick('Sorting Algorithms')}
-        onDoubleClick={onOpenSortingWindow} // Open WASM app
-      />
+      {DesktopIconsController.map((iconConfig) => (
+        <DesktopIcon
+          key={iconConfig.id}
+          name={iconConfig.name}
+          icon={iconConfig.icon}
+          isSelected={selectedIcon === iconConfig.id}
+          onClick={() => handleIconClick(iconConfig.id)}
+          onDoubleClick={() => onOpenApp(iconConfig.id)} // Open the app dynamically
+          position={iconConfig.position} // Pass initial position for the icon
+        />
+      ))}
     </div>
   );
 }

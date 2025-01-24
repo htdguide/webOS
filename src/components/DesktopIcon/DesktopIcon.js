@@ -5,8 +5,8 @@ const GRID_SIZE = 80; // Size of each grid cell
 const HOLD_THRESHOLD = 100; // Hold duration in milliseconds for dragging
 const DOUBLE_TAP_DELAY = 300; // Maximum time between taps for a double-tap (in milliseconds)
 
-function DesktopIcon({ name, onDoubleClick, onClick, isSelected, icon }) {
-  const [position, setPosition] = useState({ x: 100, y: 100 }); // Snapped position
+function DesktopIcon({ name, onDoubleClick, onClick, isSelected, icon, position: initialPosition }) {
+  const [position, setPosition] = useState(initialPosition || { x: 100, y: 100 }); // Initial or snapped position
   const [isDragging, setIsDragging] = useState(false); // Track dragging state
   const [holdTimer, setHoldTimer] = useState(null); // Timer for hold detection
   const [lastTap, setLastTap] = useState(0); // Timestamp of the last tap

@@ -3,7 +3,7 @@ import './App.css';
 import MenuBar from './components/MenuBar/MenuBar';
 import Wallpaper from './components/Wallpaper/Wallpaper';
 import Desktop from './components/Desktop/Desktop';
-import SortingAlgorithms from './apps/SortingAlgorithms/SortingAlgorithms';
+import DesktopIconsController from './controllers/DesktopIcons';
 
 function App() {
   const [openApps, setOpenApps] = useState([]);
@@ -22,12 +22,24 @@ function App() {
     <div className="App">
       <MenuBar />
       <Wallpaper />
-      <Desktop onOpenSortingWindow={() => handleOpenApp('sorting-algorithms')} />
-      {openApps.includes('sorting-algorithms') && (
-        <SortingAlgorithms onClose={() => handleCloseApp('sorting-algorithms')} />
-      )}
+      <Desktop onOpenApp={handleOpenApp} />
+      {openApps.map((appId) => {
+        const appConfig = DesktopIconsController.find((app) => app.id === appId);
+        const AppComponent = appConfig?.component;
+
+        return (
+          AppComponent && (
+            <AppComponent
+              key={appId}
+              onClose={() => handleCloseApp(appId)}
+            />
+          )
+        );
+      })}
     </div>
   );
 }
 
 export default App;
+
+//s
