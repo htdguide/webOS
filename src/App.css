@@ -78,7 +78,7 @@ body > iframe {
   height: 100%;
   z-index: -1; /* Push video behind all content */
   overflow: hidden;
-  background: url('/public/wallpaper/SequoiaSunrise.jpg') no-repeat center center fixed; /* Fallback image */
+  background: url('./media/wallpaper/SequoiaSunrise.jpg') no-repeat center center fixed; /* Fallback image */
   background-size: cover; /* Ensure the image covers the entire screen */
 }
 
@@ -151,8 +151,7 @@ body, html {
   background-position: center;
   margin-bottom: 5px;
   border-radius: 5px;
-  background-color: transparent; /* Hidden by default */
-  border: none;
+  background-color: transparent;
 }
 
 .desktop-icon.selected .icon-image {

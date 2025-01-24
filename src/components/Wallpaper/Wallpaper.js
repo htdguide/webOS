@@ -1,5 +1,7 @@
 import React from 'react';
 import './Wallpaper.css';
+import SequoiaSunriseVideo from '../../media/wallpaper/SequoiaSunrise.mp4';
+import SequoiaSunriseImage from '../../media/wallpaper/SequoiaSunrise.jpg';
 
 function Wallpaper() {
   return (
@@ -14,12 +16,12 @@ function Wallpaper() {
           e.target.style.display = 'none';
         }}
       >
-        <source src="/wallpaper/SequoiaSunrise.mp4" type="video/mp4" />
+        <source src={SequoiaSunriseVideo} type="video/mp4" />
         Your browser does not support the video tag.
       </video>
       <img
         className="wallpaper-fallback"
-        src="/wallpaper/SequoiaSunrise.jpg"
+        src={SequoiaSunriseImage}
         alt="Wallpaper"
       />
     </div>

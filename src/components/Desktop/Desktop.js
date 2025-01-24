@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DesktopIcon from '../DesktopIcon/DesktopIcon';
-import folderIcon from '../../icons/macos-folder-icon.webp'; // Replace with your folder icon path
+import folderIcon from '../../media/icons/macos-folder-icon.webp'; // Replace with your folder icon path
 import './Desktop.css';
 
 function Desktop({ onOpenSortingWindow }) {
