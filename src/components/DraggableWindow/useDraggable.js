@@ -44,8 +44,15 @@ function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount
 
         if (resizeType === 'top-right') {
           newWidth = Math.max(resizeStartSize.current.width + (clientX - dragStartPos.current.x), 200);
-          newHeight = Math.max(resizeStartSize.current.height - (clientY - dragStartPos.current.y), 200);
-          newY = windowStartPos.current.y + (clientY - dragStartPos.current.y);
+          
+          const newCalculatedHeight = resizeStartSize.current.height - (clientY - dragStartPos.current.y);
+
+          if (newCalculatedHeight > 200) {
+            newHeight = newCalculatedHeight;
+            newY = windowStartPos.current.y + (clientY - dragStartPos.current.y);
+          } else {
+            newHeight = 200; // Keep the height at minimum
+          }
         }
 
         if (resizeType === 'bottom-left') {
@@ -62,7 +69,7 @@ function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount
         windowRef.current.style.width = `${newWidth}px`;
         windowRef.current.style.height = `${newHeight}px`;
 
-        if (resizeType === 'top-right') {
+        if (resizeType === 'top-right' && newHeight > 200) {
           windowRef.current.style.top = `${newY}px`;
         }
 
@@ -93,7 +100,7 @@ function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount
   const handleDragStart = (event) => {
     if (resizeType) return; // Prevent drag when resizing
 
-    // 🔴 Check if the click is on the close button, if so, do NOT start dragging
+    // 🔴 Ignore drag if clicking the close button
     if (event.target.closest('.close-button')) {
       return;
     }
