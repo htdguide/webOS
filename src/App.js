@@ -3,7 +3,7 @@ import './App.css';
 import MenuBar from './components/MenuBar/MenuBar';
 import Wallpaper from './components/Wallpaper/Wallpaper';
 import Desktop from './components/Desktop/Desktop';
-import DesktopIconsController from './controllers/DesktopIcons';
+import DesktopIconsController from './managers/DesktopIcons';
 
 function App() {
   const [openApps, setOpenApps] = useState([]);

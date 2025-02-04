@@ -12,7 +12,7 @@ function SortingAlgorithms({ onClose }) {
     if (wasmScriptLoaded) return;
 
     script.current = document.createElement('script');
-    script.current.src = '/wasm/sorting_algorithms.js';
+    script.current.src = '/programfiles/wasm/sorting_algorithms.js';
     script.current.async = false;
 
     script.current.onload = () => {
@@ -75,7 +75,7 @@ function SortingAlgorithms({ onClose }) {
     <DraggableWindow
       title="Sorting Algorithms"
       wasmWidth={400}
-      wasmHeight={500}
+      wasmHeight={530}
       onClose={onClose}
       onMount={() => setIsWindowMounted(true)} // Set window mounted state
       onUnmount={() => setIsWindowMounted(false)} // Cleanup when window unmounts

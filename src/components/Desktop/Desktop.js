@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DesktopIcon from '../DesktopIcon/DesktopIcon';
-import DesktopIconsController from '../../controllers/DesktopIcons';
+import DesktopIconsController from '../../managers/DesktopIcons';
 import './Desktop.css';
 
 function Desktop({ onOpenApp }) {
