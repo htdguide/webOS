@@ -11,6 +11,10 @@
   overflow: hidden;
   z-index: 10;
   backdrop-filter: blur(12px);
+  user-select: none; /* Prevents text selection */
+  -webkit-user-select: none; /* For Safari */
+  -moz-user-select: none; /* For Firefox */
+  -ms-user-select: none; /* For Internet Explorer/Edge */
 }
 
 .window-header {
@@ -44,7 +48,12 @@
   font-weight: bold;
   color: #333;
   pointer-events: none;
+  white-space: nowrap;  /* Prevents text from wrapping */
+  overflow: hidden;     /* Hides overflowing text */
+  text-overflow: ellipsis; /* Adds "..." when text overflows */
+  max-width: 60%;  /* Limits the width to prevent overlap with buttons */
 }
+
 
 .close-button {
   background: #ff5f5f;
@@ -90,9 +99,24 @@
 .resize-handle {
   width: 15px;
   height: 15px;
-  background: #999;
   position: absolute;
+}
+
+.resize-br {
   right: 0;
   bottom: 0;
   cursor: nwse-resize;
 }
+
+.resize-tr {
+  right: 0;
+  top: 0;
+  cursor: nesw-resize;
+}
+
+.resize-bl {
+  left: 0;
+  bottom: 0;
+  cursor: nesw-resize;
+}
+
