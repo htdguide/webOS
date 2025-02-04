@@ -20,7 +20,16 @@ function DraggableWindow({ title, wasmWidth: windowWidth, wasmHeight: windowHeig
     >
       <div className="window-header">
         <div className="header-left">
-          <button className="close-button" onClick={onClose}></button>
+          <button
+            className="close-button"
+            onClick={(event) => {
+              event.stopPropagation(); // Prevents drag event from triggering
+              onClose();
+            }}
+            onTouchStart={(event) => {
+              event.stopPropagation(); // Prevents drag event from triggering
+            }}
+          ></button>
         </div>
         <div className="header-title">{title}</div>
         <div className="header-right"></div>

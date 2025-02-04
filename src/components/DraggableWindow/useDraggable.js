@@ -17,6 +17,9 @@ function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount
 
   useEffect(() => {
     const handleMove = (event) => {
+      if (!isDragging && !resizeType) return;
+      event.preventDefault(); // Prevent scrolling during resize/drag
+
       const clientX = event.touches ? event.touches[0].clientX : event.clientX;
       const clientY = event.touches ? event.touches[0].clientY : event.clientY;
 
@@ -49,7 +52,6 @@ function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount
           const widthDiff = dragStartPos.current.x - clientX;
           newWidth = Math.max(resizeStartSize.current.width + widthDiff, 200);
 
-          // Ensure the left side doesn't move when at minimum width
           if (newWidth > 200) {
             newX = windowStartPos.current.x - widthDiff;
           }
@@ -90,6 +92,13 @@ function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount
 
   const handleDragStart = (event) => {
     if (resizeType) return; // Prevent drag when resizing
+
+    // 🔴 Check if the click is on the close button, if so, do NOT start dragging
+    if (event.target.closest('.close-button')) {
+      return;
+    }
+
+    event.preventDefault();
     const clientX = event.touches ? event.touches[0].clientX : event.clientX;
     const clientY = event.touches ? event.touches[0].clientY : event.clientY;
 
@@ -100,6 +109,7 @@ function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount
   };
 
   const handleResizeStart = (event, type) => {
+    event.preventDefault();
     event.stopPropagation(); // Prevent triggering drag
     const clientX = event.touches ? event.touches[0].clientX : event.clientX;
     const clientY = event.touches ? event.touches[0].clientY : event.clientY;
@@ -121,16 +131,26 @@ function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount
     header.addEventListener('touchstart', handleDragStart);
 
     resizerBR.addEventListener('mousedown', (e) => handleResizeStart(e, 'bottom-right'));
+    resizerBR.addEventListener('touchstart', (e) => handleResizeStart(e, 'bottom-right'));
+
     resizerTR.addEventListener('mousedown', (e) => handleResizeStart(e, 'top-right'));
+    resizerTR.addEventListener('touchstart', (e) => handleResizeStart(e, 'top-right'));
+
     resizerBL.addEventListener('mousedown', (e) => handleResizeStart(e, 'bottom-left'));
+    resizerBL.addEventListener('touchstart', (e) => handleResizeStart(e, 'bottom-left'));
 
     return () => {
       header.removeEventListener('mousedown', handleDragStart);
       header.removeEventListener('touchstart', handleDragStart);
 
       resizerBR.removeEventListener('mousedown', handleResizeStart);
+      resizerBR.removeEventListener('touchstart', handleResizeStart);
+
       resizerTR.removeEventListener('mousedown', handleResizeStart);
+      resizerTR.removeEventListener('touchstart', handleResizeStart);
+
       resizerBL.removeEventListener('mousedown', handleResizeStart);
+      resizerBL.removeEventListener('touchstart', handleResizeStart);
     };
   }, []);
 }
