@@ -1,33 +1,42 @@
-name: Build and Deploy Docker Image for React App with Nginx
+name: Build and Deploy React App with SSL
 on:
   push:
     branches:
       - main
 
 jobs:
-  build:
-    name: Build, Push, and Deploy
+  build_and_deploy:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
 
+    steps:
+      # Checkout the code
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      # Login to Docker Hub
       - name: Login to Docker Hub
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
+      # Build Docker Image
       - name: Build Docker Image
         run: |
-          docker build . -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+          docker build --build-arg SSL_CERT_CHAIN="${{ secrets.SSL_CERT_CHAIN }}" \
+                       --build-arg SSL_PRIVATE_KEY="${{ secrets.SSL_PRIVATE_KEY }}" \
+                       -t ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest .
 
-      - name: Push Docker Image to Docker Hub
+      # Push Docker Image
+      - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
 
-      - name: Set up SSH key
+      # Set up SSH Key
+      - name: Set up SSH Key
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      # Deploy to Server
       - name: Deploy to Server
         uses: appleboy/ssh-action@v0.1.8
         with:
@@ -35,8 +44,19 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Pull the latest Docker image
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+
+            # Stop and remove any existing container
             sudo docker stop webportfolio || true
             sudo docker rm webportfolio || true
-            sudo docker run -d -p 80:80 --name webportfolio ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+
+            # Run the new container with SSL environment variables
+            sudo docker run -d -p 80:80 -p 443:443 \
+              -e SSL_CERT_CHAIN="${{ secrets.SSL_CERT_CHAIN }}" \
+              -e SSL_PRIVATE_KEY="${{ secrets.SSL_PRIVATE_KEY }}" \
+              --name webportfolio \
+              ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+
+            # Clean up old Docker images
             sudo docker system prune -af
