@@ -57,6 +57,3 @@ jobs:
               -e SSL_PRIVATE_KEY="${{ secrets.SSL_PRIVATE_KEY }}" \
               --name webportfolio \
               ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
-
-            # Clean up old Docker images
-            sudo docker system prune -af
