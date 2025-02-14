@@ -4,29 +4,30 @@ FROM node:18-alpine as build
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package files and install dependencies
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install --legacy-peer-deps
 
-# Copy the application files
+# Copy application files and build the React app
 COPY . .
-
-# Build the React application
 RUN npm run build
 
-# Stage 2: Serve the React app with Nginx
+# Stage 2: Serve with Nginx (with SSL support)
 FROM nginx:alpine
 
-# Copy the built React app from the previous stage to Nginx's web root
+# Copy build files from the previous stage
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Copy a custom Nginx configuration file
+# Copy custom Nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Expose port 80 for the web server
-EXPOSE 80
+# Create directories for SSL certificates
+RUN mkdir -p /etc/ssl/certs /etc/ssl/private
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Expose HTTP and HTTPS ports
+EXPOSE 80 443
+
+# Inject SSL certificates from environment variables
+CMD ["sh", "-c", "echo \"$SSL_CERT_CHAIN\" > /etc/ssl/certs/fullchain.pem && \
+    echo \"$SSL_PRIVATE_KEY\" > /etc/ssl/private/ssl_private.key && \
+    nginx -g 'daemon off;'"]
