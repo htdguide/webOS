@@ -60,12 +60,4 @@ jobs:
             sudo docker rm webportfolio || true
 
             # Run the new container with SSL environment variables and start Vite dev server
-            sudo docker run -d -p 80:80 -p 443:443 \
-              -e VITE_SSL_CERT_CHAIN="${{ secrets.SSL_CERT_CHAIN }}" \
-              -e VITE_SSL_PRIVATE_KEY="${{ secrets.SSL_PRIVATE_KEY }}" \
-              --name webportfolio \
-              ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest \
-              npm run dev
-
-            # Clean up unused resources without affecting running containers
-            sudo docker image prune -af
+            sudo docker run -d -p 80:80 -p 443:443
