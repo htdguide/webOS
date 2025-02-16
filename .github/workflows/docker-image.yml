@@ -52,12 +52,13 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Pull the latest Docker image
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
-
+            
             # Stop and remove any existing container
             sudo docker stop webportfolio || true
             sudo docker rm webportfolio || true
 
+            # Pull the latest Docker image
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+
             # Run the new container with SSL environment variables and start Vite dev server
-            sudo docker run -d -p 80:80 -p 443:443
+            sudo docker run webportfolio -d -p 80:80 -p 443:443
