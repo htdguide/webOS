@@ -1,4 +1,4 @@
-name: Build and Deploy Docker Image with Nginx and SSL
+name: Build and Deploy Vite App with SSL
 on:
   push:
     branches:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    name: Build, Push, and Deploy with Nginx and SSL
+    name: Build, Push, and Deploy with SSL
     runs-on: ubuntu-latest
 
     steps:
@@ -14,7 +14,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      # Install dependencies and build the React app
+      # Install dependencies and build the Vite app
       - name: Install Dependencies and Build
         run: |
           rm -rf node_modules package-lock.json
@@ -28,7 +28,7 @@ jobs:
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      # Build Docker Image with only the build folder and Nginx
+      # Build Docker Image with only the build folder
       - name: Build Docker Image
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest .
@@ -59,12 +59,13 @@ jobs:
             sudo docker stop webportfolio || true
             sudo docker rm webportfolio || true
 
-            # Run the new container with SSL environment variables
+            # Run the new container with SSL environment variables and start Vite dev server
             sudo docker run -d -p 80:80 -p 443:443 \
-              -e SSL_CERT_CHAIN="${{ secrets.SSL_CERT_CHAIN }}" \
-              -e SSL_PRIVATE_KEY="${{ secrets.SSL_PRIVATE_KEY }}" \
+              -e VITE_SSL_CERT_CHAIN="${{ secrets.SSL_CERT_CHAIN }}" \
+              -e VITE_SSL_PRIVATE_KEY="${{ secrets.SSL_PRIVATE_KEY }}" \
               --name webportfolio \
-              ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+              ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest \
+              npm run dev
 
             # Clean up unused resources without affecting running containers
             sudo docker image prune -af
