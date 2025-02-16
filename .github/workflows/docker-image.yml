@@ -41,4 +41,11 @@ jobs:
             sudo docker stop $(sudo docker ps -aq) || true
             sudo docker rm $(sudo docker ps -aq) || true
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
-            sudo docker run -d -p 80:80 -p 443:443 --name webportfolio ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+            echo "${{ secrets.SSL_PRIVATE_KEY }}" > /etc/ssl/private/ssl.key
+            echo "${{ secrets.SSL_CERT_CHAIN }}" > /etc/ssl/certs/ssl.crt
+            sudo docker run -d -p 80:80 -p 443:443 --name webportfolio \
+              -v /etc/ssl/private/ssl.key:/app/ssl.key \
+              -v /etc/ssl/certs/ssl.crt:/app/ssl.crt \
+              -e SSL_PRIVATE_KEY="/app/ssl.key" \
+              -e SSL_CERT_CHAIN="/app/ssl.crt" \
+              ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
