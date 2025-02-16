@@ -16,4 +16,4 @@ EXPOSE 80 443
 # Inject SSL certificates from environment variables and start the Vite dev server
 CMD ["sh", "-c", "echo \"$VITE_SSL_CERT_CHAIN\" > /etc/ssl/certs/fullchain.pem && \
     echo \"$VITE_SSL_PRIVATE_KEY\" > /etc/ssl/private/ssl_private.key && \
-    sudo npm run dev"]
+    npm run dev"]
