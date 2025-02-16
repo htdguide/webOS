@@ -2,7 +2,7 @@
 
 Welcome to my **webportfolio**! This project is a dynamic space where I can showcase my skills and explore cutting-edge technologies.
 
-[Visit the Website](http://htdguide.com)
+[Visit the Website](https://htdguide.com)
 
 ---
 
