@@ -38,7 +38,7 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
             sudo docker stop $(sudo docker ps -aq) || true
             sudo docker rm $(sudo docker ps -aq) || true
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
             sudo docker run -d -p 80:80 -p 443:443 --name webportfolio ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
