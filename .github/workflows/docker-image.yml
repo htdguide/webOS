@@ -1,4 +1,4 @@
-name: Build and Deploy Vite App with SSL
+name: Build and Deploy Docker Image to Server
 on:
   push:
     branches:
@@ -6,59 +6,39 @@ on:
 
 jobs:
   build:
-    name: Build, Push, and Deploy with SSL
+    name: Push Docker Image to Docker Hub and Deploy to Server
     runs-on: ubuntu-latest
-
     steps:
-      # Checkout the code
-      - name: Checkout Code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      # Install dependencies and build the Vite app
-      - name: Install Dependencies and Build
-        run: |
-          rm -rf node_modules package-lock.json
-          npm cache clean --force
-          npm install --legacy-peer-deps
-          npm install ajv --save
-          npm run build
-
-      # Login to Docker Hub
       - name: Login to Docker Hub
+        id: docker-hub
         run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
-      # Build Docker Image with only the build folder
-      - name: Build Docker Image
+      - name: Build the Docker Image
+        id: build-docker-image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest .
+          ls -la
+          docker build . -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
 
-      # Push Docker Image to Docker Hub
-      - name: Push Docker Image
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+      - name: Push the Docker Image
+        id: push-docker-image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
 
-      # Set up SSH Key
-      - name: Set up SSH Key
+      - name: Set up SSH key for server connection
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # Deploy to Server
-      - name: Deploy to Server
+      - name: Connect to server via SSH and deploy
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            
-            # Stop and remove any existing container
-            sudo docker stop webportfolio || true
-            sudo docker rm webportfolio || true
-
-            # Pull the latest Docker image
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
-
-            # Run the new container with SSL environment variables and start Vite dev server
-            sudo docker run webportfolio -d -p 80:80 -p 443:443
+            sudo docker stop $(sudo docker ps -aq) || true
+            sudo docker rm $(sudo docker ps -aq) || true
+            sudo docker run -d -p 80:3000 -p 443:443 --name webportfolio ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
