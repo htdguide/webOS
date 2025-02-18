@@ -6,12 +6,14 @@ import React, {
 } from 'react';
 import DraggableWindow from '../../components/DraggableWindow/DraggableWindow';
 import './SortingAlgorithms.css';
+import { notify } from '../../components/Notification/Notification';
 
 function SortingAlgorithms({ onClose }) {
   const [isWindowMounted, setIsWindowMounted] = useState(false);
   const [wasmScriptLoaded, setWasmScriptLoaded] = useState(false);
   const canvasRef = useRef(null);
   const script = useRef(null);
+  const notificationSent = useRef(false);
 
   // DraggableWindow ref to call .showLoading() / .hideLoading()
   const draggableWindowRef = useRef(null);
@@ -37,9 +39,11 @@ function SortingAlgorithms({ onClose }) {
 
   useEffect(() => {
     // Only load WASM script after the window is mounted
-    if (isWindowMounted) {
+    if (isWindowMounted && !notificationSent.current) {
       console.log('Window is mounted => loadWasmScript()');
       loadWasmScript();
+      notify('Sorting Algorithms app is opened', 3000);
+      notificationSent.current = true;
     }
   }, [isWindowMounted, loadWasmScript]);
 
@@ -116,6 +120,7 @@ function SortingAlgorithms({ onClose }) {
       onUnmount={() => {
         console.log('DraggableWindow onUnmount => setIsWindowMounted(false)');
         setIsWindowMounted(false);
+        notificationSent.current = false;
       }}
     >
       <canvas

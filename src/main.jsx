@@ -6,6 +6,7 @@ import App from './App.jsx';
 import LoadingScreen from './components/LoadingScreen/LoadingScreen.jsx';
 import Wallpaper from './components/Wallpaper/Wallpaper.jsx';
 import DeviceInfoProvider from './services/DeviceInfoProvider.jsx';
+import Notification, { notify } from './components/Notification/Notification.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
@@ -27,6 +28,15 @@ const Main = () => {
     }
   }, [loading]);
 
+  useEffect(() => {
+    const handleNotification = (event) => {
+      notify(event.detail.message, event.detail.duration, event.detail.icon);
+    };
+
+    window.addEventListener('show-notification', handleNotification);
+    return () => window.removeEventListener('show-notification', handleNotification);
+  }, []);
+
   return (
     <StrictMode>
       <DeviceInfoProvider>
@@ -36,6 +46,7 @@ const Main = () => {
           </div>
           <Wallpaper />
           <App />
+          <Notification />
         </div>
       </DeviceInfoProvider>
     </StrictMode>
@@ -43,3 +54,5 @@ const Main = () => {
 };
 
 createRoot(document.getElementById('root')).render(<Main />);
+
+// Now you can call notify('Your message') from anywhere in the app.
