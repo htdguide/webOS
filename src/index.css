@@ -7,6 +7,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
   padding: 0;
   box-sizing: border-box;
+  
+  /* Disable text selection */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 code {
@@ -18,4 +24,9 @@ code {
 .loading-screen.fade-out {
   opacity: 0;
   pointer-events: none;
+}
+
+/* Disable tap highlight color for all elements */
+* {
+  -webkit-tap-highlight-color: transparent;
 }

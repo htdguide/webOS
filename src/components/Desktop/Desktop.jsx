@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DesktopIcon from '../DesktopIcon/DesktopIcon.jsx';
-import DesktopIconsController from '../../managers/IconsList.jsx';
+import DesktopIconsController from '../../lists/IconsList.jsx';
 import {
   GRID_GAP,
   TOP_MARGIN,
@@ -10,6 +10,7 @@ import {
 } from '../../configs/DesktopIconConfig.jsx';
 import { GRID_SIZE } from '../../configs/DesktopIconConfig.jsx';
 import './Desktop.css';
+
 
 /**
  * Helper to convert a priority number into an (x,y) position on the desktop.

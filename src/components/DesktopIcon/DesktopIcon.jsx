@@ -5,7 +5,7 @@ import {
   startDragging,
   cancelHold,
   handleTap,
-} from '../../managers/IconInteractions.jsx';
+} from '../../interactions/IconInteractions.jsx';
 
 import {
   ICON_WIDTH,

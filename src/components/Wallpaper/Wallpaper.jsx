@@ -1,29 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './Wallpaper.css';
-import SequoiaSunriseVideo from '../../media/wallpaper/SequoiaSunrise.mp4';
 import SequoiaSunriseImage from '../../media/wallpaper/SequoiaSunrise.jpg';
 
 function Wallpaper() {
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+
   return (
     <div className="wallpaper">
+      {/* The static image is always in the DOM, behind the video */}
+      <img
+        className="wallpaper-fallback"
+        src={SequoiaSunriseImage}
+        alt="Wallpaper Fallback"
+      />
+
+      {/* The video is placed absolutely on top. We only show it once loaded.
+          If the video fails to load, it remains hidden and the fallback image shows. */}
       <video
+        className={isVideoLoaded ? 'wallpaper-video' : 'wallpaper-video hidden'}
         autoPlay
         muted
         loop
         playsInline
+        onLoadedData={() => setIsVideoLoaded(true)}
         onError={(e) => {
-          // If video fails to load, hide it and let the image fallback show
-          e.target.style.display = 'none';
+          console.error('Video failed to load:', e);
         }}
       >
-        <source src={SequoiaSunriseVideo} type="video/mp4" />
+        <source src='/WebintoshHD/Wallpapers/SequoiaSunrise.mp4' type="video/mp4" />
         Your browser does not support the video tag.
       </video>
-      <img
-        className="wallpaper-fallback"
-        src={SequoiaSunriseImage}
-        alt="Wallpaper"
-      />
     </div>
   );
 }
