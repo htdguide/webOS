@@ -94,6 +94,13 @@
   /* Remaining space below the 30px header */
   position: relative;
   height: calc(100% - 30px);
+
+  /* Bring in old scaling/centering logic: */
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
   z-index: 1; /* lower than the header, but higher than base content */
 }
 
@@ -116,11 +123,27 @@
   width: 100%;
   height: 100%;
 
-  background-color: rgba(0, 0, 0, 0.2); 
+  /* Start fully opaque */
+  opacity: 1;
+  transition: opacity 1s ease; /* or however long you prefer */
+
+  background-color: rgba(0,0,0,0.3); /* or your chosen background */
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 5;
+
+  z-index: 10; /* So it sits over the content */
+}
+
+/* When .fade-out is applied, animate to opacity 0 */
+.loading-overlay.fade-out {
+  opacity: 0;
+}
+
+/* Example if you want pointer-events none to allow clicking behind it */
+.loading-overlay.fade-out,
+.loading-overlay {
+  pointer-events: none;
 }
 
 /* --------------------

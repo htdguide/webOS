@@ -9,7 +9,7 @@ const Main = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timeout = setTimeout(() => setLoading(false), 2000); // Simulate loading time
+    const timeout = setTimeout(() => setLoading(false), 1300); // Simulate loading time
     return () => clearTimeout(timeout);
   }, []);
 
