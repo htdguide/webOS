@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DesktopIcon from '../DesktopIcon/DesktopIcon.jsx';
-import DesktopIconsController from '../../lists/IconsList.jsx';
+import IconsList from '../../lists/IconsList.jsx';
 import {
   GRID_GAP,
   TOP_MARGIN,
@@ -41,7 +41,7 @@ function Desktop({ onOpenApp }) {
 
   return (
     <div className="desktop" onClick={handleWallpaperClick}>
-      {DesktopIconsController.map((iconConfig) => {
+      {IconsList.map((iconConfig) => {
         // Convert the icon's priority into an (x,y) position,
         // now using GRID_GAP to keep them spaced out.
         const position = getPositionFromPriority(iconConfig.priority);
