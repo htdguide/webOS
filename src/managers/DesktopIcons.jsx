@@ -10,16 +10,16 @@ const DesktopIconsController = [
   {
     id: 'sorting-algorithms',
     name: 'Sorting Algorithms',
-    icon: folderIcon,
+    icon: defaultIcon,
     component: SortingAlgorithms,
     priority: 1,
   },
 
   // Example second icon (with higher priority)
   {
-    id: 'example-app',
-    name: 'Example App',
-    icon: defaultIcon,
+    id: 'untitled folder',
+    name: 'untitled folder',
+    icon: folderIcon,
     component: null,
     priority: 2,
   },

@@ -1,20 +1,14 @@
-// DesktopIconInteractions.js
+// DesktopIconInteractions.jsx
 
-/**
- * Margins so that icons do not collide with window edges and
- * we keep space for a top menubar, etc.
- */
-export const TOP_MARGIN = 60;
-export const LEFT_MARGIN = 20;
-export const RIGHT_MARGIN = 20;
-export const BOTTOM_MARGIN = 20;
-
-/**
- * This value is added to GRID_SIZE to form the "effective" cell size
- * for snapping icons in place. By increasing or decreasing GRID_GAP,
- * you can control how far apart icons are spaced vertically and horizontally.
- */
-export const GRID_GAP = 20;
+import {
+  TOP_MARGIN,
+  LEFT_MARGIN,
+  RIGHT_MARGIN,
+  BOTTOM_MARGIN,
+  GRID_GAP,
+  HOLD_THRESHOLD,
+  DOUBLE_TAP_DELAY,
+} from '../configs/DesktopIconConfig.jsx';
 
 /**
  * Dynamically calculate grid size for the usable screen area:
@@ -43,10 +37,6 @@ export const GRID_SIZE = calculateGridSize();
 function getSnapSize() {
   return GRID_SIZE + GRID_GAP;
 }
-
-// Time thresholds
-export const HOLD_THRESHOLD = 100;
-export const DOUBLE_TAP_DELAY = 300;
 
 /**
  * Initiates a timer that, after HOLD_THRESHOLD ms, begins dragging.
@@ -129,7 +119,6 @@ export const startDragging = (
     iconRef.current.style.transition = 'left 0.2s ease, top 0.2s ease';
 
     // We force the browser to apply the transition by reflow or a tiny delay
-    // The simplest approach is a requestAnimationFrame or offsetWidth trick:
     iconRef.current.offsetWidth; // Force reflow
     iconRef.current.style.left = `${snappedX}px`;
     iconRef.current.style.top = `${snappedY}px`;
