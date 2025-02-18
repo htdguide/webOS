@@ -1,33 +1,40 @@
 .draggable-window {
-  position: fixed;
-  top: 50px;
-  left: 50px;
-  width: 400px;
-  height: 500px;
+  position: fixed; /* or absolute, whichever you want for your app */
+  /* You can also set width/height in JSX or here. */
+  border-radius: 12px;
+  overflow: hidden;               /* ensures children are clipped to rounded corners */
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 12px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-  z-index: 10;
   backdrop-filter: blur(12px);
-  user-select: none; /* Prevents text selection */
-  -webkit-user-select: none; /* For Safari */
-  -moz-user-select: none; /* For Firefox */
-  -ms-user-select: none; /* For Internet Explorer/Edge */
+  z-index: 9999;  /* ensures this window is above most other elements in the page */
+
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
+/* --------------------
+   HEADER
+--------------------- */
 .window-header {
+  /* This is in normal flow at the top */
+  position: relative; 
   height: 30px;
-  background: linear-gradient(to bottom, #e0e0e0, #c0c0c0);
-  color: #000;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  position: relative;
+
+  background: linear-gradient(to bottom, #e0e0e0, #c0c0c0);
+  color: #000;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
   cursor: grab;
+
+  /* Higher than the overlay, so it won't be covered: */
+  z-index: 10;
 }
 
 .window-header:active {
@@ -41,39 +48,33 @@
 }
 
 .header-title {
-  position: absolute;
+  position: absolute; /* to center within header */
   left: 50%;
   transform: translateX(-50%);
   font-size: 14px;
   font-weight: bold;
   color: #333;
   pointer-events: none;
-  white-space: nowrap;  /* Prevents text from wrapping */
-  overflow: hidden;     /* Hides overflowing text */
-  text-overflow: ellipsis; /* Adds "..." when text overflows */
-  max-width: 60%;  /* Limits the width to prevent overlap with buttons */
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
 }
 
-
+/* Example close button style */
 .close-button {
   background: #ff5f5f;
   border: none;
   width: 12px;
   height: 12px;
-  border-radius: 50%; /* Ensures the button is always a circle */
+  border-radius: 50%;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0px 1px 2px rgba(0,0,0,0.2);
   transition: background 0.2s ease-in-out;
-
-  /* Explicit dimensions and box sizing */
   box-sizing: border-box;
   padding: 0;
-  line-height: 0; /* Prevents Safari from adding extra height */
-
-  /* Override default iOS button styles */
+  line-height: 0;
   -webkit-appearance: none;
   appearance: none;
 }
@@ -83,40 +84,94 @@
 }
 
 .close-button:focus {
-  outline: none; /* Remove focus outline */
+  outline: none;
 }
 
-
-
+/* --------------------
+   CONTENT AREA
+--------------------- */
 .window-content {
+  /* Remaining space below the 30px header */
+  position: relative;
   height: calc(100% - 30px);
+
+  /* Bring in old scaling/centering logic: */
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
+
+  z-index: 1; /* lower than the header, but higher than base content */
 }
 
+.content-inner {
+  position: relative; 
+  width: 100%;
+  height: 100%;
+  /* base content at z=0, overlay at z=5 */
+  z-index: 0;
+}
+
+/* The overlay is absolute inside content-inner,
+   so it only covers children (e.g., canvas).
+   We give it a z-index: 5 so it is above .content-inner (z=0)
+   but below the header (z=10) and resize handles. */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  /* Start fully opaque */
+  opacity: 1;
+  transition: opacity 1s ease; /* or however long you prefer */
+
+  background-color: rgba(0,0,0,0.3); /* or your chosen background */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 10; /* So it sits over the content */
+}
+
+/* When .fade-out is applied, animate to opacity 0 */
+.loading-overlay.fade-out {
+  opacity: 0;
+}
+
+/* Example if you want pointer-events none to allow clicking behind it */
+.loading-overlay.fade-out,
+.loading-overlay {
+  pointer-events: none;
+}
+
+/* --------------------
+   RESIZE HANDLES
+--------------------- */
 .resize-handle {
+  position: absolute;
   width: 15px;
   height: 15px;
-  position: absolute;
+  background: transparent;
+  /* Put them on top of the overlay: */
+  z-index: 10;
 }
 
 .resize-br {
-  right: 0;
   bottom: 0;
+  right: 0;
   cursor: nwse-resize;
 }
 
 .resize-tr {
-  right: 0;
   top: 0;
+  right: 0;
   cursor: nesw-resize;
 }
 
 .resize-bl {
-  left: 0;
   bottom: 0;
+  left: 0;
   cursor: nesw-resize;
 }
-

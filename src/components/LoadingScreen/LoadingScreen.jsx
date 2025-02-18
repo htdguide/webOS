@@ -1,4 +1,3 @@
-/* LoadingScreen.jsx */
 import React from 'react';
 import './LoadingScreen.css';
 import loadingCircle from '../../media/animations/loadingCircle.gif';
