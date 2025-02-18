@@ -1,5 +1,5 @@
 // DesktopIconInteractions.jsx
-
+// This file manages the icons grid
 import {
   TOP_MARGIN,
   LEFT_MARGIN,

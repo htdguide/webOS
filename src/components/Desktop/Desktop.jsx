@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DesktopIcon from '../DesktopIcon/DesktopIcon.jsx';
-import DesktopIconsController from '../../managers/DesktopIcons.jsx';
+import DesktopIconsController from '../../managers/IconsList.jsx';
 import {
   GRID_GAP,
   TOP_MARGIN,
@@ -8,7 +8,7 @@ import {
   // RIGHT_MARGIN,
   // BOTTOM_MARGIN,
 } from '../../configs/DesktopIconConfig.jsx';
-import { GRID_SIZE } from '../../managers/DesktopIconInteractions.jsx'
+import { GRID_SIZE } from '../../managers/IconInteractions.jsx'
 import './Desktop.css';
 
 /**
