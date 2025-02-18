@@ -7,13 +7,17 @@ import React, {
 import DraggableWindow from '../../components/DraggableWindow/DraggableWindow';
 import './SortingAlgorithms.css';
 import { notify } from '../../components/Notification/Notification';
-import defaultIcon from '../../media/icons/defaultapp.png'
+import defaultIcon from '../../media/icons/defaultapp.png';
+import { useDeviceInfo } from '../../services/DeviceInfoProvider';
+
 function SortingAlgorithms({ onClose }) {
   const [isWindowMounted, setIsWindowMounted] = useState(false);
   const [wasmScriptLoaded, setWasmScriptLoaded] = useState(false);
   const canvasRef = useRef(null);
   const script = useRef(null);
   const notificationSent = useRef(false);
+
+  const deviceInfo = useDeviceInfo();
 
   // DraggableWindow ref to call .showLoading() / .hideLoading()
   const draggableWindowRef = useRef(null);
@@ -30,8 +34,6 @@ function SortingAlgorithms({ onClose }) {
     script.current.onload = () => {
       console.log('WASM script loaded successfully.');
       setWasmScriptLoaded(true);
-      // We are NOT calling hideLoading() here anymore.
-      // We'll do it in the effect below, right after "WASM is loaded..." log.
     };
 
     document.body.appendChild(script.current);
@@ -42,18 +44,18 @@ function SortingAlgorithms({ onClose }) {
     if (isWindowMounted && !notificationSent.current) {
       console.log('Window is mounted => loadWasmScript()');
       loadWasmScript();
-      notify('Sorting Algorithms app is opened', 6000, defaultIcon);
+      if (deviceInfo.deviceType === 'desktop') {
+        notify('App is in early stage of porting, in case if it doesnt respond to the mouse clicks, reopen the window', 6000, defaultIcon);
+      }
       notificationSent.current = true;
     }
-  }, [isWindowMounted, loadWasmScript]);
+  }, [isWindowMounted, loadWasmScript, deviceInfo.deviceType]);
 
   useEffect(() => {
     // Initialize WASM only when the script is loaded and canvas is available
     if (wasmScriptLoaded && canvasRef.current) {
       console.log('WASM is loaded and canvasRef is valid => initialize WASM...');
 
-      // <-- Hide the loading cover right AFTER this console log.
-      // So we've confirmed the script is loaded and the canvas is ready.
       if (draggableWindowRef.current) {
         console.log('Hiding loading overlay now...');
         draggableWindowRef.current.hideLoading();
@@ -111,7 +113,6 @@ function SortingAlgorithms({ onClose }) {
       onMount={() => {
         console.log('DraggableWindow onMount => setIsWindowMounted(true)');
         setIsWindowMounted(true);
-        // Show loading screen when the window first mounts
         if (draggableWindowRef.current) {
           console.log('Showing loading screen...');
           draggableWindowRef.current.showLoading();
