@@ -14,7 +14,8 @@ const Notification = () => {
         if (prev.some((n) => n.message === message && Math.abs(n.id - id) < 1000)) {
           return prev;
         }
-        return [...prev, { id, message, icon }];
+        const iconSrc = typeof icon === 'string' ? icon : icon?.default;
+        return [...prev, { id, message, icon: iconSrc }];
       });
 
       setTimeout(() => {
@@ -67,8 +68,9 @@ const Notification = () => {
 export default Notification;
 
 export const notify = (message, duration = 3000, icon = '') => {
+  const iconSrc = typeof icon === 'string' ? icon : icon?.default;
   const event = new CustomEvent('show-notification', {
-    detail: { message, duration, icon }
+    detail: { message, duration, icon: iconSrc }
   });
   window.dispatchEvent(event);
 };

@@ -7,7 +7,7 @@ import React, {
 import DraggableWindow from '../../components/DraggableWindow/DraggableWindow';
 import './SortingAlgorithms.css';
 import { notify } from '../../components/Notification/Notification';
-
+import defaultIcon from '../../media/icons/defaultapp.png'
 function SortingAlgorithms({ onClose }) {
   const [isWindowMounted, setIsWindowMounted] = useState(false);
   const [wasmScriptLoaded, setWasmScriptLoaded] = useState(false);
@@ -42,7 +42,7 @@ function SortingAlgorithms({ onClose }) {
     if (isWindowMounted && !notificationSent.current) {
       console.log('Window is mounted => loadWasmScript()');
       loadWasmScript();
-      notify('Sorting Algorithms app is opened', 3000);
+      notify('Sorting Algorithms app is opened', 6000, defaultIcon);
       notificationSent.current = true;
     }
   }, [isWindowMounted, loadWasmScript]);

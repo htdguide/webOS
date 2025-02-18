@@ -1,12 +1,12 @@
 /* Notification.css */
 .notification-container {
     position: fixed;
-    top: 20px;
+    top: 50px;
     right: 20px;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    z-index: 1000;
+    z-index: 9999;
     pointer-events: none;
   }
   
