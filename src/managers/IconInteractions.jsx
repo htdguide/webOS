@@ -1,5 +1,4 @@
-// DesktopIconInteractions.jsx
-// This file manages the icons grid
+// IconInteractions.jsx
 import {
   TOP_MARGIN,
   LEFT_MARGIN,
@@ -8,31 +7,12 @@ import {
   GRID_GAP,
   HOLD_THRESHOLD,
   DOUBLE_TAP_DELAY,
+  GRID_SIZE, // <--- Import from DesktopIconConfig now
 } from '../configs/DesktopIconConfig.jsx';
 
 /**
- * Dynamically calculate grid size for the usable screen area:
- * (window width - LEFT_MARGIN - RIGHT_MARGIN) x
- * (window height - TOP_MARGIN - BOTTOM_MARGIN).
- */
-function calculateGridSize() {
-  const usableWidth = window.innerWidth - LEFT_MARGIN - RIGHT_MARGIN;
-  const usableHeight = window.innerHeight - TOP_MARGIN - BOTTOM_MARGIN;
-  const minDimension = Math.min(usableWidth, usableHeight);
-
-  // For example, ~10 cells along the smaller dimension:
-  const approximateCells = 10;
-  const gridSize = Math.floor(minDimension / approximateCells);
-
-  // Fallback if the screen is extremely small
-  return gridSize > 0 ? gridSize : 40;
-}
-
-export const GRID_SIZE = calculateGridSize();
-
-/**
- * We'll define a helper to get the actual snap step.
- * If GRID_SIZE is 60 and GRID_GAP is 10, the snap step is 70.
+ * If GRID_SIZE is, say, 80 and GRID_GAP is 20,
+ * the effective "snap step" will be 100.
  */
 function getSnapSize() {
   return GRID_SIZE + GRID_GAP;
@@ -61,8 +41,6 @@ export const startHold = (
 
 /**
  * Begins the dragging process.
- * The icon can be placed anywhere while dragging (not snapping yet).
- * On release, we animate a "fly" to the nearest grid position.
  */
 export const startDragging = (
   startX,
@@ -75,7 +53,7 @@ export const startDragging = (
 ) => {
   setIsDragging(true);
 
-  // Remove any previous transitions so it moves freely during drag
+  // Remove transitions so it moves freely
   iconRef.current.style.transition = 'none';
 
   const handleMove = (event) => {
@@ -90,7 +68,7 @@ export const startDragging = (
     const newX = Math.max(LEFT_MARGIN, Math.min(maxX, clientX - offsetX));
     const newY = Math.max(TOP_MARGIN, Math.min(maxY, clientY - offsetY));
 
-    // Move the icon freely without snapping
+    // Move the icon freely (no snapping yet)
     iconRef.current.style.left = `${newX}px`;
     iconRef.current.style.top = `${newY}px`;
   };
@@ -105,39 +83,30 @@ export const startDragging = (
     const rect = iconRef.current.getBoundingClientRect();
     const snapSize = getSnapSize();
 
-    // Snap the X coordinate
     const snappedX =
       LEFT_MARGIN +
       Math.round((rect.left - LEFT_MARGIN) / snapSize) * snapSize;
-
-    // Snap the Y coordinate
     const snappedY =
       TOP_MARGIN +
       Math.round((rect.top - TOP_MARGIN) / snapSize) * snapSize;
 
-    // Set up a short transition so the icon "flies" to the snap
+    // Add a short transition so the icon "flies" to the snap
     iconRef.current.style.transition = 'left 0.2s ease, top 0.2s ease';
-
-    // We force the browser to apply the transition by reflow or a tiny delay
     iconRef.current.offsetWidth; // Force reflow
     iconRef.current.style.left = `${snappedX}px`;
     iconRef.current.style.top = `${snappedY}px`;
 
-    // Once the transition finishes, we finalize the position in state
+    // Once the transition finishes, finalize position in state
     const onTransitionEnd = () => {
       iconRef.current.removeEventListener('transitionend', onTransitionEnd);
-
-      // Finalize state with snapped position
       setPosition({ x: snappedX, y: snappedY });
       setIsDragging(false);
-
-      // Optionally remove the transition so future style changes are instant
       iconRef.current.style.transition = 'none';
     };
     iconRef.current.addEventListener('transitionend', onTransitionEnd);
   };
 
-  // Attach listeners to track movement and end of drag
+  // Attach movement and end-of-drag listeners
   window.addEventListener('mousemove', handleMove);
   window.addEventListener('mouseup', handleEnd);
   window.addEventListener('touchmove', handleMove, { passive: false });
@@ -145,8 +114,8 @@ export const startDragging = (
 };
 
 /**
- * Cancels the hold timer, preventing drag from initiating if
- * threshold wasn't reached.
+ * Cancels the hold timer, preventing drag from initiating
+ * if threshold wasn't reached.
  */
 export const cancelHold = (holdTimer, setHoldTimer) => {
   if (holdTimer) {
@@ -156,7 +125,7 @@ export const cancelHold = (holdTimer, setHoldTimer) => {
 };
 
 /**
- * Handles single vs. double taps (e.g., to open an app on double click).
+ * Handles single vs. double taps (opens on double click, etc.).
  */
 export const handleTap = (lastTap, setLastTap, onDoubleClick, onClick) => {
   const now = Date.now();

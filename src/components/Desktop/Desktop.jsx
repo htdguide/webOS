@@ -8,7 +8,7 @@ import {
   // RIGHT_MARGIN,
   // BOTTOM_MARGIN,
 } from '../../configs/DesktopIconConfig.jsx';
-import { GRID_SIZE } from '../../managers/IconInteractions.jsx'
+import { GRID_SIZE } from '../../configs/DesktopIconConfig.jsx';
 import './Desktop.css';
 
 /**
