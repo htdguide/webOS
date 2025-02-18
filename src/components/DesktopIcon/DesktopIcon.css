@@ -1,61 +1,66 @@
 /* Desktop Icon Container */
 .desktop-icon {
-    position: absolute;
+  position: absolute;
+  /* 
+    Removed explicit width and height here—these are now inline-styled 
     width: 64px;
     height: 80px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    user-select: none;
-    z-index: 5;
-    transition: left 0.2s, top 0.2s, box-shadow 0.2s; /* Smooth snapping to grid */
-  }
-  
-  .desktop-icon.dragging {
-    opacity: 0.7; /* Make the icon slightly transparent while dragging */
-    z-index: 10; /* Bring the dragging icon to the top */
-    transition: none; /* Disable snapping effect while dragging */
-  }
-  
-  .desktop-icon.selected {
-    z-index: 6; /* Slightly higher when selected */
-  }
-  
-  /* Icon Image */
-  .icon-image {
+  */
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  user-select: none;
+  z-index: 5;
+  transition: left 0.2s, top 0.2s, box-shadow 0.2s; /* Smooth snapping */
+}
+
+.desktop-icon.dragging {
+  opacity: 0.7; /* Make the icon slightly transparent while dragging */
+  z-index: 10;  /* Bring the dragging icon to the top */
+  transition: none; /* Disable snapping effect while dragging */
+}
+
+.desktop-icon.selected {
+  z-index: 6; /* Slightly higher when selected */
+}
+
+/* Icon Image */
+.icon-image {
+  /* 
+    Removed the old fixed sizes:
     width: 48px;
-    height: 48px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
-    margin-bottom: 5px;
-    border-radius: 5px;
-    position: relative;
-  }
-  
-  .desktop-icon.selected .icon-image {
-    background-color: rgba(0, 0, 0, 0.4); /* Dark transparent square */
-    border: 1px solid rgba(255, 255, 255, 0.2);
-  }
-  
-  /* Icon Label */
-  .icon-label {
-    text-align: center;
-    font-size: 12px;
-    font-weight: 500;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    color: white;
-    line-height: 1.2;
-    text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.8);
-  }
-  
-  .desktop-icon.selected .icon-label {
-    color: white;
-    background-color: rgb(34, 91, 201); /* Opaque blue */
-    border-radius: 4px;
-    padding: 2px 4px;
-    text-shadow: none; /* Remove shadow for better readability */
-  }
-  
+    height: 48px; 
+  */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-bottom: 5px;
+  border-radius: 5px;
+  position: relative;
+}
+
+.desktop-icon.selected .icon-image {
+  background-color: rgba(0, 0, 0, 0.4); /* Dark transparent square */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Icon Label */
+.icon-label {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: white;
+  line-height: 1.2;
+  text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.desktop-icon.selected .icon-label {
+  color: white;
+  background-color: rgb(34, 91, 201); /* Opaque blue */
+  border-radius: 4px;
+  padding: 2px 4px;
+  text-shadow: none; /* Remove shadow for better readability */
+}
