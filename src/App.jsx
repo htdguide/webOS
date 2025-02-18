@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 import MenuBar from './components/MenuBar/MenuBar.jsx';
 import Desktop from './components/Desktop/Desktop.jsx';
-import DesktopIconsController from './managers/IconsList.jsx';
+import DesktopIconsController from './lists/IconsList.jsx';
 
 function App() {
   const [openApps, setOpenApps] = useState([]);
