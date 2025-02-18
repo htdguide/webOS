@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
 import LoadingScreen from './components/LoadingScreen/LoadingScreen.jsx';
+import Wallpaper from './components/Wallpaper/Wallpaper.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
@@ -29,6 +30,7 @@ const Main = () => {
         <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
           <LoadingScreen />
         </div>
+        <Wallpaper />
         <App />
       </div>
     </StrictMode>

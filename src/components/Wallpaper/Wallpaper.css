@@ -1,33 +1,43 @@
 .wallpaper {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1; /* Push wallpaper behind content */
-    overflow: hidden;
-    background: black; /* Fallback background color */
-  }
-  
-  .wallpaper video {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    min-width: 100%;
-    min-height: 100%;
-    width: auto;
-    height: auto;
-    transform: translate(-50%, -50%);
-    object-fit: cover; /* Ensure the video fills the screen */
-  }
-  
-  .wallpaper img.wallpaper-fallback {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Ensure the image fills the screen */
-    z-index: -2; /* Place the fallback image behind the video */
-  }
-  
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1; /* Push wallpaper behind other page content */
+  overflow: hidden;
+  background: black; /* Fallback background color */
+}
+
+/* 
+   1) The fallback image is always there.
+   2) Place it behind the video (z-index: -2).
+*/
+.wallpaper img.wallpaper-fallback {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Ensures the image fills the screen */
+  z-index: -2;
+}
+
+/* Default style for the video (on top of the fallback image) */
+.wallpaper-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover; /* Ensures the video fills the screen */
+  z-index: -1;       /* Above the fallback image, but still behind main content */
+}
+
+/* Hidden state: If video not loaded or fails, do not display the video */
+.wallpaper-video.hidden {
+  display: none;
+}

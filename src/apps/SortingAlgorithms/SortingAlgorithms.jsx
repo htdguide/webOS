@@ -22,7 +22,7 @@ function SortingAlgorithms({ onClose }) {
 
     console.log('Creating <script> for sorting_algorithms.js...');
     script.current = document.createElement('script');
-    script.current.src = '/programfiles/wasm/sorting_algorithms.js';
+    script.current.src = '/WebintoshHD/Applications/wasm/sorting_algorithms.js';
     script.current.async = false;
 
     script.current.onload = () => {
