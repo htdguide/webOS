@@ -8,7 +8,7 @@ Welcome to **WebOS**! This project brings a desktop-like experience into your we
 
 ## **Explore More**
 
-For detailed documentation and insights into the project structure, visit our [Wiki](https://github.com/htdguide/webOS/wiki).
+For detailed documentation and insights into the project structure, visit [Wiki](https://github.com/htdguide/webportfolio/wiki).
 
 
 ## **Key Features**
