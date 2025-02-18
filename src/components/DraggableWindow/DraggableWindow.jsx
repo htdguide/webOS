@@ -4,7 +4,7 @@ import React, {
   forwardRef,
   useImperativeHandle
 } from 'react';
-import useDraggable from './useDraggable.jsx';
+import useDraggable from '../../interactions/useDraggable.jsx';
 import LoadingScreen from '../LoadingScreen/LoadingScreen.jsx'; // Adjust path if needed
 import './DraggableWindow.css';
 
