@@ -1,12 +1,20 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback
+} from 'react';
 import DraggableWindow from '../../components/DraggableWindow/DraggableWindow';
 import './SortingAlgorithms.css';
 
 function SortingAlgorithms({ onClose }) {
-  const [isWindowMounted, setIsWindowMounted] = useState(false); // Track if the window is mounted
+  const [isWindowMounted, setIsWindowMounted] = useState(false);
   const [wasmScriptLoaded, setWasmScriptLoaded] = useState(false);
   const canvasRef = useRef(null);
   const script = useRef(null);
+
+  // DraggableWindow ref to call .showLoading() / .hideLoading()
+  const draggableWindowRef = useRef(null);
 
   const loadWasmScript = useCallback(() => {
     if (wasmScriptLoaded) return;
@@ -18,6 +26,11 @@ function SortingAlgorithms({ onClose }) {
     script.current.onload = () => {
       console.log('WASM script loaded successfully.');
       setWasmScriptLoaded(true);
+
+      // Hide the loading overlay once loaded
+      if (draggableWindowRef.current) {
+        draggableWindowRef.current.hideLoading();
+      }
     };
 
     document.body.appendChild(script.current);
@@ -39,7 +52,7 @@ function SortingAlgorithms({ onClose }) {
           canvas.width = canvas.clientWidth;
           canvas.height = canvas.clientHeight;
 
-          console.log('Canvas initialized for WASM:', {
+          console.log('Canvas ready for WASM', {
             width: canvas.width,
             height: canvas.height,
             clientWidth: canvas.clientWidth,
@@ -49,16 +62,16 @@ function SortingAlgorithms({ onClose }) {
           window.Module.canvas = canvas;
 
           if (window.Module._initializeWindow) {
-            console.log('Initializing new WASM loop.');
+            console.log('Initializing WASM loop');
             window.Module._initializeWindow();
           }
         }
-      }, 100); // Delay ensures the canvas is fully rendered
+      }, 100);
     }
   }, [wasmScriptLoaded]);
 
   useEffect(() => {
-    // Cleanup on component unmount
+    // Cleanup on unmount
     return () => {
       if (window.Module && window.Module._cancelLoop) {
         console.log('Cancelling WASM loop on window close.');
@@ -66,19 +79,26 @@ function SortingAlgorithms({ onClose }) {
       }
 
       if (script.current) {
-        document.body.removeChild(script.current); // Cleanup script element
+        document.body.removeChild(script.current);
       }
     };
   }, []);
 
   return (
     <DraggableWindow
+      ref={draggableWindowRef}
       title="Sorting Algorithms"
       wasmWidth={400}
       wasmHeight={530}
       onClose={onClose}
-      onMount={() => setIsWindowMounted(true)} // Set window mounted state
-      onUnmount={() => setIsWindowMounted(false)} // Cleanup when window unmounts
+      onMount={() => {
+        setIsWindowMounted(true);
+        // Show loading screen when the window first mounts
+        if (draggableWindowRef.current) {
+          draggableWindowRef.current.showLoading();
+        }
+      }}
+      onUnmount={() => setIsWindowMounted(false)}
     >
       <canvas
         ref={canvasRef}
