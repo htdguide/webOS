@@ -10,6 +10,13 @@ export const RIGHT_MARGIN = 20;
 export const BOTTOM_MARGIN = 20;
 
 /**
+ * This value is added to GRID_SIZE to form the "effective" cell size
+ * for snapping icons in place. By increasing or decreasing GRID_GAP,
+ * you can control how far apart icons are spaced vertically and horizontally.
+ */
+export const GRID_GAP = 20;
+
+/**
  * Dynamically calculate grid size for the usable screen area:
  * (window width - LEFT_MARGIN - RIGHT_MARGIN) x
  * (window height - TOP_MARGIN - BOTTOM_MARGIN).
@@ -28,6 +35,14 @@ function calculateGridSize() {
 }
 
 export const GRID_SIZE = calculateGridSize();
+
+/**
+ * We'll define a helper to get the actual snap step.
+ * If GRID_SIZE is 60 and GRID_GAP is 10, the snap step is 70.
+ */
+function getSnapSize() {
+  return GRID_SIZE + GRID_GAP;
+}
 
 // Time thresholds
 export const HOLD_THRESHOLD = 100;
@@ -98,12 +113,17 @@ export const startDragging = (
 
     // Calculate the final snapped position
     const rect = iconRef.current.getBoundingClientRect();
+    const snapSize = getSnapSize();
+
+    // Snap the X coordinate
     const snappedX =
       LEFT_MARGIN +
-      Math.round((rect.left - LEFT_MARGIN) / GRID_SIZE) * GRID_SIZE;
+      Math.round((rect.left - LEFT_MARGIN) / snapSize) * snapSize;
+
+    // Snap the Y coordinate
     const snappedY =
       TOP_MARGIN +
-      Math.round((rect.top - TOP_MARGIN) / GRID_SIZE) * GRID_SIZE;
+      Math.round((rect.top - TOP_MARGIN) / snapSize) * snapSize;
 
     // Set up a short transition so the icon "flies" to the snap
     iconRef.current.style.transition = 'left 0.2s ease, top 0.2s ease';

@@ -5,7 +5,7 @@ import {
   startDragging,
   cancelHold,
   handleTap,
-} from './DesktopIconInteractions.jsx';
+} from '../../managers/DesktopIconInteractions.jsx';
 
 function DesktopIcon({ name, onDoubleClick, onClick, isSelected, icon, position: initialPosition }) {
   const [position, setPosition] = useState(initialPosition || { x: 100, y: 100 });
