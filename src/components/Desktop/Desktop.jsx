@@ -11,6 +11,7 @@ import {
 import { GRID_SIZE } from '../../configs/DesktopIconConfig.jsx';
 import './Desktop.css';
 
+
 /**
  * Helper to convert a priority number into an (x,y) position on the desktop.
  * This version uses both GRID_SIZE and GRID_GAP to space icons out.
