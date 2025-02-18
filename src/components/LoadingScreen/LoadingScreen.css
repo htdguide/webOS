@@ -5,7 +5,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.4); /* Frosted glass effect */
+    background: rgba(255, 255, 255, 0.3); /* Frosted glass effect */
     backdrop-filter: blur(10px);
     display: flex;
     justify-content: center;
@@ -17,5 +17,5 @@
   .loading-gif {
     width: 20px;
     height: 20px;
-    opacity: 0.5;
+    opacity: 0.3;
   }
