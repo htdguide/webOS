@@ -6,6 +6,11 @@ Welcome to **WebOS**! This project brings a desktop-like experience into your we
 
 ---
 
+## **Explore More**
+
+For detailed documentation and insights into the project structure, visit our [Wiki](https://github.com/htdguide/webOS/wiki).
+
+
 ## **Key Features**
 
 - **Interactive React Interface**  
@@ -83,10 +88,5 @@ Simplifies WebAssembly builds:
 
 ---
 
-## **Explore More**
-
-For detailed documentation and insights into the project structure, visit our [Wiki](https://github.com/htdguide/webOS/wiki).
-
-Happy exploring! 🚀
 
 
