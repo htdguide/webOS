@@ -1,5 +1,3 @@
-
-//To use initialize: const deviceInfo = useDeviceInfo();
 // services/DeviceInfoProvider.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
@@ -18,6 +16,10 @@ const DeviceInfoProvider = ({ children }) => {
     orientation: '',
     browserModel: '',
     operatingSystem: '', // Added operatingSystem field
+    battery: {
+      level: null, // Battery level from 0.0 to 1.0
+      charging: null, // Boolean indicating if the battery is charging
+    },
   });
 
   // Fetch IP address from an external service (ipify)
@@ -80,7 +82,10 @@ const DeviceInfoProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Gather device info and store it in state and localStorage
+    let batteryManager;
+    // Placeholder for the battery status update function.
+    let updateBatteryStatus = () => {};
+
     const updateDeviceInfo = async () => {
       const ip = await fetchIP();
       const info = {
@@ -89,9 +94,42 @@ const DeviceInfoProvider = ({ children }) => {
         orientation: getOrientation(),
         browserModel: getBrowserModel(),
         operatingSystem: getOperatingSystem(),
+        battery: {
+          level: null,
+          charging: null,
+        },
       };
       setDeviceInfo(info);
       localStorage.setItem('deviceInfo', JSON.stringify(info));
+
+      // Check if the Battery Status API is supported
+      if (navigator.getBattery) {
+        try {
+          batteryManager = await navigator.getBattery();
+          updateBatteryStatus = () => {
+            setDeviceInfo(prev => {
+              const newInfo = {
+                ...prev,
+                battery: {
+                  level: batteryManager.level,
+                  charging: batteryManager.charging,
+                },
+              };
+              localStorage.setItem('deviceInfo', JSON.stringify(newInfo));
+              return newInfo;
+            });
+          };
+
+          // Set initial battery status
+          updateBatteryStatus();
+
+          // Attach event listeners to update battery info on change
+          batteryManager.addEventListener('levelchange', updateBatteryStatus);
+          batteryManager.addEventListener('chargingchange', updateBatteryStatus);
+        } catch (error) {
+          console.error('Error getting battery info:', error);
+        }
+      }
     };
 
     updateDeviceInfo();
@@ -107,7 +145,13 @@ const DeviceInfoProvider = ({ children }) => {
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (batteryManager) {
+        batteryManager.removeEventListener('levelchange', updateBatteryStatus);
+        batteryManager.removeEventListener('chargingchange', updateBatteryStatus);
+      }
+    };
   }, []);
 
   return (
