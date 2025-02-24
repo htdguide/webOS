@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './MenuBar.css';
+import { useDeviceInfo } from '../../services/DeviceInfoProvider';
 
 function MenuBar() {
+  const deviceInfo = useDeviceInfo();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -19,14 +21,27 @@ function MenuBar() {
     const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
     const [hm, ampm] = timeStr.split(' ');
     const [hour, minute] = hm.split(':');
-    return (
-      <span>
-        {weekday} {day} {month}&nbsp;&nbsp;&nbsp;
-        <span className="time-hour">{hour}</span>
-        <span className="time-colon">:</span>
-        <span className="time-minute">{minute}</span> {ampm}
-      </span>
-    );
+
+    if (deviceInfo && deviceInfo.orientation === 'portrait') {
+      // In portrait mode, display only the time (e.g., "11:47")
+      return (
+        <span>
+          <span className="time-hour">{hour}</span>
+          <span className="time-colon">:</span>
+          <span className="time-minute">{minute}</span>
+        </span>
+      );
+    } else {
+      // In landscape mode, display date and time (e.g., "Tue 25 Feb   11:06 AM")
+      return (
+        <span>
+          {weekday} {day} {month}&nbsp;&nbsp;&nbsp;
+          <span className="time-hour">{hour}</span>
+          <span className="time-colon">:</span>
+          <span className="time-minute">{minute}</span> {ampm}
+        </span>
+      );
+    }
   }
 
   return (
@@ -36,7 +51,7 @@ function MenuBar() {
         <a href="https://www.linkedin.com/in/htdguide/" className="menu-item">LinkedIn</a>
         <a href="https://github.com/htdguide" className="menu-item">GitHub</a>
       </div>
-      <div className="menu-right">
+      <div className="menu-user-info">
         <span className="menu-username">htdguide</span>
         <span className="menu-time">{renderFormattedTime(currentTime)}</span>
       </div>
