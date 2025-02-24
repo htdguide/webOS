@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import MiniWindow from '../components/MiniWindow/MiniWindow';
 import batteryIcon from '../media/icons/battery.png'; // Replace with your battery icon file
-import BatteryMiniApp from '../miniapps/BatteryMiniApp';
+import BatteryMiniApp from '../miniapps/BatteryMiniApp/BatteryMiniApp';
 
 /**
  * Icons list for the menubar miniapps.
