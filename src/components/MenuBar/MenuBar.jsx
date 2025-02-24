@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import './MenuBar.css';
 import { useDeviceInfo } from '../../services/DeviceInfoProvider';
+import MenuBarIcons from '../../lists/MenuBarIcons';
 
-// Pass darkMode externally to toggle between light and dark themes
 function MenuBar({ darkMode = false }) {
   const deviceInfo = useDeviceInfo();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -19,12 +16,15 @@ function MenuBar({ darkMode = false }) {
     const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
     const day = date.getDate();
     const month = date.toLocaleDateString('en-US', { month: 'short' });
-    const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+    const timeStr = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    });
     const [hm, ampm] = timeStr.split(' ');
     const [hour, minute] = hm.split(':');
 
     if (deviceInfo && deviceInfo.orientation === 'portrait') {
-      // In portrait mode, display only the time (e.g., "11:47")
       return (
         <span>
           <span className="time-hour">{hour}</span>
@@ -33,7 +33,6 @@ function MenuBar({ darkMode = false }) {
         </span>
       );
     } else {
-      // In landscape mode, display date and time (e.g., "Tue 25 Feb   11:06 AM")
       return (
         <span>
           {weekday} {day} {month}&nbsp;&nbsp;&nbsp;
@@ -53,6 +52,8 @@ function MenuBar({ darkMode = false }) {
         <a href="https://github.com/htdguide" className="menu-item">GitHub</a>
       </div>
       <div className="menu-user-info">
+        {/* Icons appear to the left of the username */}
+        <MenuBarIcons />
         <span className="menu-username">htdguide</span>
         <span className="menu-time">{renderFormattedTime(currentTime)}</span>
       </div>
