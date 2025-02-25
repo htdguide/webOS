@@ -1,24 +1,23 @@
 .mini-window {
-    position: absolute;
-    z-index: 1100;
-    background: white;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    padding: 10px;
-  }
-  
-  .mini-window-content {
-    position: relative;
-  }
-  
-  .mini-window-close {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    background: transparent;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-  }
-  
+  position: absolute;
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.7); /* Transparent white like the menubar */
+  backdrop-filter: blur(10px);         /* Frosted glass effect */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.mini-window-content {
+  position: relative;
+}
+
+.mini-window-close {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+}
