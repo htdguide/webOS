@@ -10,7 +10,7 @@ import DesktopIcon from './DesktopIcon.jsx';
 describe('DesktopIcon', () => {
   it('renders the given icon and label', () => {
     const testName = 'My Test Icon';
-    const testIcon = '/path/to/my-icon.png';
+    const testIcon = '../../media/icons/defaultapp.png';
     
     // Render the DesktopIcon
     const { container } = render(
