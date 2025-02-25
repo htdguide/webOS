@@ -20,7 +20,7 @@ describe('DesktopIcon', () => {
     // Verify the label text is in the document
     expect(screen.getByText(testName)).toBeInTheDocument();
 
-    // Verify the background image is set on the .icon-image element
+    // Verify the image is set on the .icon-image element
     const iconImageDiv = container.querySelector('.icon-image');
     expect(iconImageDiv).toHaveStyle(`background-image: url(${testIcon})`);
   });
