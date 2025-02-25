@@ -5,7 +5,7 @@ import './index.css';
 import App from './App.jsx';
 import LoadingScreen from './components/LoadingScreen/LoadingScreen.jsx';
 import Wallpaper from './components/Wallpaper/Wallpaper.jsx';
-import DeviceInfoProvider from './services/DeviceInfoProvider.jsx';
+import DeviceInfoProvider from './services/DeviceInfoProvider/DeviceInfoProvider.jsx';
 import Notification, { notify } from './components/Notification/Notification.jsx';
 
 const Main = () => {

@@ -8,7 +8,7 @@ import {
   HOLD_THRESHOLD,
   DOUBLE_TAP_DELAY,
   GRID_SIZE, // <--- Import from DesktopIconConfig now
-} from '../configs/DesktopIconConfig.jsx';
+} from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 
 /**
  * If GRID_SIZE is, say, 80 and GRID_GAP is 20,

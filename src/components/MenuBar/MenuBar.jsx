@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './MenuBar.css';
-import { useDeviceInfo } from '../../services/DeviceInfoProvider';
+import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider';
 import MiniApps from '../MiniApps/MiniApps';
 
 function MenuBar({ darkMode = false }) {

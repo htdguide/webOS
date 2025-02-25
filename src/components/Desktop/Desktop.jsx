@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import DesktopIcon from '../DesktopIcon/DesktopIcon.jsx';
 import DesktopAppsList from '../../lists/DesktopAppsList.jsx';
-import { GRID_GAP, TOP_MARGIN, LEFT_MARGIN,} from '../../configs/DesktopIconConfig.jsx';
-import { GRID_SIZE } from '../../configs/DesktopIconConfig.jsx';
+import { GRID_GAP, TOP_MARGIN, LEFT_MARGIN,} from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
+import { GRID_SIZE } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 import './Desktop.css';
 
 

@@ -8,7 +8,7 @@ import DraggableWindow from '../../components/DraggableWindow/DraggableWindow';
 import './SortingAlgorithms.css';
 import { notify } from '../../components/Notification/Notification';
 import defaultIcon from '../../media/icons/defaultapp.png';
-import { useDeviceInfo } from '../../services/DeviceInfoProvider';
+import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider';
 
 function SortingAlgorithms({ onClose }) {
   const [isWindowMounted, setIsWindowMounted] = useState(false);
