@@ -12,8 +12,8 @@ const DraggableWindow = forwardRef(
   (
     {
       title,
-      wasmWidth,
-      wasmHeight,
+      windowWidth,
+      windowHeight,
       onClose,
       onMount,
       onUnmount,
@@ -29,7 +29,7 @@ const DraggableWindow = forwardRef(
     const [isFadingOut, setIsFadingOut] = useState(false);
 
     // Make the window draggable/resizable
-    useDraggable(windowRef, wasmWidth, wasmHeight, onMount, onUnmount);
+    useDraggable(windowRef, windowWidth, windowHeight, onMount, onUnmount);
 
     // Imperative handle for parent
     useImperativeHandle(ref, () => ({
@@ -54,10 +54,10 @@ const DraggableWindow = forwardRef(
         ref={windowRef}
         className="draggable-window"
         style={{
-          width: `${wasmWidth}px`,
-          height: `${wasmHeight}px`,
+          width: `${windowWidth}px`,
+          height: `${windowHeight}px`,
           top: '50px',
-          left: '50px'
+          left: '50px',
         }}
       >
         {/* --- Window Header --- */}
@@ -67,7 +67,7 @@ const DraggableWindow = forwardRef(
               className="close-button"
               onClick={(event) => {
                 event.stopPropagation(); // Prevent dragging
-                onClose && onClose();
+                onClose?.();
               }}
               onTouchStart={(event) => {
                 event.stopPropagation();

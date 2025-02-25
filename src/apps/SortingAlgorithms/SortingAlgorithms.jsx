@@ -107,8 +107,8 @@ function SortingAlgorithms({ onClose }) {
     <DraggableWindow
       ref={draggableWindowRef}
       title="Sorting Algorithms"
-      wasmWidth={400}
-      wasmHeight={530}
+      windowWidth={400}
+      windowHeight={530}
       onClose={onClose}
       onMount={() => {
         console.log('DraggableWindow onMount => setIsWindowMounted(true)');
