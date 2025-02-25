@@ -6,7 +6,7 @@ import SortingAlgorithms from '../apps/SortingAlgorithms/SortingAlgorithms.jsx';
  * Instead of x,y, each icon now has a `priority` which determines
  * its order on the desktop grid. 1 is placed first, 2 second, etc.
  */
-const DesktopIconsController = [
+const DesktopAppsList = [
   {
     id: 'sorting-algorithms',
     name: 'Sorting Algorithms',
@@ -27,4 +27,4 @@ const DesktopIconsController = [
   // Add more apps here as needed, with increasing `priority`
 ];
 
-export default DesktopIconsController;
+export default DesktopAppsList;

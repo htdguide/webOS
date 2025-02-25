@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 import MenuBar from './components/MenuBar/MenuBar.jsx';
 import Desktop from './components/Desktop/Desktop.jsx';
-import DesktopIconsController from './lists/DesktopIconsList.jsx';
+import DesktopAppsList from './lists/DesktopAppsList.jsx';
 
 function App() {
   const [openApps, setOpenApps] = useState([]);
@@ -22,7 +22,7 @@ function App() {
       <MenuBar />
       <Desktop onOpenApp={handleOpenApp} />
       {openApps.map((appId) => {
-        const appConfig = DesktopIconsController.find((app) => app.id === appId);
+        const appConfig = DesktopAppsList.find((app) => app.id === appId);
         const AppComponent = appConfig?.component;
 
         return (

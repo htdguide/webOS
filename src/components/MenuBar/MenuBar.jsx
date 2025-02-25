@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './MenuBar.css';
 import { useDeviceInfo } from '../../services/DeviceInfoProvider';
-import MenuBarIcons from '../../lists/MenuBarIcons';
+import MiniApps from '../MiniApps/MiniApps';
 
 function MenuBar({ darkMode = false }) {
   const deviceInfo = useDeviceInfo();
@@ -53,7 +53,7 @@ function MenuBar({ darkMode = false }) {
       </div>
       <div className="menu-user-info">
         {/* Icons appear to the left of the username */}
-        <MenuBarIcons />
+        <MiniApps />
         <span className="menu-username">htdguide</span>
         <span className="menu-time">{renderFormattedTime(currentTime)}</span>
       </div>

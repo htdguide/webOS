@@ -1,13 +1,7 @@
 import React, { useState } from 'react';
 import DesktopIcon from '../DesktopIcon/DesktopIcon.jsx';
-import IconsList from '../../lists/DesktopIconsList.jsx';
-import {
-  GRID_GAP,
-  TOP_MARGIN,
-  LEFT_MARGIN,
-  // RIGHT_MARGIN,
-  // BOTTOM_MARGIN,
-} from '../../configs/DesktopIconConfig.jsx';
+import DesktopAppsList from '../../lists/DesktopAppsList.jsx';
+import { GRID_GAP, TOP_MARGIN, LEFT_MARGIN,} from '../../configs/DesktopIconConfig.jsx';
 import { GRID_SIZE } from '../../configs/DesktopIconConfig.jsx';
 import './Desktop.css';
 
@@ -41,7 +35,7 @@ function Desktop({ onOpenApp }) {
 
   return (
     <div className="desktop" onClick={handleWallpaperClick}>
-      {IconsList.map((iconConfig) => {
+      {DesktopAppsList.map((iconConfig) => {
         // Convert the icon's priority into an (x,y) position,
         // now using GRID_GAP to keep them spaced out.
         const position = getPositionFromPriority(iconConfig.priority);

@@ -1,23 +1,8 @@
 import React, { useState } from 'react';
-import MiniWindow from '../components/MiniWindow/MiniWindow';
-import batteryIcon from '../media/icons/battery.png'; // Replace with your battery icon file
-import BatteryMiniApp from '../miniapps/BatteryMiniApp/BatteryMiniApp';
-/**
- * Icons list for the menubar miniapps.
- * Lower priority numbers appear at the right (i.e. newer icons added from right to left).
- */
-const iconsList = [
-  {
-    id: 'battery',
-    name: 'Battery',
-    icon: batteryIcon,
-    component: BatteryMiniApp,
-    priority: 1,
-  },
-  // Add more icons/apps here as needed
-];
+import MiniWindow from '../MiniWindow/MiniWindow';
+import MiniAppsList from '../../lists/MiniAppsList';
 
-function MenuBarIcons() {
+function MiniApps() {
   const [activeApp, setActiveApp] = useState(null);
   const [anchorPos, setAnchorPos] = useState({ x: 0, y: 0 });
 
@@ -30,7 +15,7 @@ function MenuBarIcons() {
   };
 
   // Sort icons by priority ascending then reverse for right-to-left display.
-  const sortedIcons = iconsList.slice().sort((a, b) => a.priority - b.priority).reverse();
+  const sortedIcons = MiniAppsList.slice().sort((a, b) => a.priority - b.priority).reverse();
   const ActiveComponent = activeApp ? activeApp.component : null;
 
   return (
@@ -63,4 +48,4 @@ function MenuBarIcons() {
   );
 }
 
-export default MenuBarIcons;
+export default MiniApps;
