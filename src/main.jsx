@@ -7,6 +7,7 @@ import LoadingScreen from './components/LoadingScreen/LoadingScreen.jsx';
 import Wallpaper from './components/Wallpaper/Wallpaper.jsx';
 import DeviceInfoProvider from './services/DeviceInfoProvider/DeviceInfoProvider.jsx';
 import Notification, { notify } from './components/Notification/Notification.jsx';
+import MenuBar from './components/MenuBar/MenuBar.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
@@ -40,11 +41,12 @@ const Main = () => {
   return (
     <StrictMode>
       <DeviceInfoProvider>
+        <Wallpaper />
         <div>
           <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
             <LoadingScreen />
           </div>
-          <Wallpaper />
+          <MenuBar />
           <App />
           <Notification />
         </div>
