@@ -4,7 +4,7 @@
  * Margins so that icons do not collide with window edges
  * and we keep space for a top menubar, etc.
  */
-export const TOP_MARGIN = 50;
+export const TOP_MARGIN = 40;
 export const LEFT_MARGIN = 20;
 export const RIGHT_MARGIN = 20;
 export const BOTTOM_MARGIN = 20;
