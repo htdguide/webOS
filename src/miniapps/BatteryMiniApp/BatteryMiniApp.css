@@ -19,10 +19,9 @@
   display: inline-block;
 }
 
+/* Default styling for the battery image, overridden by inline styles in the component. */
 .battery-icon-image {
   display: block;
-  width: 24px; /* Adjust if you want a larger/smaller icon */
-  height: auto;
 }
 
 /* The black “fill” portion. */
