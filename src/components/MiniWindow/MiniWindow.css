@@ -1,8 +1,7 @@
 .mini-window {
   position: absolute;
   z-index: 1000;
-  background: rgba(255, 255, 255, 0.7); /* Transparent white like the menubar */
-  backdrop-filter: blur(10px);         /* Frosted glass effect */
+  background: rgba(216, 215, 215, 0.915); /* Transparent white like the menubar */
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   border-radius: 6px;
   padding: 10px;

@@ -1,4 +1,4 @@
-import batteryIcon from '../media/icons/battery.png'; // Replace with your battery icon file
+import batteryIcon from '../media/icons/battery.png';
 import BatteryMiniApp from '../miniapps/BatteryMiniApp/BatteryMiniApp';
 
 /**
@@ -12,8 +12,9 @@ const MiniAppsList = [
     icon: batteryIcon,
     component: BatteryMiniApp,
     priority: 1,
+    displayType: 'div',  // <--- Tells MiniApps to render the component inline in the menubar
   },
-  // Add more icons/apps here as needed
+  // Add more icons/apps here as needed...
 ];
 
 export default MiniAppsList;
