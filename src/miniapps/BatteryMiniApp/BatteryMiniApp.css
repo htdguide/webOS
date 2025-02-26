@@ -1,33 +1,50 @@
-/* Container holds the percentage on the left and the battery icon on the right. */
+/* Ensures percentage and battery icon align properly in the menubar */
 .battery-miniapp-container {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
     'Helvetica Neue', Helvetica, Arial, sans-serif;
   color: rgb(33, 35, 36);
+  gap: 4px; /* Small gap between percentage and battery icon */
 }
 
-/* Spacing between the percentage text and the icon. */
+/* Ensures proper spacing and alignment for percentage */
 .battery-percentage {
-  margin-right: 8px;
-  font-size: 13px; /* macOS-like size, adjust as desired */
+  display: flex;
+  align-items: baseline;
+  font-size: 13px;
+  margin-right: 2px; /* Reduce spacing slightly for compact look */
+  line-height: 1;
 }
 
-/* Wrapper that positions the black fill over the battery PNG. */
+/* Styling for battery number and % sign separately */
+.battery-number {
+  font-weight: 500; /* Slightly bold for visibility */
+}
+
+.battery-symbol {
+  font-weight: 400; /* Normal weight for the % sign */
+  margin-left: 4px;
+}
+
+/* Wrapper ensures battery icon and fill overlay align properly */
 .battery-icon-wrapper {
+  margin-top: 1px;
   position: relative;
-  display: inline-block;
+  display: flex;
+  align-items: center;
 }
 
-/* Default styling for the battery image, overridden by inline styles in the component. */
+/* Ensures battery icon is properly aligned */
 .battery-icon-image {
   display: block;
+  vertical-align: middle;
 }
 
-/* The black “fill” portion. */
+/* Battery fill bar */
 .battery-level-indicator {
   position: absolute;
-  background-color: #000; /* black fill to mimic macOS */
-  border-radius: 2px; /* Rounded corners by 2px */
-  transition: width 0.3s ease; /* animate fill changes smoothly */
+  background-color: #000;
+  border-radius: 2px;
+  transition: width 0.3s ease;
 }
