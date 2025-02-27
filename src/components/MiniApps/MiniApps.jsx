@@ -46,7 +46,6 @@ function MiniApps() {
                 display: 'flex',
                 alignItems: 'center',
                 cursor: 'pointer',
-                marginRight: '10px',
                 pointerEvents: 'auto',
               }}
             >
@@ -66,7 +65,6 @@ function MiniApps() {
                 width: '30px',
                 height: '30px',
                 cursor: 'pointer',
-                marginRight: '10px',
                 pointerEvents: 'auto',
               }}
             />
