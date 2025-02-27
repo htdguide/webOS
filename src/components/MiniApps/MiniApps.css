@@ -1,0 +1,42 @@
+.menu-bar-icon {
+    transition: opacity 0.2s ease;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+/* Remove hover effect */
+.menu-bar-icon:hover {
+    background: transparent;
+}
+
+/* Active effect applied to the container */
+.menu-bar-app.active {
+    height: 25px; /* Fixed height */
+    border-radius: 6px;
+    transition: background 0.2s ease;
+    position: relative; /* Needed for ::before */
+    background: transparent !important; /* Remove the old background */
+}
+
+/* Expanding effect without shifting icons */
+.menu-bar-app.active::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -8px; /* Extends effect 5px to the left */
+    right: -8px; /* Extends effect 5px to the right */
+    height: 100%;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.15); /* macOS-like effect */
+    z-index: -1; /* Keeps it behind the icon */
+}
+
+/* Light mode active effect */
+.menu-bar.light-mode .menu-bar-app.active::before {
+    background: rgba(0, 0, 0, 0.12);
+}
+
+/* Dark mode active effect */
+.menu-bar.dark-mode .menu-bar-app.active::before {
+    background: rgba(255, 255, 255, 0.18);
+}

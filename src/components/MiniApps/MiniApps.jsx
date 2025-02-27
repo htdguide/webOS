@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import MiniWindow from '../MiniWindow/MiniWindow';
 import MiniAppsList from '../../lists/MiniAppsList';
+import './MiniApps.css';
 
 function MiniApps() {
   const [activeApp, setActiveApp] = useState(null);
@@ -23,7 +24,6 @@ function MiniApps() {
     }
   };
 
-  // Update miniwindow position when window resizes
   useEffect(() => {
     const handleResize = () => {
       if (activeApp) updateAnchorPosition(activeApp.id);
@@ -33,7 +33,6 @@ function MiniApps() {
     return () => window.removeEventListener('resize', handleResize);
   }, [activeApp]);
 
-  // Sort apps by priority (right to left display order)
   const sortedApps = MiniAppsList.slice()
     .sort((a, b) => a.priority - b.priority)
     .reverse();
@@ -41,25 +40,27 @@ function MiniApps() {
   const ActiveComponent = activeApp ? activeApp.miniApp : null;
 
   return (
-    <div
-      className="menu-bar-icons"
-      style={{ display: 'flex', alignItems: 'center', pointerEvents: 'auto' }}
-    >
+    <div className="menu-bar-icons" style={{ display: 'flex', alignItems: 'center', pointerEvents: 'auto' }}>
       {sortedApps.map((appItem) => {
         const { id, name, barApp: BarApp, icon, iconSize = 30 } = appItem;
+        const isActive = activeApp && activeApp.id === id;
+        const paddingX = isActive ? '9px' : '4px'; // Expands width only
 
         return (
           <div
             key={id}
-            className="menu-bar-app"
-            ref={(el) => (iconRefs.current[id] = el)} // Assign ref dynamically
+            className={`menu-bar-app ${isActive ? 'active' : ''}`}
+            ref={(el) => (iconRefs.current[id] = el)}
             onClick={() => handleAppClick(appItem)}
             style={{
               display: 'flex',
               alignItems: 'center',
               cursor: 'pointer',
-              marginLeft: '18px',
               pointerEvents: 'auto',
+              height: '25px', // Fixed height
+              marginLeft: '18px',
+              borderRadius: '6px', // Ensuring rounded corners
+              background: isActive ? 'rgba(0, 0, 0, 0.15)' : 'transparent',
             }}
           >
             {BarApp ? (
@@ -69,14 +70,13 @@ function MiniApps() {
                 src={icon}
                 alt={name}
                 className="menu-bar-icon"
-                style={{ width: `${iconSize}px`, height: `${iconSize}px` }} // Dynamic icon size
+                style={{ width: `${iconSize}px`, height: `${iconSize}px` }}
               />
             )}
           </div>
         );
       })}
 
-      {/* Render the miniwindow if an app is active */}
       {activeApp && ActiveComponent && (
         <MiniWindow anchorPos={anchorPos} onClose={() => setActiveApp(null)}>
           <ActiveComponent />
