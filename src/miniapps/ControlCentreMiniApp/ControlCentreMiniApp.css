@@ -1,0 +1,32 @@
+.control-centre-container {
+    width: 200px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    border-radius: 10px;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    text-align: center;
+  }
+  
+  .control-centre-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  
+  .control-btn {
+    background: rgba(240, 240, 240, 0.8);
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  
+  .control-btn:hover {
+    background: rgba(200, 200, 200, 0.9);
+  }
+  
