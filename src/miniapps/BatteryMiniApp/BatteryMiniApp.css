@@ -44,7 +44,7 @@
 /* Battery fill bar */
 .battery-level-indicator {
   position: absolute;
-  background-color: #000;
+  background-color: #000; /* Ensuring original color is retained */
   border-radius: 2px;
   transition: width 0.3s ease;
 }

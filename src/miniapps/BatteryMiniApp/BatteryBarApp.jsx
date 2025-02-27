@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './BatteryMiniApp.css';
 import batteryPng from '../../media/assets/battery.png';
 
-function BatteryMiniApp() {
+function BatteryBarApp() {
   const [batteryLevel, setBatteryLevel] = useState(85);
 
   useEffect(() => {
@@ -17,17 +17,20 @@ function BatteryMiniApp() {
 
   return (
     <div className="battery-miniapp-container">
-      <h3>Battery Status</h3>
-      <p>Current battery level: {Math.round(batteryLevel)}%</p>
+      <span className="battery-percentage">
+        <span className="battery-number">{Math.round(batteryLevel)}</span>
+        <span className="battery-symbol">%</span>
+      </span>
 
       <div className="battery-icon-wrapper">
         <img
           src={batteryPng}
-          alt="Battery Icon"
+          alt="Battery"
           className="battery-icon-image"
-          style={{ width: '50px', height: '50px', opacity: 0.8 }}
+          style={{ width: '27px', height: '27px', opacity: 0.5 }}
         />
 
+        {/* Battery fill bar inside the battery icon */}
         <div
           className="battery-level-indicator"
           style={{
@@ -42,4 +45,4 @@ function BatteryMiniApp() {
   );
 }
 
-export default BatteryMiniApp;
+export default BatteryBarApp;
