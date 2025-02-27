@@ -65,7 +65,7 @@
 
 .menu-user-info {
   margin-left: auto;
-  margin-right: 30px;
+  margin-right: 25px;
   display: flex;
   align-items: center;
   gap: 18px; /* Gap between icons, username, and time */

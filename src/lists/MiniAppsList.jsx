@@ -12,7 +12,7 @@ const MiniAppsList = [
     miniApp: ControlCentreMiniApp,
     barApp: null,
     icon: controlCentreIcon,
-    iconSize: 24, // Custom size for Control Centre icon
+    iconSize: 16, // Custom size for Control Centre icon
     priority: 0,
   },
   {

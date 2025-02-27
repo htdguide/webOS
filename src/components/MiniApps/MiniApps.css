@@ -1,7 +1,6 @@
 .menu-bar-icon {
     transition: opacity 0.2s ease;
     border-radius: 6px;
-    padding: 4px;
 }
 
 /* Remove hover effect */
