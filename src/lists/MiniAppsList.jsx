@@ -12,6 +12,7 @@ const MiniAppsList = [
     miniApp: ControlCentreMiniApp,
     barApp: null,
     icon: controlCentreIcon,
+    iconSize: 24, // Custom size for Control Centre icon
     priority: 0,
   },
   {
@@ -19,21 +20,22 @@ const MiniAppsList = [
     name: 'Battery',
     miniApp: BatteryMiniApp,
     barApp: BatteryBarApp,
+    iconSize: 24, // Custom size for Battery icon
     priority: 2,
   },
   {
     id: 'user',
     name: 'User',
     miniApp: null,
-    barApp: UserMiniApp, // Display username inline in the menubar
-    priority: 1, // Keep it in the same position
+    barApp: UserMiniApp,
+    priority: 1,
   },
   {
     id: 'datetime',
     name: 'Date & Time',
     miniApp: null,
-    barApp: DateTimeMiniApp, // Display date and time inline in the menubar
-    priority: -1, // Keep it at the rightmost position
+    barApp: DateTimeMiniApp,
+    priority: -1,
   },
 ];
 

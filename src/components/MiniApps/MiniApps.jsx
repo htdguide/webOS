@@ -46,7 +46,7 @@ function MiniApps() {
       style={{ display: 'flex', alignItems: 'center', pointerEvents: 'auto' }}
     >
       {sortedApps.map((appItem) => {
-        const { id, name, barApp: BarApp } = appItem;
+        const { id, name, barApp: BarApp, icon, iconSize = 30 } = appItem;
 
         return (
           <div
@@ -57,12 +57,21 @@ function MiniApps() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              marginLeft: '20px',
               cursor: 'pointer',
+              marginLeft: '18px',
               pointerEvents: 'auto',
             }}
           >
-            {BarApp ? <BarApp /> : <img src={appItem.icon} alt={name} className="menu-bar-icon" style={{ width: '30px', height: '30px' }} />}
+            {BarApp ? (
+              <BarApp />
+            ) : (
+              <img
+                src={icon}
+                alt={name}
+                className="menu-bar-icon"
+                style={{ width: `${iconSize}px`, height: `${iconSize}px` }} // Dynamic icon size
+              />
+            )}
           </div>
         );
       })}
