@@ -4,13 +4,13 @@ import batteryPng from '../../media/assets/battery.png';
 
 function BatteryMiniApp({
   compact = false, // Default to false (miniwindow mode)
-  barTop = 8,
-  barLeft = 4,
-  barHeight = 7,
-  barMaxWidth = 18,
-  iconWidth = 28,
-  iconHeight = 24,
-  iconOpacity = 0.4,
+  barTop = 9.5,
+  barLeft = 3,
+  barHeight = 8,
+  barMaxWidth = 18.5,
+  iconWidth = 27,
+  iconHeight = 27,
+  iconOpacity = 0.5,
 }) {
   const [batteryLevel, setBatteryLevel] = useState(85);
 

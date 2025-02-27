@@ -4,27 +4,27 @@
   align-items: center;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
     'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: rgb(33, 35, 36);
-  gap: 4px; /* Small gap between percentage and battery icon */
+  color: rgb(35, 35, 35);
 }
 
 /* Ensures proper spacing and alignment for percentage */
 .battery-percentage {
   display: flex;
   align-items: baseline;
-  font-size: 13px;
-  margin-right: 2px; /* Reduce spacing slightly for compact look */
+  font-size: 11px;
+  margin-right: 3px; /* Reduce spacing slightly for compact look */
   line-height: 1;
 }
 
 /* Styling for battery number and % sign separately */
 .battery-number {
   font-weight: 500; /* Slightly bold for visibility */
+  margin-top: 1px;
+  margin-right: 3px;
 }
 
 .battery-symbol {
   font-weight: 400; /* Normal weight for the % sign */
-  margin-left: 4px;
 }
 
 /* Wrapper ensures battery icon and fill overlay align properly */
