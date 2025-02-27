@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import './MenuBar.css';
+import './DateTimeMiniApp.css';
 import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider';
-import MiniApps from '../MiniApps/MiniApps';
 
-function MenuBar({ darkMode = false }) {
+function DateTimeMiniApp() {
   const deviceInfo = useDeviceInfo();
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -45,18 +44,8 @@ function MenuBar({ darkMode = false }) {
   }
 
   return (
-    <div className={`menu-bar ${darkMode ? 'dark-mode' : 'light-mode'}`}>
-      <div className="menu-left">
-        <a href="/" className="menu-item">Home</a>
-        <a href="https://www.linkedin.com/in/htdguide/" className="menu-item">LinkedIn</a>
-        <a href="https://github.com/htdguide" className="menu-item">GitHub</a>
-      </div>
-      <div className="menu-user-info">
-        {/* Icons appear to the left of the username */}
-        <MiniApps />
-      </div>
-    </div>
+    <span className="menu-time">{renderFormattedTime(currentTime)}</span>
   );
 }
 
-export default MenuBar;
+export default DateTimeMiniApp;

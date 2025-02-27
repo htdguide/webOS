@@ -57,6 +57,7 @@ function MiniApps() {
             style={{
               display: 'flex',
               alignItems: 'center',
+              marginLeft: '20px',
               cursor: 'pointer',
               pointerEvents: 'auto',
             }}
