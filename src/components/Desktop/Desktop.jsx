@@ -4,6 +4,7 @@ import DesktopAppsList from '../../lists/DesktopAppsList.jsx';
 import { GRID_GAP, TOP_MARGIN, LEFT_MARGIN,} from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 import { GRID_SIZE } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 import './Desktop.css';
+import { FocusWrapper } from '../../interactions/FocusControl/FocusControl.jsx';
 
 
 /**
@@ -34,25 +35,27 @@ function Desktop({ onOpenApp }) {
   };
 
   return (
-    <div className="desktop" onClick={handleWallpaperClick}>
-      {DesktopAppsList.map((iconConfig) => {
-        // Convert the icon's priority into an (x,y) position,
-        // now using GRID_GAP to keep them spaced out.
-        const position = getPositionFromPriority(iconConfig.priority);
+    <FocusWrapper name="Desktop">
+      <div className="desktop" onClick={handleWallpaperClick}>
+        {DesktopAppsList.map((iconConfig) => {
+          // Convert the icon's priority into an (x,y) position,
+          // now using GRID_GAP to keep them spaced out.
+          const position = getPositionFromPriority(iconConfig.priority);
 
-        return (
-          <DesktopIcon
-            key={iconConfig.id}
-            name={iconConfig.name}
-            icon={iconConfig.icon}
-            isSelected={selectedIcon === iconConfig.id}
-            onClick={() => handleIconClick(iconConfig.id)}
-            onDoubleClick={() => onOpenApp(iconConfig.id)}
-            position={position} 
-          />
-        );
-      })}
-    </div>
+          return (
+            <DesktopIcon
+              key={iconConfig.id}
+              name={iconConfig.name}
+              icon={iconConfig.icon}
+              isSelected={selectedIcon === iconConfig.id}
+              onClick={() => handleIconClick(iconConfig.id)}
+              onDoubleClick={() => onOpenApp(iconConfig.id)}
+              position={position} 
+            />
+          );
+        })}
+      </div>
+    </FocusWrapper>
   );
 }
 

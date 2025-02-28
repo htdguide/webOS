@@ -7,7 +7,7 @@
     left: 0;
     overflow: hidden;
     background: transparent;
-    z-index: 5; /* Lower than the window */
+    z-index: 0; /* Lower than the window */
   }
   
   /* Desktop Icons */
@@ -21,11 +21,11 @@
     align-items: center;
     justify-content: flex-start;
     user-select: none;
-    z-index: 5; /* Lower than the window */
+    z-index: 1; /* Lower than the window */
     transition: box-shadow 0.2s, transform 0.2s;
   }
   
   .desktop-icon.selected {
-    z-index: 6; /* Slightly higher when selected, but still below the window */
+    z-index: 1; /* Slightly higher when selected, but still below the window */
   }
   

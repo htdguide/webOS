@@ -1,4 +1,3 @@
-/* main.jsx */
 import { StrictMode, useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
@@ -8,12 +7,13 @@ import Wallpaper from './components/Wallpaper/Wallpaper.jsx';
 import DeviceInfoProvider from './services/DeviceInfoProvider/DeviceInfoProvider.jsx';
 import Notification, { notify } from './components/Notification/Notification.jsx';
 import MenuBar from './components/MenuBar/MenuBar.jsx';
+import { FocusProvider } from './interactions/FocusControl/FocusControl.jsx'; // Import FocusProvider
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timeout = setTimeout(() => setLoading(false), 1300); // Simulate loading time
+    const timeout = setTimeout(() => setLoading(false), 1300);
     return () => clearTimeout(timeout);
   }, []);
 
@@ -41,20 +41,20 @@ const Main = () => {
   return (
     <StrictMode>
       <DeviceInfoProvider>
-        <Wallpaper />
-        <div>
-          <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
-            <LoadingScreen />
+        <FocusProvider> {/* Wrap everything inside FocusProvider */}
+          <Wallpaper />
+          <div>
+            <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
+              <LoadingScreen />
+            </div>
+            <MenuBar />
+            <App />
+            <Notification />
           </div>
-          <MenuBar />
-          <App />
-          <Notification />
-        </div>
+        </FocusProvider>
       </DeviceInfoProvider>
     </StrictMode>
   );
 };
 
 createRoot(document.getElementById('root')).render(<Main />);
-
-// Now you can call notify('Your message') from anywhere in the app.
