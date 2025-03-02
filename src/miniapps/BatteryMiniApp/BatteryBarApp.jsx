@@ -1,19 +1,23 @@
-import React, { useState, useEffect } from 'react';
+// BatteryBarApp.jsx
+import React from 'react';
 import './BatteryMiniApp.css';
 import batteryPng from '../../media/assets/battery.png';
+import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider';
 
 function BatteryBarApp() {
-  const [batteryLevel, setBatteryLevel] = useState(85);
+  const deviceInfo = useDeviceInfo();
+  const batteryLevel =
+    deviceInfo.battery && deviceInfo.battery.level != null
+      ? deviceInfo.battery.level * 100
+      : 0;
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBatteryLevel((prev) =>
-        Math.max(0, Math.min(100, prev + (Math.random() * 10 - 5)))
-      );
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
+  const batteryFillStyle = {
+    top: '9.5px',
+    left: '3px',
+    height: '8px',
+    width: `${(batteryLevel / 100) * 18.5}px`,
+    backgroundColor: batteryLevel < 20 ? '#FF3B30' : undefined,
+  };
 
   return (
     <div className="battery-miniapp-container">
@@ -31,15 +35,7 @@ function BatteryBarApp() {
         />
 
         {/* Battery fill bar inside the battery icon */}
-        <div
-          className="battery-level-indicator"
-          style={{
-            top: '9.5px',   // Restoring original bar position
-            left: '3px',
-            height: '8px',  // Restoring original bar height
-            width: `${(batteryLevel / 100) * 18.5}px`, // Restoring original width scale
-          }}
-        />
+        <div className="battery-level-indicator" style={batteryFillStyle} />
       </div>
     </div>
   );
