@@ -16,20 +16,22 @@ function BatteryMiniApp() {
   }, []);
 
   return (
-    <div className="battery-miniapp-container">
-      {/* Top Row: "Battery" (bold) on the left, battery percentage on the right */}
-      <div className="battery-header-row">
-        <strong className="battery-title">Battery</strong>
-        <strong className="battery-percentage">{Math.round(batteryLevel)}%</strong>
-      </div>
+    <div className="battery-miniapp-wrapper">
+      <div className="battery-miniapp-container">
+        {/* Top Row: "Battery" on the left, battery percentage on the right */}
+        <div className="battery-header-row">
+          <strong className="battery-title">Battery</strong>
+          <strong className="battery-percentage">{Math.round(batteryLevel)}%</strong>
+        </div>
 
-      {/* Thin gray separator line */}
-      <div className="battery-separator" />
+        {/* Thin gray separator line */}
+        <div className="battery-separator" />
 
-      {/* "Using Significant Energy" section */}
-      <div className="battery-using-energy-section">
-        <strong className="using-energy-title">Using Significant Energy</strong>
-        <div className="energy-item">htdguide's website</div>
+        {/* "Using Significant Energy" section */}
+        <div className="battery-using-energy-section">
+          <strong className="using-energy-title">Using Significant Energy</strong>
+          <div className="energy-item">htdguide's website</div>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,24 @@
 /* BatteryMiniApp.css */
 
+/* Outer wrapper that creates a new stacking context and applies its own backdrop filter */
+.battery-miniapp-wrapper {
+  position: relative;
+  isolation: isolate; /* Forces a separate stacking context */
+}
+
+/* The pseudo-element applies the backdrop blur to everything behind this element */
+.battery-miniapp-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: -1;
+}
+
 /* Container for the entire battery mini-app */
 .battery-miniapp-container {
   display: flex;
@@ -9,8 +28,7 @@
   color: rgb(35, 35, 35);
   padding: 8px 12px;
   width: 250px;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.6); /* Half-transparent */
 }
 
 /* Top row: "Battery" on the left, battery percentage on the right */
@@ -27,11 +45,10 @@
   margin: 0;
 }
 
-/* Battery percentage on the right */
 .battery-percentage {
   display: flex;
   align-items: baseline;
-  font-size: 11px; /* smaller macOS-like text */
+  font-size: 11px;
   line-height: 1;
   font-weight: bold;
   margin: 0;
