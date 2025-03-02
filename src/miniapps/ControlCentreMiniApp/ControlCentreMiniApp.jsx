@@ -4,7 +4,7 @@ import controlCentreIcon from '../../media/assets/controlcentre.png';
 
 function ControlCentreMiniApp() {
   return (
-    <div className="control-centre-container">
+    <div class="control-centre-container">
       <h3>Control Centre</h3>
       <p>Quick access to essential controls</p>
 

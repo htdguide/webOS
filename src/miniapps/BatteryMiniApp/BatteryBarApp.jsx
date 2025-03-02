@@ -1,6 +1,6 @@
 // BatteryBarApp.jsx
 import React from 'react';
-import './BatteryMiniApp.css';
+import './BatteryBarApp.css';
 import batteryPng from '../../media/assets/battery.png';
 import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider';
 
@@ -20,13 +20,13 @@ function BatteryBarApp() {
   };
 
   return (
-    <div className="battery-miniapp-container">
-      <span className="battery-percentage">
-        <span className="battery-number">{Math.round(batteryLevel)}</span>
-        <span className="battery-symbol">%</span>
+    <div className="battery-bar-container">
+      <span className="battery-bar-percentage">
+        <span className="battery-bar-number">{Math.round(batteryLevel)}</span>
+        <span className="battery-bar-symbol">%</span>
       </span>
 
-      <div className="battery-icon-wrapper">
+      <div className="battery-bar-icon-wrapper">
         <img
           src={batteryPng}
           alt="Battery"
@@ -35,7 +35,7 @@ function BatteryBarApp() {
         />
 
         {/* Battery fill bar inside the battery icon */}
-        <div className="battery-level-indicator" style={batteryFillStyle} />
+        <div className="battery-bar-level-indicator" style={batteryFillStyle} />
       </div>
     </div>
   );

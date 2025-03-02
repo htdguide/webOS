@@ -8,6 +8,7 @@ import DeviceInfoProvider from './services/DeviceInfoProvider/DeviceInfoProvider
 import Notification, { notify } from './components/Notification/Notification.jsx';
 import MenuBar from './components/MenuBar/MenuBar.jsx';
 import { FocusProvider } from './interactions/FocusControl/FocusControl.jsx'; // Import FocusProvider
+import { UIStateProvider } from './services/UIStateStorage/UIStateStorage.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
@@ -41,17 +42,19 @@ const Main = () => {
   return (
     <StrictMode>
       <DeviceInfoProvider>
-        <FocusProvider> {/* Wrap everything inside FocusProvider */}
-          <Wallpaper />
-          <div>
-            <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
-              <LoadingScreen />
+        <UIStateProvider>
+          <FocusProvider> {/* Wrap everything inside FocusProvider */}
+          <MenuBar />
+            <Wallpaper />
+            <div>
+              <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
+                <LoadingScreen />
+              </div>
+              <App />
+              <Notification />
             </div>
-            <MenuBar />
-            <App />
-            <Notification />
-          </div>
-        </FocusProvider>
+          </FocusProvider>
+        </UIStateProvider>
       </DeviceInfoProvider>
     </StrictMode>
   );

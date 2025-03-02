@@ -1,50 +1,60 @@
-/* Ensures percentage and battery icon align properly in the menubar */
+/* BatteryMiniApp.css */
+
+/* Container for the entire battery mini-app */
 .battery-miniapp-container {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
     'Helvetica Neue', Helvetica, Arial, sans-serif;
   color: rgb(35, 35, 35);
+  padding: 8px 12px;
+  width: 250px;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
 }
 
-/* Ensures proper spacing and alignment for percentage */
+/* Top row: "Battery" on the left, battery percentage on the right */
+.battery-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.battery-title {
+  font-size: 13px;
+  font-weight: bold;
+  margin: 0;
+}
+
+/* Battery percentage on the right */
 .battery-percentage {
   display: flex;
   align-items: baseline;
-  font-size: 11px;
-  margin-right: 3px; /* Reduce spacing slightly for compact look */
+  font-size: 11px; /* smaller macOS-like text */
   line-height: 1;
+  font-weight: bold;
+  margin: 0;
 }
 
-/* Styling for battery number and % sign separately */
-.battery-number {
-  font-weight: 500; /* Slightly bold for visibility */
-  margin-top: 1px;
-  margin-right: 3px;
+/* Thin gray separator line (like in macOS battery menu) */
+.battery-separator {
+  border-top: 1px solid #ccc;
+  margin: 8px 0;
 }
 
-.battery-symbol {
-  font-weight: 400; /* Normal weight for the % sign */
+/* "Using Significant Energy" section */
+.battery-using-energy-section {
+  margin-top: 8px;
 }
 
-/* Wrapper ensures battery icon and fill overlay align properly */
-.battery-icon-wrapper {
-  margin-top: 1px;
-  position: relative;
-  display: flex;
-  align-items: center;
+.using-energy-title {
+  font-size: 13px;
+  font-weight: bold;
+  margin: 0 0 4px 0;
 }
 
-/* Ensures battery icon is properly aligned */
-.battery-icon-image {
-  display: block;
-  vertical-align: middle;
-}
-
-/* Battery fill bar */
-.battery-level-indicator {
-  position: absolute;
-  background-color: #000; /* Ensuring original color is retained */
-  border-radius: 2px;
-  transition: width 0.3s ease;
+.energy-item {
+  font-size: 13px;
+  color: #444;
 }

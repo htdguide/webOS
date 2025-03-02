@@ -1,7 +1,6 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
-import './MiniWindow.css';
 
-function MiniWindow({ anchorPos, onClose, children }) {
+function MiniWindow({ anchorPos, onClose, children, className = '' }) {
   const miniWindowRef = useRef(null);
   const [position, setPosition] = useState({ top: anchorPos.y, left: anchorPos.x });
 
@@ -11,15 +10,15 @@ function MiniWindow({ anchorPos, onClose, children }) {
       let top = anchorPos.y;
       let left = anchorPos.x;
 
-      // If the mini window overflows the right edge, adjust left position
+      // Adjust if the mini window overflows the right edge
       if (left + rect.width > window.innerWidth) {
-        left = window.innerWidth - rect.width - 5; // 5 margin
+        left = window.innerWidth - rect.width - 5; // 5px margin
       }
-      // If the mini window overflows the bottom edge, adjust top position
+      // Adjust if the mini window overflows the bottom edge
       if (top + rect.height > window.innerHeight) {
-        top = window.innerHeight - rect.height - 5; // 5 margin
+        top = window.innerHeight - rect.height - 5; // 5px margin
       }
-      // Ensure the position is not negative
+      // Ensure the position is not too close to the top or left edge
       top = Math.max(10, top);
       left = Math.max(10, left);
 
@@ -28,14 +27,12 @@ function MiniWindow({ anchorPos, onClose, children }) {
   }, [anchorPos]);
 
   return (
-    <div 
+    <div
       ref={miniWindowRef}
-      className="mini-window" 
-      style={{ top: position.top, left: position.left }}>
-      <div className="mini-window-content">
-        {children}
-      </div>
-      <button className="mini-window-close" onClick={onClose}>×</button>
+      className={className}
+      style={{ position: 'absolute', top: position.top, left: position.left }}
+    >
+      {children}
     </div>
   );
 }
