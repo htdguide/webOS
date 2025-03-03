@@ -21,22 +21,26 @@
 
 /* Container for the entire battery mini-app */
 .battery-miniapp-container {
+  margin-left: -8px;
   display: flex;
   flex-direction: column;
+  border-radius: 6px;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
     'Helvetica Neue', Helvetica, Arial, sans-serif;
   color: rgb(35, 35, 35);
   padding: 8px 12px;
   width: 250px;
-  background: rgba(255, 255, 255, 0.6); /* Half-transparent */
+  background: rgba(210, 210, 210, 0.98); /* Half-transparent */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 /* Top row: "Battery" on the left, battery percentage on the right */
 .battery-header-row {
+  margin-top: 6px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
 .battery-title {
@@ -48,30 +52,30 @@
 .battery-percentage {
   display: flex;
   align-items: baseline;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1;
-  font-weight: bold;
+  font-weight: 500;
   margin: 0;
 }
 
 /* Thin gray separator line (like in macOS battery menu) */
 .battery-separator {
-  border-top: 1px solid #ccc;
+  border-top: 1px solid #a7a7a79d;
   margin: 8px 0;
+  margin-left: 4px;
+  margin-right: 4px;
 }
 
-/* "Using Significant Energy" section */
-.battery-using-energy-section {
-  margin-top: 8px;
-}
 
 .using-energy-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: bold;
   margin: 0 0 4px 0;
+  color:rgba(35, 35, 35, 0.7)
 }
 
 .energy-item {
+  margin-top: 6px;
   font-size: 13px;
-  color: #444;
+  color:rgba(35, 35, 35);
 }

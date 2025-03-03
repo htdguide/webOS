@@ -6,7 +6,7 @@ function ControlCentreMiniApp() {
   return (
     <div class="control-centre-container">
       <h3>Control Centre</h3>
-      <p>Quick access to essential controls</p>
+      <p>Development in progress</p>
 
       <div className="control-centre-items">
         <button className="control-btn">Wi-Fi</button>

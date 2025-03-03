@@ -16,7 +16,7 @@ function BatteryBarApp() {
     left: '3px',
     height: '8px',
     width: `${(batteryLevel / 100) * 18.5}px`,
-    backgroundColor: batteryLevel < 20 ? '#FF3B30' : undefined,
+    backgroundColor: batteryLevel < 11 ? '#FF3B30' : undefined,
   };
 
   return (
