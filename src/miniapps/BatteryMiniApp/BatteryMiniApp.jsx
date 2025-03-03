@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './BatteryMiniApp.css';
 import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider';
+import logo from '../../media/assets/logo.png';
 
 function BatteryMiniApp() {
   const deviceInfo = useDeviceInfo();
@@ -25,7 +26,10 @@ function BatteryMiniApp() {
         {/* "Using Significant Energy" section */}
         <div className="battery-using-energy-section">
           <strong className="using-energy-title">Using Significant Energy</strong>
-          <div className="energy-item">htdguide's website</div>
+          <div className="energy-item">
+            <img src={logo} alt="Logo" className="energy-logo" />
+            <span>htdguide's webOS</span>
+          </div>
         </div>
       </div>
     </div>
