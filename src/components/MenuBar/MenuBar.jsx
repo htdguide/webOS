@@ -48,8 +48,6 @@ function MenuBar({ darkMode = false }) {
     <div className={`menu-bar ${darkMode ? 'dark-mode' : 'light-mode'}`}>
       <div className="menu-left">
         <a href="/" className="menu-item">Home</a>
-        <a href="https://www.linkedin.com/in/htdguide/" className="menu-item">LinkedIn</a>
-        <a href="https://github.com/htdguide" className="menu-item">GitHub</a>
       </div>
       <div className="menu-user-info">
         {/* Icons appear to the left of the username */}

@@ -44,13 +44,13 @@ const Main = () => {
       <DeviceInfoProvider>
         <UIStateProvider>
           <FocusProvider> {/* Wrap everything inside FocusProvider */}
-          <MenuBar />
             <Wallpaper />
             <div>
               <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
                 <LoadingScreen />
               </div>
               <App />
+              <MenuBar />
               <Notification />
             </div>
           </FocusProvider>
