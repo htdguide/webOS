@@ -30,7 +30,8 @@
   color: rgb(35, 35, 35);
   padding: 8px 12px;
   width: 250px;
-  background: rgba(210, 210, 210, 0.98); /* Half-transparent */
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
@@ -52,6 +53,7 @@
 .battery-percentage {
   display: flex;
   align-items: baseline;
+  opacity: 0.6;
   font-size: 12px;
   line-height: 1;
   font-weight: 500;
