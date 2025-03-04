@@ -7,8 +7,9 @@ import Wallpaper from './components/Wallpaper/Wallpaper.jsx';
 import DeviceInfoProvider from './services/DeviceInfoProvider/DeviceInfoProvider.jsx';
 import Notification, { notify } from './components/Notification/Notification.jsx';
 import MenuBar from './components/MenuBar/MenuBar.jsx';
-import { FocusProvider } from './interactions/FocusControl/FocusControl.jsx'; // Import FocusProvider
+import { FocusProvider } from './interactions/FocusControl/FocusControl.jsx';
 import { UIStateProvider } from './services/UIStateStorage/UIStateStorage.jsx';
+import { MiniWindowProvider } from './components/MiniWindow/MiniWindowProvider.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
@@ -36,23 +37,26 @@ const Main = () => {
     };
 
     window.addEventListener('show-notification', handleNotification);
-    return () => window.removeEventListener('show-notification', handleNotification);
+    return () =>
+      window.removeEventListener('show-notification', handleNotification);
   }, []);
 
   return (
     <StrictMode>
       <DeviceInfoProvider>
         <UIStateProvider>
-          <FocusProvider> {/* Wrap everything inside FocusProvider */}
+          <FocusProvider>
             <Wallpaper />
-            <div>
-              <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
-                <LoadingScreen />
+              <MiniWindowProvider>
+              <div>
+                <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
+                  <LoadingScreen />
+                </div>
+                <App />
+                <MenuBar />
+                <Notification />
               </div>
-              <App />
-              <MenuBar />
-              <Notification />
-            </div>
+            </MiniWindowProvider>
           </FocusProvider>
         </UIStateProvider>
       </DeviceInfoProvider>

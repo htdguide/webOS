@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import MiniWindow from '../MiniWindow/MiniWindow';
 import MiniAppsList from '../../lists/MiniAppsList';
 import { FocusWrapper, useFocus } from '../../interactions/FocusControl/FocusControl.jsx';
 import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider.jsx';
+import { useMiniWindow } from '../MiniWindow/MiniWindowProvider.jsx';
 import './MiniApps.css';
 
 function MiniApps() {
@@ -11,35 +11,50 @@ function MiniApps() {
   const iconRefs = useRef({});
   const { focusedComponent } = useFocus();
   const deviceInfo = useDeviceInfo();
+  const { openMiniWindow, closeMiniWindow } = useMiniWindow();
 
-  // Update MiniWindow position
+  // Update anchor position and, if needed, update the mini window position
   const updateAnchorPosition = (appId) => {
     if (iconRefs.current[appId]) {
       const rect = iconRefs.current[appId].getBoundingClientRect();
-      setAnchorPos({ x: rect.left, y: rect.top + rect.height });
+      const newAnchor = { x: rect.left, y: rect.top + rect.height };
+      setAnchorPos(newAnchor);
+      if (activeApp) {
+        openMiniWindow(<activeApp.miniApp />, newAnchor);
+      }
     }
   };
 
-  // Handle app click
+  // Handle app click by toggling the mini window via the provider
   const handleAppClick = (appItem) => {
     if (activeApp && activeApp.id === appItem.id) {
       setActiveApp(null);
+      closeMiniWindow();
     } else {
       setActiveApp(appItem);
-      updateAnchorPosition(appItem.id);
+      if (iconRefs.current[appItem.id]) {
+        const rect = iconRefs.current[appItem.id].getBoundingClientRect();
+        const newAnchor = { x: rect.left, y: rect.top + rect.height };
+        setAnchorPos(newAnchor);
+        openMiniWindow(<appItem.miniApp />, newAnchor);
+      }
     }
   };
 
-  // Close MiniWindow when focus is lost
+  // Close mini window when focus is lost
   useEffect(() => {
     if (focusedComponent !== 'MiniApps') {
       setActiveApp(null);
+      closeMiniWindow();
     }
-  }, [focusedComponent]);
+  }, [focusedComponent, closeMiniWindow]);
 
+  // Update mini window position on window resize
   useEffect(() => {
     const handleResize = () => {
-      if (activeApp) updateAnchorPosition(activeApp.id);
+      if (activeApp) {
+        updateAnchorPosition(activeApp.id);
+      }
     };
 
     window.addEventListener('resize', handleResize);
@@ -60,8 +75,6 @@ function MiniApps() {
     .slice()
     .sort((a, b) => a.priority - b.priority)
     .reverse();
-
-  const ActiveComponent = activeApp ? activeApp.miniApp : null;
 
   return (
     <FocusWrapper name="MiniApps">
@@ -100,12 +113,6 @@ function MiniApps() {
             </div>
           );
         })}
-
-        {activeApp && ActiveComponent && (
-          <MiniWindow anchorPos={anchorPos} onClose={() => setActiveApp(null)}>
-            <ActiveComponent />
-          </MiniWindow>
-        )}
       </div>
     </FocusWrapper>
   );

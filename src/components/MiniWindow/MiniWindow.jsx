@@ -2,10 +2,10 @@ import React, { useState, useRef, useLayoutEffect } from 'react';
 
 function MiniWindow({ anchorPos, onClose, children, className = '' }) {
   const miniWindowRef = useRef(null);
-  const [position, setPosition] = useState({ top: anchorPos.y, left: anchorPos.x });
+  const [position, setPosition] = useState({ top: 0, left: 0 });
 
   useLayoutEffect(() => {
-    if (miniWindowRef.current) {
+    if (anchorPos && miniWindowRef.current) {
       const rect = miniWindowRef.current.getBoundingClientRect();
       let top = anchorPos.y;
       let left = anchorPos.x;
