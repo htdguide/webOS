@@ -93,17 +93,27 @@ export const startDragging = (
     // Add a short transition so the icon "flies" to the snap
     iconRef.current.style.transition = 'left 0.2s ease, top 0.2s ease';
     iconRef.current.offsetWidth; // Force reflow
+
+    // Set new positions
     iconRef.current.style.left = `${snappedX}px`;
     iconRef.current.style.top = `${snappedY}px`;
 
-    // Once the transition finishes, finalize position in state
-    const onTransitionEnd = () => {
-      iconRef.current.removeEventListener('transitionend', onTransitionEnd);
+    // If the icon is already at the snapped position,
+    // the transition event may not fire so we finalize immediately.
+    if (Math.abs(rect.left - snappedX) < 1 && Math.abs(rect.top - snappedY) < 1) {
       setPosition({ x: snappedX, y: snappedY });
       setIsDragging(false);
       iconRef.current.style.transition = 'none';
-    };
-    iconRef.current.addEventListener('transitionend', onTransitionEnd);
+    } else {
+      // Once the transition finishes, finalize position in state
+      const onTransitionEnd = () => {
+        iconRef.current.removeEventListener('transitionend', onTransitionEnd);
+        setPosition({ x: snappedX, y: snappedY });
+        setIsDragging(false);
+        iconRef.current.style.transition = 'none';
+      };
+      iconRef.current.addEventListener('transitionend', onTransitionEnd);
+    }
   };
 
   // Attach movement and end-of-drag listeners
