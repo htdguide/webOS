@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect } from 'react';
+import React, { useState } from 'react';
 import './ControlCentreMiniApp.css';
 import play from '../../media/assets/play.png';
 import fastforward from '../../media/assets/fastforward.png';
@@ -7,31 +7,6 @@ import volumeIcon from '../../media/assets/volume.png';
 
 function ControlCentreMiniApp() {
   const [volume, setVolume] = useState(50);
-  const [sliderWidth, setSliderWidth] = useState(0);
-  const sliderRef = useRef(null);
-  const thumbRadius = 9; // half of thumb's 18px width
-
-  useLayoutEffect(() => {
-    const updateSliderWidth = () => {
-      if (sliderRef.current) {
-        setSliderWidth(sliderRef.current.offsetWidth);
-      }
-    };
-    updateSliderWidth();
-    window.addEventListener('resize', updateSliderWidth);
-    return () => window.removeEventListener('resize', updateSliderWidth);
-  }, []);
-
-  // Compute the current fill position in pixels
-  const computedFill = (volume / 100) * sliderWidth;
-  // Clamp the fill so it never goes below the thumb's center (thumbRadius) or beyond the track's limit
-  const effectiveFill =
-    sliderWidth > 0
-      ? Math.min(Math.max(computedFill, thumbRadius), sliderWidth - thumbRadius)
-      : thumbRadius;
-  // Convert to a percentage of the slider width
-  const whiteStopPercentage =
-    sliderWidth > 0 ? (effectiveFill / sliderWidth) * 100 : 0;
 
   const handleVolumeChange = (event) => {
     setVolume(event.target.value);
@@ -70,16 +45,15 @@ function ControlCentreMiniApp() {
           />
 
           <input
-            ref={sliderRef}
             type="range"
             className="volume-slider"
-            min="0"
-            max="100"
+            min="3"
+            max="98"
             value={volume}
             onChange={handleVolumeChange}
             style={{
               '--volume': `${volume}%`,
-              '--white-stop': `${whiteStopPercentage}%`
+              '--white-stop': `${volume}%`
             }}
           />
         </div>
