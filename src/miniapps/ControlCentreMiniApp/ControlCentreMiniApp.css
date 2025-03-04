@@ -18,16 +18,58 @@
   margin-bottom: 12px;
 }
 
-.song-info {
-  font-size: 14px;
-  font-weight: 500;
-  max-width: 180px;
-  white-space: nowrap;
+.music-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.album-artwork {
+  margin-right: 8px;
+}
+
+.album-artwork img {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.song-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.song-title-container {
+  margin-top: -7px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.song-title-text {
+  font-size: 12px;
+  font-weight: bold;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.song-artist {
+  font-size: 11px;
+  color: #555;
+  margin-top: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.song-artist-text {
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .music-buttons {
+  margin-left: 5px;
   display: flex;
   gap: 8px;
 }
@@ -49,14 +91,12 @@
   height: 16px;
 }
 
-/* --- Divider --- */
 .divider {
   height: 1px;
-  background-color: #ddd;
+  border-top: 1px solid #a7a7a79d;
   margin: 12px 0;
 }
 
-/* --- Sound Control Section --- */
 .sound-title {
   font-size: 14px;
   font-weight: 500;
@@ -69,14 +109,12 @@
   gap: 8px;
 }
 
-/* Volume slider container */
 .volume-slider-container {
   position: relative;
   width: 100%;
-  height: 20px; /* increased by 10% from 18px */
+  height: 20px;
 }
 
-/* The icon placed on the track */
 .volume-icon-ontrack {
   position: absolute;
   opacity: 0.6;
@@ -90,27 +128,25 @@
   -webkit-user-drag: none;
 }
 
-/* --- Volume Slider --- */
 .volume-slider {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 20px; /* increased by 10% */
+  height: 20px;
   margin: 0;
   cursor: pointer;
   outline: none;
-  border-radius: 10px; /* increased from 9px */
+  border-radius: 10px;
   -webkit-appearance: none;
   appearance: none;
   --volume: 50%;
   --white-stop: 50%;
 }
 
-/* 1) Chrome / Safari / Opera track */
 .volume-slider::-webkit-slider-runnable-track {
-  height: 20px; /* increased by 10% */
-  border-radius: 10px; /* increased from 9px */
+  height: 20px;
+  border-radius: 10px;
   border: 1px solid #bbb;
   background: linear-gradient(
     to right,
@@ -121,13 +157,12 @@
   );
 }
 
-/* 2) Chrome / Safari / Opera thumb */
 .volume-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 19px; /* increased from 17px */
-  height: 18px; /* increased from 16.5px */
-  border-radius: 10px; /* increased from 9px */
+  width: 19px;
+  height: 18px;
+  border-radius: 10px;
   background: #fff;
   border: 0.5px solid rgba(153, 153, 153, var(--thumb-border-opacity, 1));
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
@@ -135,10 +170,9 @@
   transition: border-color 0.3s ease;
 }
 
-/* 3) Firefox track */
 .volume-slider::-moz-range-track {
-  height: 20px; /* increased by 10% */
-  border-radius: 10px; /* increased from 9px */
+  height: 20px;
+  border-radius: 10px;
   border: 1px solid #bbb;
   background: linear-gradient(
     to right,
@@ -149,11 +183,10 @@
   );
 }
 
-/* 4) Firefox thumb */
 .volume-slider::-moz-range-thumb {
-  width: 20px; /* increased from 18px */
-  height: 20px; /* increased from 18px */
-  border-radius: 10px; /* increased from 9px */
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
   background: #fff;
   border: 1px solid rgba(153, 153, 153, var(--thumb-border-opacity, 1));
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
