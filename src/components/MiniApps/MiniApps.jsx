@@ -27,6 +27,16 @@ function MiniApps() {
 
   // Handle app click by toggling the mini window via the provider
   const handleAppClick = (appItem) => {
+    // If the app does not have a miniApp, do not open a mini window.
+    if (!appItem.miniApp) {
+      // If this app is active for some reason, close the mini window.
+      if (activeApp && activeApp.id === appItem.id) {
+        setActiveApp(null);
+        closeMiniWindow();
+      }
+      return;
+    }
+
     if (activeApp && activeApp.id === appItem.id) {
       setActiveApp(null);
       closeMiniWindow();
