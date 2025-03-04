@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import MiniWindow from '../MiniWindow/MiniWindow';
 import MiniAppsList from '../../lists/MiniAppsList';
-import { FocusWrapper, useFocus } from '../../interactions/FocusControl/FocusControl.jsx'; // Import focus tracking
+import { FocusWrapper, useFocus } from '../../interactions/FocusControl/FocusControl.jsx';
+import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider.jsx';
 import './MiniApps.css';
 
 function MiniApps() {
   const [activeApp, setActiveApp] = useState(null);
   const [anchorPos, setAnchorPos] = useState({ x: 0, y: 0 });
-  const iconRefs = useRef({}); // Store refs dynamically
-  const { focusedComponent } = useFocus(); // Get focused component
+  const iconRefs = useRef({});
+  const { focusedComponent } = useFocus();
+  const deviceInfo = useDeviceInfo();
 
   // Update MiniWindow position
   const updateAnchorPosition = (appId) => {
@@ -44,14 +46,25 @@ function MiniApps() {
     return () => window.removeEventListener('resize', handleResize);
   }, [activeApp]);
 
-  const sortedApps = MiniAppsList.slice()
+  // Filter apps:
+  // - Only include apps with available: true.
+  // - For battery app, hide if battery info is not available.
+  // - For user app, hide in portrait orientation.
+  const sortedApps = MiniAppsList
+    .filter(app => app.available)
+    .filter(app => {
+      if (app.id === 'battery' && deviceInfo.battery.level === null) return false;
+      if (app.id === 'user' && deviceInfo.orientation === 'portrait') return false;
+      return true;
+    })
+    .slice()
     .sort((a, b) => a.priority - b.priority)
     .reverse();
 
   const ActiveComponent = activeApp ? activeApp.miniApp : null;
 
   return (
-    <FocusWrapper name="MiniApps"> {/* Wrap with FocusWrapper */}
+    <FocusWrapper name="MiniApps">
       <div className="menu-bar-icons" style={{ display: 'flex', alignItems: 'center', pointerEvents: 'auto' }}>
         {sortedApps.map((appItem) => {
           const { id, name, barApp: BarApp, icon, iconSize = 30 } = appItem;

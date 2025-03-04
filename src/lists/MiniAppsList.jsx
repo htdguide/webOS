@@ -14,6 +14,7 @@ const MiniAppsList = [
     icon: controlCentreIcon,
     iconSize: 16, // Custom size for Control Centre icon
     priority: 0,
+    available: true, // Will not be rendered
   },
   {
     id: 'battery',
@@ -22,6 +23,7 @@ const MiniAppsList = [
     barApp: BatteryBarApp,
     iconSize: 24, // Custom size for Battery icon
     priority: 2,
+    available: true, // Will not be rendered if no battery info
   },
   {
     id: 'user',
@@ -29,6 +31,7 @@ const MiniAppsList = [
     miniApp: null,
     barApp: UserMiniApp,
     priority: 1,
+    available: true, // Will be rendered only in landscape orientation
   },
   {
     id: 'datetime',
@@ -36,6 +39,7 @@ const MiniAppsList = [
     miniApp: null,
     barApp: DateTimeMiniApp,
     priority: -1,
+    available: true, // Will be rendered
   },
 ];
 
