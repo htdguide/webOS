@@ -21,10 +21,12 @@ function BatteryBarApp() {
 
   return (
     <div className="battery-bar-container">
-      <span className="battery-bar-percentage">
-        <span className="battery-bar-number">{Math.round(batteryLevel)}</span>
-        <span className="battery-bar-symbol">%</span>
-      </span>
+      {deviceInfo.orientation !== 'portrait' && (
+        <span className="battery-bar-percentage">
+          <span className="battery-bar-number">{Math.round(batteryLevel)}</span>
+          <span className="battery-bar-symbol">%</span>
+        </span>
+      )}
 
       <div className="battery-bar-icon-wrapper">
         <img

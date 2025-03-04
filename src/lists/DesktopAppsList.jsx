@@ -14,7 +14,7 @@ const DesktopAppsList = [
     name: 'Sorting Algorithms',
     icon: defaultIcon,
     component: SortingAlgorithms,
-    priority: 1,
+    priority: 3,
   },
 
   {
@@ -22,7 +22,7 @@ const DesktopAppsList = [
     name: 'untitled folder',
     icon: folderIcon,
     component: null,
-    priority: 2,
+    priority: 4,
   },
 
   {
@@ -31,7 +31,7 @@ const DesktopAppsList = [
     icon: linkedinIcon,
     link: 'http://linkedin.com/in/htdguide/',
     component: null,
-    priority: 3,
+    priority: 2,
   },
 
   {
@@ -40,7 +40,7 @@ const DesktopAppsList = [
     icon: githubIcon,
     link: 'https://github.com/htdguide',
     component: null,
-    priority: 4,
+    priority: 1,
   },
 
   // Add more apps here as needed, with increasing `priority`
