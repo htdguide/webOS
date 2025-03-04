@@ -86,6 +86,8 @@
   z-index: 2;
   width: 14px;
   height: 14px;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 /* --- Volume Slider --- */
@@ -127,9 +129,10 @@
   height: 18px; /* increased from 16.5px */
   border-radius: 10px; /* increased from 9px */
   background: #fff;
-  border: 0.5px solid #99999954;
+  border: 0.5px solid rgba(153, 153, 153, var(--thumb-border-opacity, 1));
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
   cursor: pointer;
+  transition: border-color 0.3s ease;
 }
 
 /* 3) Firefox track */
@@ -152,7 +155,8 @@
   height: 20px; /* increased from 18px */
   border-radius: 10px; /* increased from 9px */
   background: #fff;
-  border: 1px solid #999;
+  border: 1px solid rgba(153, 153, 153, var(--thumb-border-opacity, 1));
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
   cursor: pointer;
+  transition: border-color 0.3s ease;
 }

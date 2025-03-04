@@ -9,8 +9,12 @@ function ControlCentreMiniApp() {
   const [volume, setVolume] = useState(50);
 
   const handleVolumeChange = (event) => {
-    setVolume(event.target.value);
+    setVolume(Number(event.target.value));
   };
+
+  // Compute thumb border opacity: 0 for volume <= 10, linearly ramping to 1 at volume 30.
+  const thumbBorderOpacity =
+    volume < 20 ? 0 : volume < 20 ? (volume - 20) / 60 : 1;
 
   return (
     <div className="control-centre-container">
@@ -53,7 +57,8 @@ function ControlCentreMiniApp() {
             onChange={handleVolumeChange}
             style={{
               '--volume': `${volume}%`,
-              '--white-stop': `${volume}%`
+              '--white-stop': `${volume}%`,
+              '--thumb-border-opacity': thumbBorderOpacity,
             }}
           />
         </div>
