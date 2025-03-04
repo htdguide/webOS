@@ -21,7 +21,7 @@
 .song-info {
   font-size: 14px;
   font-weight: 500;
-  max-width: 180px; /* Prevent text overflow */
+  max-width: 180px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -45,7 +45,7 @@
 }
 
 .music-btn img {
-  width: 16px; /* Adjust to match your icon size */
+  width: 16px;
   height: 16px;
 }
 
@@ -69,41 +69,57 @@
   gap: 8px;
 }
 
-.volume-icon {
+/* Volume slider container */
+.volume-slider-container {
+  position: relative;
+  width: 100%;
+  height: 18px;
+}
+
+/* The icon placed on the track */
+.volume-icon-ontrack {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
   width: 18px;
   height: 18px;
 }
 
 /* --- Volume Slider --- */
 .volume-slider {
-  flex: 1;
-  -webkit-appearance: none; /* Remove default Safari styling */
-  appearance: none;
-  height: 8px;
-  border-radius: 8px;
-  outline: none;
-  border: 1px solid #bbb;
-  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 18px;
   margin: 0;
-
-  /* Default fallback if no inline style is set yet */
-  --volume: 50%;
-}
-
-/* 1) WebKit-based browsers (Chrome, Safari, etc.) track */
-.volume-slider::-webkit-slider-runnable-track {
-  height: 8px;
-  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  border-radius: 9px;
   border: 1px solid #bbb;
-  /*
-    Use our CSS variable for a dynamic gradient:
-    - White from 0% to var(--volume)
-    - Gray from var(--volume) to 100%
-  */
-  background: linear-gradient(to right, #fff 0%, #fff var(--volume), #ccc var(--volume), #ccc 100%);
+  -webkit-appearance: none;
+  appearance: none;
+  --volume: 50%;
+  --white-stop: 50%;
 }
 
-/* 2) WebKit-based browsers (Chrome, Safari, etc.) thumb */
+/* 1) Chrome / Safari / Opera track */
+.volume-slider::-webkit-slider-runnable-track {
+  height: 18px;
+  border-radius: 9px;
+  border: 1px solid #bbb;
+  background: linear-gradient(
+    to right,
+    #fff 0%,
+    #fff var(--white-stop),
+    #ccc var(--white-stop),
+    #ccc 100%
+  );
+}
+
+/* 2) Chrome / Safari / Opera thumb */
 .volume-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -113,18 +129,24 @@
   background: #fff;
   border: 1px solid #999;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
-  margin-top: -6px; /* Centers the thumb on the track */
   cursor: pointer;
 }
 
-/* 3) Firefox track & thumb */
+/* 3) Firefox track */
 .volume-slider::-moz-range-track {
-  height: 8px;
-  border-radius: 8px;
+  height: 18px;
+  border-radius: 9px;
   border: 1px solid #bbb;
-  background: linear-gradient(to right, #fff 0%, #fff var(--volume), #ccc var(--volume), #ccc 100%);
+  background: linear-gradient(
+    to right,
+    #fff 0%,
+    #fff var(--white-stop),
+    #ccc var(--white-stop),
+    #ccc 100%
+  );
 }
 
+/* 4) Firefox thumb */
 .volume-slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
