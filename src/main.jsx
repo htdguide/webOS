@@ -10,6 +10,7 @@ import MenuBar from './components/MenuBar/MenuBar.jsx';
 import { FocusProvider } from './interactions/FocusControl/FocusControl.jsx';
 import { UIStateProvider } from './services/UIStateStorage/UIStateStorage.jsx';
 import { MiniWindowProvider } from './components/MiniWindow/MiniWindowProvider.jsx';
+import { DraggableWindowProvider } from './components/DraggableWindow/DraggableWindowProvider.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
@@ -48,14 +49,16 @@ const Main = () => {
           <FocusProvider>
             <Wallpaper />
               <MiniWindowProvider>
-              <div>
-                <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
-                  <LoadingScreen />
-                </div>
-                <App />
-                <MenuBar />
-                <Notification />
-              </div>
+                <DraggableWindowProvider>
+                  <div>
+                    <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
+                      <LoadingScreen />
+                    </div>
+                    <App />
+                    <MenuBar />
+                    <Notification />
+                  </div>
+                </DraggableWindowProvider>
             </MiniWindowProvider>
           </FocusProvider>
         </UIStateProvider>
