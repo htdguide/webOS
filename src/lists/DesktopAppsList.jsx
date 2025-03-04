@@ -3,6 +3,7 @@ import folderIcon from '../media/icons/folder.webp';
 import SortingAlgorithms from '../apps/SortingAlgorithms/SortingAlgorithms.jsx';
 import linkedinIcon from '../media/icons/linkedin.png';
 import githubIcon from '../media/icons/github.png';
+import awaiIcon from '../media/icons/awai.png';
 
 /**
  * Each icon now has a `priority` which determines its order on the desktop grid.
@@ -14,7 +15,7 @@ const DesktopAppsList = [
     name: 'Sorting Algorithms',
     icon: defaultIcon,
     component: SortingAlgorithms,
-    priority: 3,
+    priority: 4,
   },
 
   {
@@ -22,7 +23,7 @@ const DesktopAppsList = [
     name: 'untitled folder',
     icon: folderIcon,
     component: null,
-    priority: 4,
+    priority: 5,
   },
 
   {
@@ -41,6 +42,15 @@ const DesktopAppsList = [
     link: 'https://github.com/htdguide',
     component: null,
     priority: 1,
+  },
+
+  {
+    id: 'awai',
+    name: 'ApplyWithAI',
+    icon: awaiIcon,
+    link: 'https://applywithai.com',
+    component: null,
+    priority: 3,
   },
 
   // Add more apps here as needed, with increasing `priority`
