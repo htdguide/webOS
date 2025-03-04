@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import DesktopIcon from '../DesktopIcon/DesktopIcon.jsx';
 import DesktopAppsList from '../../lists/DesktopAppsList.jsx';
-import { GRID_GAP, TOP_MARGIN, LEFT_MARGIN,} from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
+import { GRID_GAP, TOP_MARGIN, LEFT_MARGIN } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 import { GRID_SIZE } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 import './Desktop.css';
 import { FocusWrapper } from '../../interactions/FocusControl/FocusControl.jsx';
-
 
 /**
  * Helper to convert a priority number into an (x,y) position on the desktop.
