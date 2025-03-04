@@ -1,32 +1,136 @@
 .control-centre-container {
-    width: 200px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(12px);
-    border-radius: 10px;
-    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    text-align: center;
-  }
-  
-  .control-centre-items {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 10px;
-  }
-  
-  .control-btn {
-    background: rgba(240, 240, 240, 0.8);
-    border: none;
-    padding: 8px;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-  }
-  
-  .control-btn:hover {
-    background: rgba(200, 200, 200, 0.9);
-  }
-  
+  width: 300px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+               "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #333;
+}
+
+/* --- Music Control Section --- */
+.music-control-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.song-info {
+  font-size: 14px;
+  font-weight: 500;
+  max-width: 180px; /* Prevent text overflow */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.music-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.music-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  transition: opacity 0.2s ease;
+}
+
+.music-btn:hover {
+  opacity: 0.7;
+}
+
+.music-btn img {
+  width: 16px; /* Adjust to match your icon size */
+  height: 16px;
+}
+
+/* --- Divider --- */
+.divider {
+  height: 1px;
+  background-color: #ddd;
+  margin: 12px 0;
+}
+
+/* --- Sound Control Section --- */
+.sound-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.sound-control-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.volume-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* --- Volume Slider --- */
+.volume-slider {
+  flex: 1;
+  -webkit-appearance: none; /* Remove default Safari styling */
+  appearance: none;
+  height: 8px;
+  border-radius: 8px;
+  outline: none;
+  border: 1px solid #bbb;
+  cursor: pointer;
+  margin: 0;
+
+  /* Default fallback if no inline style is set yet */
+  --volume: 50%;
+}
+
+/* 1) WebKit-based browsers (Chrome, Safari, etc.) track */
+.volume-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 8px;
+  border: 1px solid #bbb;
+  /*
+    Use our CSS variable for a dynamic gradient:
+    - White from 0% to var(--volume)
+    - Gray from var(--volume) to 100%
+  */
+  background: linear-gradient(to right, #fff 0%, #fff var(--volume), #ccc var(--volume), #ccc 100%);
+}
+
+/* 2) WebKit-based browsers (Chrome, Safari, etc.) thumb */
+.volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #999;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+  margin-top: -6px; /* Centers the thumb on the track */
+  cursor: pointer;
+}
+
+/* 3) Firefox track & thumb */
+.volume-slider::-moz-range-track {
+  height: 8px;
+  border-radius: 8px;
+  border: 1px solid #bbb;
+  background: linear-gradient(to right, #fff 0%, #fff var(--volume), #ccc var(--volume), #ccc 100%);
+}
+
+.volume-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #999;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
