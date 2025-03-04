@@ -98,7 +98,6 @@
   cursor: pointer;
   outline: none;
   border-radius: 9px;
-  border: 1px solid #bbb;
   -webkit-appearance: none;
   appearance: none;
   --volume: 50%;
@@ -125,7 +124,7 @@
   appearance: none;
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: 9px;
   background: #fff;
   border: 1px solid #999;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
@@ -150,7 +149,7 @@
 .volume-slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: 9px;
   background: #fff;
   border: 1px solid #999;
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
