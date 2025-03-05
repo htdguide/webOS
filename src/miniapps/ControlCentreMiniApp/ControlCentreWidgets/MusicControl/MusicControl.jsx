@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './MusicControl.css';
-import play from '../../media/assets/play.png';
-import pause from '../../media/assets/pause.png';
-import fastforward from '../../media/assets/fastforward.png';
-import rewind from '../../media/assets/rewind.png';
-import albumThumbnail from '../../media/assets/album.jpg';
+import play from '../../../../media/assets/play.png';
+import pause from '../../../../media/assets/pause.png';
+import fastforward from '../../../../media/assets/fastforward.png';
+import rewind from '../../../../media/assets/rewind.png';
+import albumThumbnail from '../../../../media/assets/album.jpg';
 
 function MusicControl() {
   // PLAYBACK

@@ -1,6 +1,6 @@
 import React from 'react';
 import './BatteryControl.css';
-import batteryIcon from '../../media/assets/battery.png'; // (just an example)
+import batteryIcon from '../../../../media/assets/battery.png'; // (just an example)
 
 function BatteryControl() {
   const batteryPercentage = 87; // Hard-coded for now

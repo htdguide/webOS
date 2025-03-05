@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import SliderControlWidgetAsset from './SliderControlWidgetAsset';
-import brightnessIcon from '../../media/assets/volume.png';
+import SliderControlWidgetAsset from '../../WidgetsComponents/SliderControl/SliderControlAsset';
+import brightnessIcon from '../../../../media/assets/volume.png';
 
 function DisplayControl() {
   const [brightness, setBrightness] = useState(50);
@@ -16,8 +16,8 @@ function DisplayControl() {
         icon={brightnessIcon}
         value={brightness}
         onChange={handleBrightnessChange}
-        min={0}
-        max={100}
+        min={3}
+        max={97}
         fadeThumbBorder={true}
         removeFocusOutline={true}
       />

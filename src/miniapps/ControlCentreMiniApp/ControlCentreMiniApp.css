@@ -4,7 +4,7 @@
 
 /* The container that holds all segments */
 .cc-main-container {
-  width: 320px;
+  width: 275px;
   padding: 12px;
   /* Semi-translucent white with blur, to mimic macOS style */
   background: rgba(255, 255, 255, 0.8);

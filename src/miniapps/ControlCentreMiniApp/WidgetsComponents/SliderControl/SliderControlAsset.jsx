@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './SliderControlWidgetAsset.css';
+import './SliderControlAsset.css';
 
 /**
  * A reusable slider widget that uses unique CSS classes so multiple sliders

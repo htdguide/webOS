@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import SliderControlWidgetAsset from './SliderControlWidgetAsset';
-import volumeIcon from '../../media/assets/volume.png';
+import SliderControlWidgetAsset from '../../WidgetsComponents/SliderControl/SliderControlAsset';
+import volumeIcon from '../../../../media/assets/volume.png';
 
 function SoundControl() {
   const [volume, setVolume] = useState(50);
