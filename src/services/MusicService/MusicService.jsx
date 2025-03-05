@@ -11,6 +11,9 @@ import React, {
   // Import jsmediatags from the UMD build to avoid Vite dep-scan issues
   import jsmediatags from 'jsmediatags/dist/jsmediatags.min.js';
   
+  // Import our config
+  import musicServiceConfig from '../../configs/MusicServiceConfig/MusicServiceConfig';
+  
   // Create the context
   const MusicServiceContext = createContext(null);
   
@@ -42,10 +45,25 @@ import React, {
     });
   
     /**
-     * 1) Fetch the JSON from /WebintoshHD/Music/musicList.json
+     * Volume state (0–100). We use DEFAULT_VOLUME from config
+     */
+    const [volume, setVolume] = useState(musicServiceConfig.DEFAULT_VOLUME);
+  
+    /**
+     * Keep <audio> volume in sync with the volume state.
+     * We apply an exponent from config (e.g. 2) so that volume changes
+     * feel more uniform across the slider’s 0–100 range.
      */
     useEffect(() => {
-      fetch('/WebintoshHD/Music/musicList.json')
+      const fraction = volume / 100;
+      audioRef.current.volume = Math.pow(fraction, musicServiceConfig.VOLUME_EXPONENT);
+    }, [volume]);
+  
+    /**
+     * 1) Fetch the JSON from the MUSIC_LIST_URL in the config
+     */
+    useEffect(() => {
+      fetch(musicServiceConfig.MUSIC_LIST_URL)
         .then((res) => {
           if (!res.ok) {
             throw new Error('Failed to fetch musicList.json');
@@ -242,8 +260,10 @@ import React, {
       currentIndex,
       musicList,
       audioRef,
+      volume,
   
       // actions
+      setVolume,
       play,
       pause,
       stop,
