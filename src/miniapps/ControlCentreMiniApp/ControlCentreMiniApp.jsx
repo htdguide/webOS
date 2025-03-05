@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ControlCentreMiniApp.css';
 import play from '../../media/assets/play.png';
+import pause from '../../media/assets/pause.png';
 import fastforward from '../../media/assets/fastforward.png';
 import rewind from '../../media/assets/rewind.png';
 import volumeIcon from '../../media/assets/volume.png';
@@ -8,6 +9,7 @@ import albumThumbnail from '../../media/assets/album.jpg';
 
 function ControlCentreMiniApp() {
   const [volume, setVolume] = useState(50);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Example song details
   const songTitle = "Keep Moving";
@@ -104,6 +106,10 @@ function ControlCentreMiniApp() {
     };
   }, [artistName]);
 
+  const handlePlayToggle = () => {
+    setIsPlaying(!isPlaying);
+  };
+
   return (
     <div className="control-centre-container">
       {dynamicKeyframes && <style>{dynamicKeyframes}</style>}
@@ -142,8 +148,8 @@ function ControlCentreMiniApp() {
           <button className="music-btn">
             <img src={rewind} alt="Previous" />
           </button>
-          <button className="music-btn">
-            <img src={play} alt="Play" />
+          <button className="music-btn" onClick={handlePlayToggle}>
+            <img src={isPlaying ? pause : play} alt={isPlaying ? "Pause" : "Play"} />
           </button>
           <button className="music-btn">
             <img src={fastforward} alt="Next" />
