@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
-import './DisplayControl.css';
+import SliderControlWidgetAsset from './SliderControlWidgetAsset';
+import brightnessIcon from '../../media/assets/volume.png';
 
 function DisplayControl() {
   const [brightness, setBrightness] = useState(50);
 
-  const handleBrightnessChange = (e) => {
-    setBrightness(Number(e.target.value));
+  const handleBrightnessChange = (newValue) => {
+    setBrightness(newValue);
   };
 
   return (
-    <div className="display-control-container">
-      <div className="display-title">Display</div>
-      <input
-        type="range"
-        className="display-slider"
-        min="0"
-        max="100"
+    <div>
+      <SliderControlWidgetAsset
+        label="Display"
+        icon={brightnessIcon}
         value={brightness}
         onChange={handleBrightnessChange}
+        min={0}
+        max={100}
+        fadeThumbBorder={true}
+        removeFocusOutline={true}
       />
     </div>
   );
