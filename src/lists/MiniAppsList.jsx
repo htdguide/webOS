@@ -3,6 +3,7 @@ import ControlCentreMiniApp from '../miniapps/ControlCentreMiniApp/ControlCentre
 import BatteryMiniApp from '../miniapps/BatteryMiniApp/BatteryMiniApp';
 import BatteryBarApp from '../miniapps/BatteryMiniApp/BatteryBarApp';
 import UserBarApp from '../miniapps/UserMiniApp/UserBarApp';
+import UserMiniApp from '../miniapps/UserMiniApp/UserMiniApp';
 import DateTimeBarApp from '../miniapps/DateTimeMiniApp/DateTimeBarApp';
 
 const MiniAppsList = [
@@ -28,7 +29,7 @@ const MiniAppsList = [
   {
     id: 'user',
     name: 'User',
-    miniApp: null,
+    miniApp: UserMiniApp,
     barApp: UserBarApp,
     priority: 1,
     available: true, // Will be rendered only in landscape orientation

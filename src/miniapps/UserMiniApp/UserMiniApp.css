@@ -1,0 +1,109 @@
+/* UserMiniApp.css */
+
+/* Outer wrapper that creates a new stacking context and applies its own backdrop filter */
+.user-miniapp-wrapper {
+    position: relative;
+    isolation: isolate; /* Forces a separate stacking context */
+  }
+  
+  /* The pseudo-element applies the backdrop blur to everything behind this element */
+  .user-miniapp-wrapper::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: -1;
+  }
+  
+  /* Container for the entire user mini-app */
+  .user-miniapp-container {
+    margin-left: -8px;
+    display: flex;
+    flex-direction: column;
+    border-radius: 6px;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+      'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: rgb(35, 35, 35);
+    padding: 8px 12px;
+    width: 250px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Top row: "User" label on the left and a verification circle on the right */
+  .user-header-row {
+    margin-top: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3px;
+  }
+  
+  .user-title {
+    font-size: 13px;
+    font-weight: bold;
+    margin: 0;
+  }
+  
+  /* Orange circle with white border and checkmark inside */
+  .user-verify-icon {
+    width: 18px;
+    height: 18px;
+    background-color: #ffa500; /* MacOS-like orange, tweak as needed */
+    border: 2px solid #fff;    /* White border around the circle */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .user-verify-tick {
+    width: 6px;
+    height: 10px;
+    border-right: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(45deg);
+  }
+  
+  /* Thin gray separator line (like in macOS menus) */
+  .user-separator {
+    border-top: 1px solid #a7a7a79d;
+    margin: 8px 0;
+    margin-left: 4px;
+    margin-right: 4px;
+  }
+  
+  /* User details section */
+  .user-details-section {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .user-details-item {
+    margin-top: 6px;
+    font-size: 13px;
+    color: rgba(35, 35, 35);
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  
+  /* Photo styling, adjust width/height as desired */
+  .user-photo {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 8px;
+    object-fit: cover;
+  }
+  
+  .user-name {
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
