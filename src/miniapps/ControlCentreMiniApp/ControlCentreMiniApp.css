@@ -5,11 +5,13 @@
 /* The container that holds all segments */
 .cc-main-container {
   width: 275px;
-  padding: 12px;
   /* Semi-translucent white with blur, to mimic macOS style */
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(16px);
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 0.1px;
+  padding-bottom: 10px;
   border-radius: 14px;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
 
@@ -20,13 +22,10 @@
 
 /* Each “segment” or “card” in the control center */
 .cc-segment {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(1px);
   border-radius: 12px;
-
   padding: 12px 16px;
-  margin-bottom: 10px;
-
+  margin-top: 10px;
   /* Subtle border or shadow to separate each segment */
   box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15);
 }

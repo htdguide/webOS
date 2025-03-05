@@ -5,7 +5,6 @@ import './ControlCentreMiniApp.css';
 import DisplayControl from './ControlCentreWidgets/DisplayControl/DisplayControl';
 import SoundControl from './ControlCentreWidgets/SoundControl/SoundControl';
 import MusicControl from './ControlCentreWidgets/MusicControl/MusicControl';
-import BatteryControl from './ControlCentreWidgets/BatteryControl/BatteryControl';
 
 function ControlCentreMiniApp() {
   return (
@@ -26,10 +25,6 @@ function ControlCentreMiniApp() {
         <MusicControl />
       </div>
 
-      {/* Battery */}
-      <div className="cc-segment">
-        <BatteryControl />
-      </div>
     </div>
   );
 }
