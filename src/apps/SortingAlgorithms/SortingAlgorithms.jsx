@@ -1,20 +1,19 @@
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  useCallback
-} from 'react';
-import DraggableWindow from '../../components/DraggableWindow/DraggableWindow';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import './SortingAlgorithms.css';
+import { notify } from '../../components/Notification/Notification';
+import defaultIcon from '../../media/icons/defaultapp.png';
+import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider';
+import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowProvider';
 
 function SortingAlgorithms({ onClose }) {
   const [isWindowMounted, setIsWindowMounted] = useState(false);
   const [wasmScriptLoaded, setWasmScriptLoaded] = useState(false);
   const canvasRef = useRef(null);
   const script = useRef(null);
+  const notificationSent = useRef(false);
 
-  // DraggableWindow ref to call .showLoading() / .hideLoading()
-  const draggableWindowRef = useRef(null);
+  const deviceInfo = useDeviceInfo();
+  const { openDraggableWindow, closeDraggableWindow, hideLoading } = useDraggableWindow();
 
   // Attempt to load the WASM script if not already loaded
   const loadWasmScript = useCallback(() => {
@@ -28,48 +27,47 @@ function SortingAlgorithms({ onClose }) {
     script.current.onload = () => {
       console.log('WASM script loaded successfully.');
       setWasmScriptLoaded(true);
-      // We are NOT calling hideLoading() here anymore.
-      // We'll do it in the effect below, right after "WASM is loaded..." log.
     };
 
     document.body.appendChild(script.current);
   }, [wasmScriptLoaded]);
 
+  // Load the WASM script once the window is mounted
   useEffect(() => {
-    // Only load WASM script after the window is mounted
-    if (isWindowMounted) {
+    if (isWindowMounted && !notificationSent.current) {
       console.log('Window is mounted => loadWasmScript()');
       loadWasmScript();
+      if (deviceInfo.deviceType === 'desktop') {
+        notify(
+          'App is in early stage of porting, in case if it doesnt respond to the mouse clicks, reopen the window',
+          6000,
+          defaultIcon
+        );
+      }
+      notificationSent.current = true;
     }
-  }, [isWindowMounted, loadWasmScript]);
+  }, [isWindowMounted, loadWasmScript, deviceInfo.deviceType]);
 
+  // Initialize WASM when the script is loaded and the canvas is ready
   useEffect(() => {
-    // Initialize WASM only when the script is loaded and canvas is available
     if (wasmScriptLoaded && canvasRef.current) {
       console.log('WASM is loaded and canvasRef is valid => initialize WASM...');
-
-      // <-- Hide the loading cover right AFTER this console log.
-      // So we've confirmed the script is loaded and the canvas is ready.
-      if (draggableWindowRef.current) {
-        console.log('Hiding loading overlay now...');
-        draggableWindowRef.current.hideLoading();
+      console.log('Hiding loading overlay now...');
+      if (hideLoading) {
+        hideLoading();
       }
-
       setTimeout(() => {
         if (window.Module) {
           const canvas = canvasRef.current;
           canvas.width = canvas.clientWidth;
           canvas.height = canvas.clientHeight;
-
           console.log('Canvas ready for WASM:', {
             width: canvas.width,
             height: canvas.height,
             clientWidth: canvas.clientWidth,
             clientHeight: canvas.clientHeight,
           });
-
           window.Module.canvas = canvas;
-
           if (window.Module._initializeWindow) {
             console.log('Calling window.Module._initializeWindow()...');
             window.Module._initializeWindow();
@@ -79,17 +77,16 @@ function SortingAlgorithms({ onClose }) {
         }
       }, 100);
     }
-  }, [wasmScriptLoaded]);
+  }, [wasmScriptLoaded, hideLoading]);
 
+  // Cleanup on component unmount
   useEffect(() => {
-    // Cleanup on component unmount
     return () => {
       console.log('SortingAlgorithms unmounting...');
       if (window.Module && window.Module._cancelLoop) {
         console.log('Cancelling WASM loop on window close.');
         window.Module._cancelLoop();
       }
-
       if (script.current) {
         console.log('Removing script from DOM:', script.current);
         document.body.removeChild(script.current);
@@ -97,41 +94,45 @@ function SortingAlgorithms({ onClose }) {
     };
   }, []);
 
-  return (
-    <DraggableWindow
-      ref={draggableWindowRef}
-      title="Sorting Algorithms"
-      wasmWidth={400}
-      wasmHeight={530}
-      onClose={onClose}
-      onMount={() => {
+  // Open the draggable window via the provider when this component mounts,
+  // and close it on unmount.
+  useEffect(() => {
+    openDraggableWindow({
+      title: 'Sorting Algorithms',
+      windowWidth: 400,
+      windowHeight: 530,
+      content: (
+        <canvas
+          ref={canvasRef}
+          id="canvas"
+          className="emscripten"
+          tabIndex="-1"
+          style={{
+            width: '100%',
+            height: '100%',
+            backgroundColor: '#000',
+            display: 'block',
+          }}
+        />
+      ),
+      onClose: onClose,
+      onMount: () => {
         console.log('DraggableWindow onMount => setIsWindowMounted(true)');
         setIsWindowMounted(true);
-        // Show loading screen when the window first mounts
-        if (draggableWindowRef.current) {
-          console.log('Showing loading screen...');
-          draggableWindowRef.current.showLoading();
-        }
-      }}
-      onUnmount={() => {
+      },
+      onUnmount: () => {
         console.log('DraggableWindow onUnmount => setIsWindowMounted(false)');
         setIsWindowMounted(false);
-      }}
-    >
-      <canvas
-        ref={canvasRef}
-        id="canvas"
-        className="emscripten"
-        tabIndex="-1"
-        style={{
-          width: '100%',
-          height: '100%',
-          backgroundColor: '#000',
-          display: 'block',
-        }}
-      />
-    </DraggableWindow>
-  );
+        notificationSent.current = false;
+      },
+    });
+
+    return () => {
+      closeDraggableWindow();
+    };
+  }, [openDraggableWindow, closeDraggableWindow, onClose]);
+
+  return null;
 }
 
 export default SortingAlgorithms;

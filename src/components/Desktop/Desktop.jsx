@@ -1,16 +1,10 @@
 import React, { useState } from 'react';
 import DesktopIcon from '../DesktopIcon/DesktopIcon.jsx';
-import DesktopIconsController from '../../lists/IconsList.jsx';
-import {
-  GRID_GAP,
-  TOP_MARGIN,
-  LEFT_MARGIN,
-  // RIGHT_MARGIN,
-  // BOTTOM_MARGIN,
-} from '../../configs/DesktopIconConfig.jsx';
-import { GRID_SIZE } from '../../configs/DesktopIconConfig.jsx';
+import DesktopAppsList from '../../lists/DesktopAppsList.jsx';
+import { GRID_GAP, TOP_MARGIN, LEFT_MARGIN } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
+import { GRID_SIZE } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 import './Desktop.css';
-
+import { FocusWrapper } from '../../interactions/FocusControl/FocusControl.jsx';
 
 /**
  * Helper to convert a priority number into an (x,y) position on the desktop.
@@ -40,25 +34,27 @@ function Desktop({ onOpenApp }) {
   };
 
   return (
-    <div className="desktop" onClick={handleWallpaperClick}>
-      {DesktopIconsController.map((iconConfig) => {
-        // Convert the icon's priority into an (x,y) position,
-        // now using GRID_GAP to keep them spaced out.
-        const position = getPositionFromPriority(iconConfig.priority);
+    <FocusWrapper name="Desktop">
+      <div className="desktop" onClick={handleWallpaperClick}>
+        {DesktopAppsList.map((iconConfig) => {
+          // Convert the icon's priority into an (x,y) position,
+          // now using GRID_GAP to keep them spaced out.
+          const position = getPositionFromPriority(iconConfig.priority);
 
-        return (
-          <DesktopIcon
-            key={iconConfig.id}
-            name={iconConfig.name}
-            icon={iconConfig.icon}
-            isSelected={selectedIcon === iconConfig.id}
-            onClick={() => handleIconClick(iconConfig.id)}
-            onDoubleClick={() => onOpenApp(iconConfig.id)}
-            position={position} 
-          />
-        );
-      })}
-    </div>
+          return (
+            <DesktopIcon
+              key={iconConfig.id}
+              name={iconConfig.name}
+              icon={iconConfig.icon}
+              isSelected={selectedIcon === iconConfig.id}
+              onClick={() => handleIconClick(iconConfig.id)}
+              onDoubleClick={() => onOpenApp(iconConfig.id)}
+              position={position} 
+            />
+          );
+        })}
+      </div>
+    </FocusWrapper>
   );
 }
 

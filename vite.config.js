@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import fs from 'fs';
 
+
 // Load SSL certificates from environment variables
 const sslKeyPath = process.env.SSL_PRIVATE_KEY;
 const sslCertPath = process.env.SSL_CERT_CHAIN;
@@ -16,7 +17,13 @@ if (sslKeyPath && sslCertPath && fs.existsSync(sslKeyPath) && fs.existsSync(sslC
 }
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      babel: {
+        plugins: [["babel-plugin-react-compiler"]],
+      },
+    }
+  )],
   server: {
     host: '0.0.0.0',
     port: 443,

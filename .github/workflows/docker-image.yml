@@ -1,4 +1,5 @@
 name: Build and Deploy Docker Image to Server
+
 on:
   push:
     branches:
@@ -9,7 +10,18 @@ jobs:
     name: Push Docker Image to Docker Hub and Deploy to Server
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Dependencies and Run Vitest
+        run: |
+          npm install --legacy-peer-deps
+          npm run test
 
       - name: Login to Docker Hub
         id: docker-hub
@@ -38,11 +50,18 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Stop and remove any existing containers
             sudo docker stop $(sudo docker ps -aq) || true
             sudo docker rm $(sudo docker ps -aq) || true
+
+            # Pull the latest image from Docker Hub
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+
+            # Copy SSL certificates to server paths
             echo "${{ secrets.SSL_PRIVATE_KEY }}" > /etc/ssl/private/ssl.key
             echo "${{ secrets.SSL_CERT_CHAIN }}" > /etc/ssl/certs/ssl.crt
+
+            # Run container with mapped SSL certs
             sudo docker run -d -p 80:80 -p 443:443 --name webportfolio \
               -v /etc/ssl/private/ssl.key:/app/ssl.key \
               -v /etc/ssl/certs/ssl.crt:/app/ssl.crt \

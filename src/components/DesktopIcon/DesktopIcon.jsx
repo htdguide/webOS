@@ -1,18 +1,7 @@
 import React, { useState, useRef } from 'react';
 import './DesktopIcon.css';
-import {
-  startHold,
-  startDragging,
-  cancelHold,
-  handleTap,
-} from '../../interactions/IconInteractions.jsx';
-
-import {
-  ICON_WIDTH,
-  ICON_HEIGHT,
-  ICON_IMAGE_WIDTH,
-  ICON_IMAGE_HEIGHT,
-} from '../../configs/DesktopIconConfig.jsx';
+import { startHold, startDragging, cancelHold, handleTap } from '../../interactions/IconInteractions/IconInteractions.jsx';
+import { ICON_WIDTH, ICON_HEIGHT, ICON_IMAGE_WIDTH, ICON_IMAGE_HEIGHT } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 
 function DesktopIcon({ name, onDoubleClick, onClick, isSelected, icon, position: initialPosition }) {
   const [position, setPosition] = useState(initialPosition || { x: 100, y: 100 });
@@ -51,7 +40,6 @@ function DesktopIcon({ name, onDoubleClick, onClick, isSelected, icon, position:
       ref={iconRef}
       className={`desktop-icon ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
       style={{
-        // Dynamically set the width and height from config:
         width: ICON_WIDTH,
         height: ICON_HEIGHT,
         left: position.x,
@@ -70,7 +58,6 @@ function DesktopIcon({ name, onDoubleClick, onClick, isSelected, icon, position:
         e.stopPropagation();
         handleTap(lastTap, setLastTap, onDoubleClick, onClick);
       }}
-      onDoubleClick={onDoubleClick}
     >
       <div
         className="icon-image"
