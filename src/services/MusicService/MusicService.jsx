@@ -55,7 +55,6 @@ export function MusicServiceProvider({ children }) {
 
   /**
    * 3) Playback state: isPlaying, currentTime, duration
-   *    We’ll have to track these manually, since we no longer have <audio> events.
    */
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -115,7 +114,7 @@ export function MusicServiceProvider({ children }) {
       gainNodeRef.current = audioContextRef.current.createGain();
       gainNodeRef.current.connect(audioContextRef.current.destination);
     }
-    // If context is suspended, try to resume (iOS might require it in a gesture)
+    // If context is suspended, try to resume
     if (audioContextRef.current.state === 'suspended') {
       audioContextRef.current.resume().catch((err) => {
         console.warn('AudioContext resume error:', err);
@@ -185,7 +184,7 @@ export function MusicServiceProvider({ children }) {
         console.warn('ID3 read error:', err);
       }
 
-      // Next, fetch the MP3 as an ArrayBuffer for decoding
+      // Next, fetch the MP3 as an ArrayBuffer
       const response = await fetch(mp3Url);
       if (!response.ok) {
         console.error('Failed to fetch MP3:', mp3Url);
@@ -199,10 +198,10 @@ export function MusicServiceProvider({ children }) {
       // Once we have an AudioBuffer, set duration in seconds
       setDuration(audioBuffer.duration);
 
-      // Reset any playback so it’s not playing old track
+      // Reset playback so we’re not playing the old track
       stop();
 
-      // We store the newly loaded AudioBuffer in a ref so that play() can use it
+      // Store the newly loaded AudioBuffer
       sourceNodeRef.current = { audioBuffer };
 
       // Update currentIndex
@@ -212,17 +211,40 @@ export function MusicServiceProvider({ children }) {
   );
 
   /**
-   * 9) Basic playback functions with Web Audio
+   * 9) Next / Prev must be declared before referencing them inside "play()" 
+   */
+  const handleNext = useCallback(() => {
+    if (!musicList.length) return;
+    let newIndex = currentIndex + 1;
+    if (newIndex >= musicList.length) {
+      newIndex = 0; // wrap
+    }
+    loadTrackByIndex(newIndex).then(() => {
+      play();
+    });
+  }, [currentIndex, musicList, loadTrackByIndex]);
+
+  const handlePrev = useCallback(() => {
+    if (!musicList.length) return;
+    let newIndex = currentIndex - 1;
+    if (newIndex < 0) {
+      newIndex = musicList.length - 1;
+    }
+    loadTrackByIndex(newIndex).then(() => {
+      play();
+    });
+  }, [currentIndex, musicList, loadTrackByIndex]);
+
+  /**
+   * 10) Basic playback functions
    */
   const play = useCallback(() => {
-    ensureAudioContext(); // make sure we have an AudioContext resumed
+    ensureAudioContext(); // make sure we have an AudioContext
 
-    // If we don’t have a loaded AudioBuffer, either do nothing or load the first
+    // If we don’t have a loaded AudioBuffer, load the first track
     if (!sourceNodeRef.current || !sourceNodeRef.current.audioBuffer) {
-      // Optionally auto-load first:
       if (musicList.length > 0) {
         loadTrackByIndex(0).then(() => {
-          // Then call play again
           play();
         });
       }
@@ -232,7 +254,6 @@ export function MusicServiceProvider({ children }) {
     // If we’re already playing, ignore
     if (isPlaying) return;
 
-    // Create a new BufferSource for each play
     const newSource = audioContextRef.current.createBufferSource();
     newSource.buffer = sourceNodeRef.current.audioBuffer;
     newSource.connect(gainNodeRef.current);
@@ -244,34 +265,29 @@ export function MusicServiceProvider({ children }) {
     // Keep reference so we can stop it
     sourceNodeRef.current.bufferSource = newSource;
 
-    // On ended, move to next track (like <audio> “ended”)
+    // On ended, move to next track
     newSource.onended = () => {
-      // If we intentionally stopped or paused, we might not want to “handleNext”
-      // So only call handleNext if “currentTime” is at the end
       const total = sourceNodeRef.current?.audioBuffer?.duration || 0;
       const diff = Math.abs(currentTime - total);
-      // If it truly ended, go next
       if (diff < 0.5) {
         handleNext();
       }
     };
 
-    // Mark the startTimestamp so we can track currentTime
+    // Mark the startTimestamp
     startTimestampRef.current = performance.now();
-
-    // Switch state
     setIsPlaying(true);
-  }, [isPlaying, loadTrackByIndex, musicList.length, ensureAudioContext]);
+  }, [isPlaying, loadTrackByIndex, musicList.length, ensureAudioContext, currentTime, handleNext]);
 
   const pause = useCallback(() => {
     if (!sourceNodeRef.current?.bufferSource) return;
     if (!isPlaying) return;
 
-    // We figure out how long we've played so far
+    // How long we’ve played so far
     const playedSoFar = pausedAtRef.current + (performance.now() - startTimestampRef.current) / 1000;
     pausedAtRef.current = playedSoFar;
 
-    // Stop the current source node
+    // Stop the current source
     sourceNodeRef.current.bufferSource.stop();
     sourceNodeRef.current.bufferSource = null;
 
@@ -289,58 +305,55 @@ export function MusicServiceProvider({ children }) {
   }, []);
 
   /**
-   * 10) Seek function
-   *     - Stop the current source
-   *     - Set pausedAt to new time
-   *     - If was playing, call play() again
+   * 11) Seek function that doesn't explicitly pause
    */
   const seek = useCallback(
     (timeInSeconds) => {
-      const wasPlaying = isPlaying;
-      // Pause (which sets pausedAt correctly) if needed
-      pause();
-      // Then override pausedAt with our desired new time
+      if (!sourceNodeRef.current?.audioBuffer) {
+        pausedAtRef.current = timeInSeconds;
+        setCurrentTime(timeInSeconds);
+        return;
+      }
+
+      // Stop old source if it exists
+      if (sourceNodeRef.current.bufferSource) {
+        sourceNodeRef.current.bufferSource.stop();
+        sourceNodeRef.current.bufferSource = null;
+      }
+
       pausedAtRef.current = timeInSeconds;
       setCurrentTime(timeInSeconds);
-      // If we were playing, resume
-      if (wasPlaying) {
-        play();
+
+      // If we’re still playing, create a new source at the new offset
+      if (isPlaying) {
+        const newSource = audioContextRef.current.createBufferSource();
+        newSource.buffer = sourceNodeRef.current.audioBuffer;
+        newSource.connect(gainNodeRef.current);
+        newSource.start(0, timeInSeconds);
+
+        sourceNodeRef.current.bufferSource = newSource;
+
+        // Handle end of track
+        newSource.onended = () => {
+          const total = sourceNodeRef.current?.audioBuffer?.duration || 0;
+          const diff = Math.abs(currentTime - total);
+          if (diff < 0.5) {
+            handleNext();
+          }
+        };
+
+        // Reset startTimestamp for time tracking
+        startTimestampRef.current = performance.now();
       }
     },
-    [isPlaying, pause, play]
+    [isPlaying, currentTime, handleNext]
   );
-
-  /**
-   * 11) Next / Prev
-   *     - Just load next index, then call play
-   */
-  const handleNext = useCallback(() => {
-    if (!musicList.length) return;
-    let newIndex = currentIndex + 1;
-    if (newIndex >= musicList.length) {
-      newIndex = 0; // wrap
-    }
-    loadTrackByIndex(newIndex).then(() => {
-      play();
-    });
-  }, [currentIndex, musicList, loadTrackByIndex, play]);
-
-  const handlePrev = useCallback(() => {
-    if (!musicList.length) return;
-    let newIndex = currentIndex - 1;
-    if (newIndex < 0) {
-      newIndex = musicList.length - 1;
-    }
-    loadTrackByIndex(newIndex).then(() => {
-      play();
-    });
-  }, [currentIndex, musicList, loadTrackByIndex, play]);
 
   /**
    * 12) Toggle Play/Pause
    */
   const togglePlay = useCallback(() => {
-    // If no track is loaded yet, load the first
+    // If no track is loaded, load the first
     if (!sourceNodeRef.current?.audioBuffer) {
       if (musicList.length > 0) {
         loadTrackByIndex(0).then(() => play());
@@ -355,15 +368,13 @@ export function MusicServiceProvider({ children }) {
   }, [isPlaying, musicList, loadTrackByIndex, play, pause]);
 
   /**
-   * 13) We must track “currentTime” in a requestAnimationFrame (like a “timeupdate”).
-   *     Because with Web Audio, we manage playback logic ourselves.
+   * 13) Track currentTime in a requestAnimationFrame
    */
   useEffect(() => {
     let animationFrameId;
 
     const updateTime = () => {
       if (isPlaying) {
-        // Calculate how much time has elapsed since we started
         const playedSoFar =
           pausedAtRef.current + (performance.now() - startTimestampRef.current) / 1000;
         setCurrentTime(playedSoFar);
@@ -371,7 +382,6 @@ export function MusicServiceProvider({ children }) {
       animationFrameId = requestAnimationFrame(updateTime);
     };
 
-    // Kick off
     updateTime();
 
     return () => {
