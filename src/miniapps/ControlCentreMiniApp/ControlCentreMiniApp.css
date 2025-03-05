@@ -10,19 +10,11 @@
   color: #333;
 }
 
-/* --- Music Control Section --- */
-.music-control-container {
+/* --- TOP SECTION: ALBUM + TITLE + ARTIST --- */
+.music-info-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.music-info {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  overflow: hidden;
+  margin-bottom: 8px;
 }
 
 .album-artwork {
@@ -68,10 +60,81 @@
   white-space: nowrap;
 }
 
-.music-buttons {
-  margin-left: 5px;
+/* --- MIDDLE SECTION: PROGRESS BAR & TIME TEXT --- */
+.progress-container {
   display: flex;
+  align-items: center;
   gap: 8px;
+  margin: 12px 0;
+}
+
+.time-text {
+  font-size: 10px;
+  color: #444;
+  width: 34px;
+  text-align: center;
+}
+
+.progress-bar {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  background: #ccc;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+
+.progress-bar::-webkit-slider-runnable-track {
+  height: 3px;
+  background: #ccc;
+  border-radius: 2px;
+}
+
+.progress-bar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 1px solid #999;
+  border-radius: 50%;
+  cursor: pointer;
+  margin-top: -6px; /* center the thumb */
+  transition: transform 0.1s ease;
+}
+
+.progress-bar::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+.progress-bar::-moz-range-track {
+  height: 3px;
+  background: #ccc;
+  border-radius: 2px;
+}
+
+.progress-bar::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 1px solid #999;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.progress-bar::-moz-range-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* --- BOTTOM SECTION: PLAYBACK BUTTONS --- */
+.music-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
 }
 
 .music-btn {
@@ -91,12 +154,14 @@
   height: 16px;
 }
 
+/* DIVIDER */
 .divider {
   height: 1px;
   border-top: 1px solid #a7a7a79d;
   margin: 12px 0;
 }
 
+/* SOUND SECTION */
 .sound-title {
   font-size: 14px;
   font-weight: 500;

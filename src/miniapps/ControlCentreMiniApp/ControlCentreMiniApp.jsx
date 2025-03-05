@@ -8,28 +8,35 @@ import volumeIcon from '../../media/assets/volume.png';
 import albumThumbnail from '../../media/assets/album.jpg';
 
 function ControlCentreMiniApp() {
+  // Volume
   const [volume, setVolume] = useState(50);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  // Example song details
-  const songTitle = "Keep Moving";
-  const artistName = "Jungle";
-
   const handleVolumeChange = (event) => {
     setVolume(Number(event.target.value));
   };
-
-  // Compute thumb border opacity (example logic)
   const thumbBorderOpacity =
     volume < 20 ? 0 : volume < 20 ? (volume - 20) / 60 : 1;
 
-  // Adaptive marquee logic with a 3-second pause for the song title
+  // Playback
+  const [isPlaying, setIsPlaying] = useState(false);
+  const handlePlayToggle = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  // Fake timeline
+  const [currentTime, setCurrentTime] = useState(7); // in seconds
+  const totalTime = 204; // e.g. 3m24s = 204 seconds
+
+  // Song info
+  const songTitle = "Keep Moving";
+  const artistName = "Jungle";
+
+  // For marquee (song title)
   const titleContainerRef = useRef(null);
   const titleTextRef = useRef(null);
   const [marqueeStyle, setMarqueeStyle] = useState({});
   const [dynamicKeyframes, setDynamicKeyframes] = useState("");
 
-  // Adaptive marquee logic with a 3-second pause for the artist name
+  // For marquee (artist)
   const artistContainerRef = useRef(null);
   const artistTextRef = useRef(null);
   const [artistMarqueeStyle, setArtistMarqueeStyle] = useState({});
@@ -38,7 +45,7 @@ function ControlCentreMiniApp() {
   const speed = 50; // pixels per second
   const pauseTime = 3; // seconds to wait before sliding
 
-  // Update marquee for song title
+  // --- MARQUEE FOR SONG TITLE ---
   useEffect(() => {
     function updateMarquee() {
       const containerWidth = titleContainerRef.current?.offsetWidth || 0;
@@ -59,9 +66,7 @@ function ControlCentreMiniApp() {
           animation: `marquee-dynamic ${totalDuration}s linear infinite`
         });
       } else {
-        setMarqueeStyle({
-          animation: 'none'
-        });
+        setMarqueeStyle({ animation: 'none' });
         setDynamicKeyframes("");
       }
     }
@@ -72,7 +77,7 @@ function ControlCentreMiniApp() {
     };
   }, [songTitle]);
 
-  // Update marquee for artist name
+  // --- MARQUEE FOR ARTIST ---
   useEffect(() => {
     function updateArtistMarquee() {
       const containerWidth = artistContainerRef.current?.offsetWidth || 0;
@@ -93,9 +98,7 @@ function ControlCentreMiniApp() {
           animation: `marquee-dynamic-artist ${totalDuration}s linear infinite`
         });
       } else {
-        setArtistMarqueeStyle({
-          animation: 'none'
-        });
+        setArtistMarqueeStyle({ animation: 'none' });
         setArtistDynamicKeyframes("");
       }
     }
@@ -106,60 +109,81 @@ function ControlCentreMiniApp() {
     };
   }, [artistName]);
 
-  const handlePlayToggle = () => {
-    setIsPlaying(!isPlaying);
+  // --- PROGRESS SLIDER HANDLING ---
+  const handleProgressChange = (e) => {
+    setCurrentTime(Number(e.target.value));
+  };
+
+  // Convert seconds to mm:ss format
+  const formatTime = (secs) => {
+    const minutes = Math.floor(secs / 60);
+    const seconds = secs % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
   return (
     <div className="control-centre-container">
+      {/* Keyframe styles for the marquee animations */}
       {dynamicKeyframes && <style>{dynamicKeyframes}</style>}
       {artistDynamicKeyframes && <style>{artistDynamicKeyframes}</style>}
-      {/* Music Control (song info & control buttons) */}
-      <div className="music-control-container">
-        {/* Left section: album art + song info */}
-        <div className="music-info">
-          <div className="album-artwork">
-            <img src={albumThumbnail} alt="Album Artwork" />
-          </div>
-          <div className="song-details">
-            <div className="song-title-container" ref={titleContainerRef}>
-              <div
-                className="song-title-text"
-                ref={titleTextRef}
-                style={marqueeStyle}
-              >
-                {songTitle}
-              </div>
-            </div>
-            <div className="song-artist" ref={artistContainerRef}>
-              <div
-                className="song-artist-text"
-                ref={artistTextRef}
-                style={artistMarqueeStyle}
-              >
-                {artistName}
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Right section: playback buttons */}
-        <div className="music-buttons">
-          <button className="music-btn">
-            <img src={rewind} alt="Previous" />
-          </button>
-          <button className="music-btn" onClick={handlePlayToggle}>
-            <img src={isPlaying ? pause : play} alt={isPlaying ? "Pause" : "Play"} />
-          </button>
-          <button className="music-btn">
-            <img src={fastforward} alt="Next" />
-          </button>
+      {/* TOP SECTION: Album art, Title, Artist */}
+      <div className="music-info-top">
+        <div className="album-artwork">
+          <img src={albumThumbnail} alt="Album Artwork" />
         </div>
+        <div className="song-details">
+          <div className="song-title-container" ref={titleContainerRef}>
+            <div
+              className="song-title-text"
+              ref={titleTextRef}
+              style={marqueeStyle}
+            >
+              {songTitle}
+            </div>
+          </div>
+          <div className="song-artist" ref={artistContainerRef}>
+            <div
+              className="song-artist-text"
+              ref={artistTextRef}
+              style={artistMarqueeStyle}
+            >
+              {artistName}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MIDDLE SECTION: Progress bar + times */}
+      <div className="progress-container">
+        <div className="time-text">{formatTime(currentTime)}</div>
+        <input
+          type="range"
+          className="progress-bar"
+          min="0"
+          max={totalTime}
+          value={currentTime}
+          onChange={handleProgressChange}
+        />
+        <div className="time-text">{formatTime(totalTime)}</div>
+      </div>
+
+      {/* BOTTOM SECTION: Playback buttons */}
+      <div className="music-buttons">
+        <button className="music-btn">
+          <img src={rewind} alt="Previous" />
+        </button>
+        <button className="music-btn" onClick={handlePlayToggle}>
+          <img src={isPlaying ? pause : play} alt={isPlaying ? "Pause" : "Play"} />
+        </button>
+        <button className="music-btn">
+          <img src={fastforward} alt="Next" />
+        </button>
       </div>
 
       <div className="divider" />
 
-      {/* Sound Control */}
+      {/* SOUND SECTION */}
       <div className="sound-title">Sound</div>
       <div className="sound-control-container">
         <div className="volume-slider-container">
