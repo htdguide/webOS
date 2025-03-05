@@ -22,9 +22,9 @@ function ControlCentreMiniApp() {
     setIsPlaying(!isPlaying);
   };
 
-  // Fake timeline
-  const [currentTime, setCurrentTime] = useState(7); // in seconds
-  const totalTime = 204; // e.g. 3m24s = 204 seconds
+  // Fake timeline (in seconds)
+  const [currentTime, setCurrentTime] = useState(72); // 1m12s
+  const totalTime = 204; // 3m24s
 
   // Song info
   const songTitle = "Keep Moving";
@@ -121,6 +121,16 @@ function ControlCentreMiniApp() {
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
+  // Style for the progress bar background (black for “played”, gray for “remaining”)
+  const progressPercent = (currentTime / totalTime) * 100;
+  const progressBarStyle = {
+    background: `linear-gradient(to right, 
+      #000 0%, 
+      #000 ${progressPercent}%, 
+      #ccc ${progressPercent}%, 
+      #ccc 100%)`
+  };
+
   return (
     <div className="control-centre-container">
       {/* Keyframe styles for the marquee animations */}
@@ -164,6 +174,7 @@ function ControlCentreMiniApp() {
           max={totalTime}
           value={currentTime}
           onChange={handleProgressChange}
+          style={progressBarStyle}
         />
         <div className="time-text">{formatTime(totalTime)}</div>
       </div>
