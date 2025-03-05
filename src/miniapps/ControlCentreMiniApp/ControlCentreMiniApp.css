@@ -7,7 +7,15 @@
   width: 280px;
   /* Semi-translucent white with blur, to mimic macOS style */
   background: rgba(255, 255, 255, 0.5);
+
+  /* Ensures the blur effect works in Safari */
+  -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
+
+  /* Prevents artefacts in Safari */
+  -webkit-background-clip: padding-box;
+  background-clip: padding-box;
+
   margin-top: 6px;
   padding-left: 10px;
   padding-right: 10px;
@@ -23,7 +31,12 @@
 
 /* Each “segment” or “card” in the control center */
 .cc-segment {
-  backdrop-filter: blur(1px);
+  background: rgba(255, 255, 255, 0.5);
+
+  /* Clip the background to avoid artefacts */
+  -webkit-background-clip: padding-box;
+  background-clip: padding-box;
+
   border-radius: 12px;
   padding: 12px 16px;
   margin-top: 10px;
