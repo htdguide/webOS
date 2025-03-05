@@ -1,6 +1,6 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
 
-function MiniWindow({ anchorPos, onClose, children, className = '' }) {
+function MiniWindow({ anchorPos, onClose, children, className = '', visible = true }) {
   const miniWindowRef = useRef(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
 
@@ -30,7 +30,15 @@ function MiniWindow({ anchorPos, onClose, children, className = '' }) {
     <div
       ref={miniWindowRef}
       className={className}
-      style={{ position: 'absolute', top: position.top, left: position.left }}
+      style={{
+        position: 'absolute',
+        top: position.top,
+        left: position.left,
+        opacity: visible ? 1 : 0,
+        // Transition both the opacity and the backdrop filter blur effect
+        backdropFilter: visible ? 'blur(5px)' : 'blur(0px)',
+        transition: 'opacity 300ms ease-in-out, backdrop-filter 300ms ease-in-out'
+      }}
     >
       {children}
     </div>

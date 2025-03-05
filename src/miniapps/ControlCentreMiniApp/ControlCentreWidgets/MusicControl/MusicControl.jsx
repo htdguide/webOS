@@ -18,8 +18,8 @@ function MusicControl() {
   const totalTime = 204; // 3m24s
 
   // SONG INFO
-  const songTitle = "Зцапала-злапала";
-  const artistName = "BoomBox – Family бізнес";
+  const songTitle = "Keep Moving";
+  const artistName = "Jungle - Loving In Stereo";
 
   // Marquee for Song Title
   const titleContainerRef = useRef(null);
