@@ -1,261 +1,41 @@
-.control-centre-container {
-  width: 300px;
-  padding: 14px 16px;
+/**********************************************/
+/**  Overall Control Centre Layout & Style  **/
+/**********************************************/
+
+/* The container that holds all segments */
+.cc-main-container {
+  width: 320px;
+  padding: 12px;
+  /* Semi-translucent white with blur, to mimic macOS style */
   background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  border-radius: 12px;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20px);
+
+  border-radius: 14px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
                "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #333;
 }
 
-/* --- TOP SECTION: ALBUM + TITLE + ARTIST --- */
-.music-info-top {
+/* Each “segment” or “card” in the control center */
+.cc-segment {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+
+  padding: 12px 16px;
+  margin-bottom: 10px;
+
+  /* Subtle border or shadow to separate each segment */
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15);
+}
+
+/* Special top row (Quick Controls) might have a slightly different layout */
+.cc-segment-toprow {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  justify-content: space-between;
 }
 
-.album-artwork {
-  margin-right: 8px;
-}
-
-.album-artwork img {
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  object-fit: cover;
-}
-
-.song-details {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.song-title-container {
-  margin-top: -7px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.song-title-text {
-  font-size: 12px;
-  font-weight: bold;
-  display: inline-block;
-  white-space: nowrap;
-}
-
-.song-artist {
-  font-size: 11px;
-  color: #555;
-  margin-top: 1px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.song-artist-text {
-  display: inline-block;
-  white-space: nowrap;
-}
-
-/* --- MIDDLE SECTION: PROGRESS BAR & TIME TEXT --- */
-.progress-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 12px 0;
-}
-
-.time-text {
-  font-size: 10px;
-  color: #444;
-  width: 34px;
-  text-align: center;
-}
-
-.progress-bar {
-  flex: 1;
-  -webkit-appearance: none;
-  appearance: none;
-  height: 4px; 
-  border-radius: 2px;
-  outline: none;
-  margin: 0;
-  cursor: pointer;
-  /* background is overridden inline via style={} */
-}
-
-/* For Chrome / Safari (WebKit) */
-.progress-bar::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: 2px;
-}
-
-/* The "vertical line" thumb */
-.progress-bar::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 2px;       /* Slim line */
-  height: 16px;
-  background: #000; /* Black vertical bar */
-  margin-top: -6px; /* Position so it centers on the track */
-  border-radius: 1px;
-  cursor: pointer;
-  transition: transform 0.1s ease;
-}
-
-.progress-bar::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-}
-
-/* For Firefox */
-.progress-bar::-moz-range-track {
-  height: 4px;
-  border-radius: 2px;
-}
-
-.progress-bar::-moz-range-thumb {
-  width: 2px;
-  height: 16px;
-  background: #000;
-  border: none;
-  border-radius: 1px;
-  cursor: pointer;
-  transition: transform 0.1s ease;
-  margin: 0; 
-}
-
-.progress-bar::-moz-range-thumb:hover {
-  transform: scale(1.1);
-}
-
-/* --- BOTTOM SECTION: PLAYBACK BUTTONS --- */
-.music-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.music-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  transition: opacity 0.2s ease;
-}
-
-.music-btn:hover {
-  opacity: 0.7;
-}
-
-.music-btn img {
-  width: 16px;
-  height: 16px;
-}
-
-/* DIVIDER */
-.divider {
-  height: 1px;
-  border-top: 1px solid #a7a7a79d;
-  margin: 12px 0;
-}
-
-/* SOUND SECTION */
-.sound-title {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 8px;
-}
-
-.sound-control-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.volume-slider-container {
-  position: relative;
-  width: 100%;
-  height: 20px;
-}
-
-.volume-icon-ontrack {
-  position: absolute;
-  opacity: 0.6;
-  left: 3px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  width: 14px;
-  height: 14px;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.volume-slider {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 20px;
-  margin: 0;
-  cursor: pointer;
-  outline: none;
-  border-radius: 10px;
-  -webkit-appearance: none;
-  appearance: none;
-  --volume: 50%;
-  --white-stop: 50%;
-}
-
-.volume-slider::-webkit-slider-runnable-track {
-  height: 20px;
-  border-radius: 10px;
-  border: 1px solid #bbb;
-  background: linear-gradient(
-    to right,
-    #fff 0%,
-    #fff var(--white-stop),
-    #ccc var(--white-stop),
-    #ccc 100%
-  );
-}
-
-.volume-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 19px;
-  height: 18px;
-  border-radius: 10px;
-  background: #fff;
-  border: 0.5px solid rgba(153, 153, 153, var(--thumb-border-opacity, 1));
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
-  transition: border-color 0.3s ease;
-}
-
-.volume-slider::-moz-range-track {
-  height: 20px;
-  border-radius: 10px;
-  border: 1px solid #bbb;
-  background: linear-gradient(
-    to right,
-    #fff 0%,
-    #fff var(--white-stop),
-    #ccc var(--white-stop),
-    #ccc 100%
-  );
-}
-
-.volume-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  background: #fff;
-  border: 1px solid rgba(153, 153, 153, var(--thumb-border-opacity, 1));
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
-  transition: border-color 0.3s ease;
-}
+/* Just an example: you might need to tweak for your design */
