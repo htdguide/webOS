@@ -2,8 +2,8 @@ import controlCentreIcon from '../media/assets/controlcentre.png';
 import ControlCentreMiniApp from '../miniapps/ControlCentreMiniApp/ControlCentreMiniApp';
 import BatteryMiniApp from '../miniapps/BatteryMiniApp/BatteryMiniApp';
 import BatteryBarApp from '../miniapps/BatteryMiniApp/BatteryBarApp';
-import UserMiniApp from '../miniapps/UserMiniApp/UserMiniApp';
-import DateTimeMiniApp from '../miniapps/DateTimeMiniApp/DateTimeMiniApp';
+import UserBarApp from '../miniapps/UserMiniApp/UserBarApp';
+import DateTimeBarApp from '../miniapps/DateTimeMiniApp/DateTimeBarApp';
 
 const MiniAppsList = [
   {
@@ -29,7 +29,7 @@ const MiniAppsList = [
     id: 'user',
     name: 'User',
     miniApp: null,
-    barApp: UserMiniApp,
+    barApp: UserBarApp,
     priority: 1,
     available: true, // Will be rendered only in landscape orientation
   },
@@ -37,7 +37,7 @@ const MiniAppsList = [
     id: 'datetime',
     name: 'Date & Time',
     miniApp: null,
-    barApp: DateTimeMiniApp,
+    barApp: DateTimeBarApp,
     priority: -1,
     available: true, // Will be rendered
   },

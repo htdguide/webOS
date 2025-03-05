@@ -1,5 +1,5 @@
 import React from 'react';
-import './UserMiniApp.css';
+import './UserBarApp.css';
 
 function UserMiniApp() {
   return (

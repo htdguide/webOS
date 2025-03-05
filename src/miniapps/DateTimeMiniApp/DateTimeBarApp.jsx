@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './DateTimeMiniApp.css';
+import './DateTimeBarApp.css';
 import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider';
 
 function DateTimeMiniApp() {
