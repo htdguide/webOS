@@ -8,10 +8,10 @@ import React, {
     useCallback,
   } from 'react';
   
-  // 1) Import jsmediatags
+  // Import jsmediatags from the UMD build to avoid Vite dep-scan issues
   import jsmediatags from 'jsmediatags/dist/jsmediatags.min.js';
-
-  // Our context
+  
+  // Create the context
   const MusicServiceContext = createContext(null);
   
   // Custom hook
@@ -20,8 +20,7 @@ import React, {
   }
   
   export function MusicServiceProvider({ children }) {
-    // We'll store the loaded list of MP3 "entries" from a JSON. 
-    // Example JSON structure below (see "musicList.json" example).
+    // We'll store the loaded list of MP3 "entries" from the JSON.
     const [musicList, setMusicList] = useState([]);
   
     // The <audio> element reference
@@ -30,12 +29,12 @@ import React, {
     // Current track index in the list
     const [currentIndex, setCurrentIndex] = useState(0);
   
-    // Global states
+    // Audio states
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
   
-    // Info extracted from the track (via ID3 or fallback)
+    // ID3 / track info
     const [trackInfo, setTrackInfo] = useState({
       title: '',
       artist: '',
@@ -43,11 +42,10 @@ import React, {
     });
   
     /**
-     * 1) Fetch musicList.json on mount
-     *    Put "musicList.json" in "public/Music/musicList.json" for example
+     * 1) Fetch the JSON from /WebintoshHD/Music/musicList.json
      */
     useEffect(() => {
-      fetch('WebintoshHD/Music/musicList.json')
+      fetch('/WebintoshHD/Music/musicList.json')
         .then((res) => {
           if (!res.ok) {
             throw new Error('Failed to fetch musicList.json');
@@ -56,7 +54,7 @@ import React, {
         })
         .then((data) => {
           setMusicList(data);
-          // Optionally, load the first track right away:
+          // Optionally load the first track automatically:
           // loadTrackByIndex(0);
         })
         .catch((err) => {
@@ -92,7 +90,7 @@ import React, {
       };
     }, []);
   
-    // Basic playback control
+    // Basic controls
     const play = useCallback(() => {
       audioRef.current.play();
       setIsPlaying(true);
@@ -115,8 +113,9 @@ import React, {
     }, []);
   
     /**
-     * 3) loadTrackByIndex – loads the mp3 from musicList[index].
-     *    Then we read ID3 tags with jsmediatags to extract album art.
+     * 3) loadTrackByIndex – loads the MP3 from musicList[index].
+     *    Then uses jsmediatags to read ID3 (album art, etc.).
+     *    If no embedded art or an error occurs, fallback to JSON's "backupArt".
      */
     const loadTrackByIndex = useCallback(
       async (index) => {
@@ -124,43 +123,48 @@ import React, {
         if (index < 0 || index >= musicList.length) return;
   
         const trackData = musicList[index];
-        const mp3Url = trackData.src;  // e.g. "/Music/Jungle - Busy Earnin'.mp3"
+        // e.g. "/WebintoshHD/Music/Jungle - Busy Earnin'.mp3"
+        const mp3Url = trackData.src;
   
-        // Stop/pause the current track, reset current time
+        // Pause & reset time
         pause();
         setCurrentTime(0);
   
-        // Set new audio src
+        // Set the new audio source
         audioRef.current.src = mp3Url;
         audioRef.current.load();
   
-        // We'll set a default trackInfo in case ID3 fails or has no data
+        // Default track info if ID3 fails
         setTrackInfo({
           title: trackData.title || '',
           artist: trackData.artist || '',
-          albumArt: '',
+          // We'll store the fallback image in case ID3 has none
+          albumArt: trackData.backupArt || '',
         });
   
-        // Attempt to parse ID3 tags from the URL using jsmediatags
-        // This might fail if there's no ID3, or if there's a CORS issue
+        // Try reading ID3 tags
         try {
           jsmediatags.read(mp3Url, {
             onSuccess: (tag) => {
-              const { title, artist } = tag.tags;
+              const { title, artist, picture } = tag.tags;
               let albumArtUrl = '';
   
-              // If there's embedded picture data, convert it to base64
-              if (tag.tags.picture) {
-                const { data, format } = tag.tags.picture;
+              // If there's embedded picture data, convert to base64
+              if (picture) {
+                const { data, format } = picture;
                 let base64String = '';
-                // data is an array of bytes
                 for (let i = 0; i < data.length; i++) {
                   base64String += String.fromCharCode(data[i]);
                 }
                 albumArtUrl = `data:${format};base64,${window.btoa(base64String)}`;
               }
   
-              // Update our trackInfo with ID3 data
+              // If no embedded picture, fallback to backupArt
+              if (!albumArtUrl && trackData.backupArt) {
+                albumArtUrl = trackData.backupArt;
+              }
+  
+              // Update track info with ID3 or fallback
               setTrackInfo({
                 title: title || trackData.title || '',
                 artist: artist || trackData.artist || '',
@@ -169,10 +173,21 @@ import React, {
             },
             onError: (error) => {
               console.warn('jsmediatags error:', error.type, error.info);
+              // Use fallback if we get an error
+              setTrackInfo({
+                title: trackData.title || '',
+                artist: trackData.artist || '',
+                albumArt: trackData.backupArt || '',
+              });
             },
           });
         } catch (err) {
           console.warn('ID3 read error:', err);
+          // Also fallback on a general try/catch error
+          setTrackInfo((prev) => ({
+            ...prev,
+            albumArt: trackData.backupArt || '',
+          }));
         }
   
         setCurrentIndex(index);
@@ -180,12 +195,12 @@ import React, {
       [musicList, pause]
     );
   
-    // Next / Prev
+    // Next / Prev track
     const handleNext = useCallback(() => {
       if (!musicList || musicList.length === 0) return;
       let newIndex = currentIndex + 1;
       if (newIndex >= musicList.length) {
-        newIndex = 0; // wrap to first
+        newIndex = 0; // wrap around
       }
       loadTrackByIndex(newIndex);
       play();
@@ -195,13 +210,13 @@ import React, {
       if (!musicList || musicList.length === 0) return;
       let newIndex = currentIndex - 1;
       if (newIndex < 0) {
-        newIndex = musicList.length - 1; 
+        newIndex = musicList.length - 1;
       }
       loadTrackByIndex(newIndex);
       play();
     }, [musicList, currentIndex, loadTrackByIndex, play]);
   
-    // Toggle play – if none loaded yet, load the first track
+    // Toggle play. If nothing loaded, load first
     const togglePlay = useCallback(() => {
       if (!audioRef.current.src) {
         if (musicList && musicList.length > 0) {
@@ -217,7 +232,7 @@ import React, {
       }
     }, [isPlaying, musicList, loadTrackByIndex, play, pause]);
   
-    // Provide everything in context
+    // Provide everything via context
     const contextValue = {
       // states
       isPlaying,
