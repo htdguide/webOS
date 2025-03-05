@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import SliderControlWidgetAsset from '../../WidgetsComponents/SliderControl/SliderControlAsset';
-import brightnessIcon from '../../../../media/assets/volume.png';
+import brightnessIcon from '../../../../media/assets/brightness.png';
 
 function DisplayControl() {
   const [brightness, setBrightness] = useState(50);
