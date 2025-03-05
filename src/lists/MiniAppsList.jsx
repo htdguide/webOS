@@ -37,7 +37,7 @@ const MiniAppsList = [
   {
     id: 'datetime',
     name: 'Date & Time',
-    miniApp: null,
+    miniApp: ControlCentreMiniApp,
     barApp: DateTimeBarApp,
     priority: -1,
     available: true, // Will be rendered
