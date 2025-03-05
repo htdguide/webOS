@@ -1,42 +1,65 @@
-import React, { useState, useEffect, useRef } from 'react';
+// MusicControl.jsx
+
+import React, { useState, useRef, useEffect } from 'react';
 import './MusicControl.css';
-import play from '../../../../media/assets/play.png';
-import pause from '../../../../media/assets/pause.png';
-import fastforward from '../../../../media/assets/fastforward.png';
-import rewind from '../../../../media/assets/rewind.png';
-import albumThumbnail from '../../../../media/assets/album.jpg';
+
+// Icons
+import playIcon from '../../../../media/assets/play.png';
+import pauseIcon from '../../../../media/assets/pause.png';
+import fastForwardIcon from '../../../../media/assets/fastforward.png';
+import rewindIcon from '../../../../media/assets/rewind.png';
+import defaultThumbnail from '../../../../media/assets/album.jpg';
+
+// Import the music service
+import { useMusicService } from '../../../../services/MusicService/MusicService';
 
 function MusicControl() {
-  // PLAYBACK
-  const [isPlaying, setIsPlaying] = useState(false);
-  const handlePlayToggle = () => {
-    setIsPlaying(!isPlaying);
+  // Grab data/functions from the MusicService
+  const {
+    isPlaying,
+    currentTime,
+    duration,
+    trackInfo,
+    togglePlay,
+    handleNext,
+    handlePrev,
+    seek,
+  } = useMusicService();
+
+  // For the slider background
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const progressBarStyle = {
+    background: `linear-gradient(to right,
+      #000 0%,
+      #000 ${progressPercent}%,
+      #888 ${progressPercent}%,
+      #888 80%)`
   };
 
-  // TIMELINE in seconds
-  const [currentTime, setCurrentTime] = useState(72);
-  const totalTime = 204; // 3m24s
+  // Convert seconds to mm:ss
+  const formatTime = (secs) => {
+    if (!secs || secs < 0) secs = 0;
+    const minutes = Math.floor(secs / 60);
+    const seconds = secs % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
 
-  // SONG INFO
-  const songTitle = "Keep Moving";
-  const artistName = "Jungle - Loving In Stereo";
-
-  // Marquee for Song Title
+  // MARQUEE for Title
   const titleContainerRef = useRef(null);
   const titleTextRef = useRef(null);
   const [marqueeStyle, setMarqueeStyle] = useState({});
-  const [dynamicKeyframes, setDynamicKeyframes] = useState("");
+  const [dynamicKeyframes, setDynamicKeyframes] = useState('');
 
-  // Marquee for Artist
+  // MARQUEE for Artist
   const artistContainerRef = useRef(null);
   const artistTextRef = useRef(null);
   const [artistMarqueeStyle, setArtistMarqueeStyle] = useState({});
-  const [artistDynamicKeyframes, setArtistDynamicKeyframes] = useState("");
+  const [artistDynamicKeyframes, setArtistDynamicKeyframes] = useState('');
 
   const speed = 50; // px/sec
   const pauseTime = 3; // seconds before scrolling
 
-  // Title marquee
+  // Title marquee effect
   useEffect(() => {
     function updateMarquee() {
       const containerWidth = titleContainerRef.current?.offsetWidth || 0;
@@ -58,15 +81,15 @@ function MusicControl() {
         });
       } else {
         setMarqueeStyle({ animation: 'none' });
-        setDynamicKeyframes("");
+        setDynamicKeyframes('');
       }
     }
     updateMarquee();
     window.addEventListener('resize', updateMarquee);
     return () => window.removeEventListener('resize', updateMarquee);
-  }, [songTitle]);
+  }, [trackInfo.title]);
 
-  // Artist marquee
+  // Artist marquee effect
   useEffect(() => {
     function updateArtistMarquee() {
       const containerWidth = artistContainerRef.current?.offsetWidth || 0;
@@ -88,35 +111,21 @@ function MusicControl() {
         });
       } else {
         setArtistMarqueeStyle({ animation: 'none' });
-        setArtistDynamicKeyframes("");
+        setArtistDynamicKeyframes('');
       }
     }
     updateArtistMarquee();
     window.addEventListener('resize', updateArtistMarquee);
     return () => window.removeEventListener('resize', updateArtistMarquee);
-  }, [artistName]);
+  }, [trackInfo.artist]);
 
-  // Progress bar changes
+  // Slider change => seek
   const handleProgressChange = (e) => {
-    setCurrentTime(Number(e.target.value));
+    seek(Number(e.target.value));
   };
 
-  // Convert seconds to mm:ss
-  const formatTime = (secs) => {
-    const minutes = Math.floor(secs / 60);
-    const seconds = secs % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  };
-
-  // For the progress bar background
-  const progressPercent = (currentTime / totalTime) * 100;
-  const progressBarStyle = {
-    background: `linear-gradient(to right,
-      #000 0%,
-      #000 ${progressPercent}%,
-      #888 ${progressPercent}%,
-      #888 80%)`
-  };
+  // Use the extracted albumArt if it exists, otherwise a default
+  const albumThumbnail = trackInfo.albumArt || defaultThumbnail;
 
   return (
     <div className="music-control-container">
@@ -136,7 +145,7 @@ function MusicControl() {
               ref={titleTextRef}
               style={marqueeStyle}
             >
-              {songTitle}
+              {trackInfo.title || 'Unknown Title'}
             </div>
           </div>
           <div className="song-artist" ref={artistContainerRef}>
@@ -145,39 +154,42 @@ function MusicControl() {
               ref={artistTextRef}
               style={artistMarqueeStyle}
             >
-              {artistName}
+              {trackInfo.artist || 'Unknown Artist'}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Progress/Timeline in the middle */}
+      {/* Progress Bar */}
       <div className="progress-container">
         <input
           type="range"
           className="progress-bar"
           min="0"
-          max={totalTime}
+          max={duration}
           value={currentTime}
           onChange={handleProgressChange}
           style={progressBarStyle}
         />
         <div className="time-row">
           <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(totalTime)}</span>
+          <span>{formatTime(duration)}</span>
         </div>
       </div>
 
-      {/* BOTTOM SECTION: Playback buttons */}
+      {/* Playback buttons */}
       <div className="music-buttons">
-        <button className="music-btn">
-          <img src={rewind} alt="Previous" />
+        <button className="music-btn" onClick={handlePrev}>
+          <img src={rewindIcon} alt="Previous" />
         </button>
-        <button className="music-btn" onClick={handlePlayToggle}>
-          <img src={isPlaying ? pause : play} alt={isPlaying ? "Pause" : "Play"} />
+        <button className="music-btn" onClick={togglePlay}>
+          <img
+            src={isPlaying ? pauseIcon : playIcon}
+            alt={isPlaying ? "Pause" : "Play"}
+          />
         </button>
-        <button className="music-btn">
-          <img src={fastforward} alt="Next" />
+        <button className="music-btn" onClick={handleNext}>
+          <img src={fastForwardIcon} alt="Next" />
         </button>
       </div>
     </div>

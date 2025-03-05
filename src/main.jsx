@@ -11,6 +11,7 @@ import { FocusProvider } from './interactions/FocusControl/FocusControl.jsx';
 import { UIStateProvider } from './services/UIStateStorage/UIStateStorage.jsx';
 import { MiniWindowProvider } from './components/MiniWindow/MiniWindowProvider.jsx';
 import { DraggableWindowProvider } from './components/DraggableWindow/DraggableWindowProvider.jsx';
+import { MusicServiceProvider } from './services/MusicService/MusicService.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
@@ -47,7 +48,8 @@ const Main = () => {
       <DeviceInfoProvider>
         <UIStateProvider>
           <FocusProvider>
-            <Wallpaper />
+            <MusicServiceProvider>
+              <Wallpaper />
               <MiniWindowProvider>
                 <DraggableWindowProvider>
                   <div>
@@ -59,7 +61,8 @@ const Main = () => {
                     <Notification />
                   </div>
                 </DraggableWindowProvider>
-            </MiniWindowProvider>
+              </MiniWindowProvider>
+            </MusicServiceProvider>
           </FocusProvider>
         </UIStateProvider>
       </DeviceInfoProvider>

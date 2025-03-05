@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "framer-motion": "^12.4.7",
+    "jsmediatags": "^3.9.7",
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },
