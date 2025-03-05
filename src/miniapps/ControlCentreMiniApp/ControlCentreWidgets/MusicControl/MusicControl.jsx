@@ -114,8 +114,8 @@ function MusicControl() {
     background: `linear-gradient(to right,
       #000 0%,
       #000 ${progressPercent}%,
-      #ccc ${progressPercent}%,
-      #ccc 100%)`
+      #888 ${progressPercent}%,
+      #888 80%)`
   };
 
   return (

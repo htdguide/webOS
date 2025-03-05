@@ -35,8 +35,7 @@ function MiniWindow({ anchorPos, onClose, children, className = '', visible = tr
         top: position.top,
         left: position.left,
         opacity: visible ? 1 : 0,
-        // Transition both the opacity and the backdrop filter blur effect
-        backdropFilter: visible ? 'blur(5px)' : 'blur(0px)',
+
         transition: 'opacity 300ms ease-in-out, backdrop-filter 300ms ease-in-out'
       }}
     >
