@@ -96,6 +96,7 @@ function SliderControlWidgetAsset({
             src={icon}
             alt="Slider Icon"
             className="slider-icon-ontrack"
+            draggable="false"
           />
         )}
         <input

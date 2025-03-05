@@ -124,6 +124,7 @@ function MusicControl() {
       {dynamicKeyframes && <style>{dynamicKeyframes}</style>}
       {artistDynamicKeyframes && <style>{artistDynamicKeyframes}</style>}
 
+      {/* TOP SECTION: Album + Title + Artist */}
       <div className="music-info-top">
         <div className="album-artwork">
           <img src={albumThumbnail} alt="Album Artwork" />
@@ -150,8 +151,8 @@ function MusicControl() {
         </div>
       </div>
 
+      {/* Progress/Timeline in the middle */}
       <div className="progress-container">
-        <div className="time-text">{formatTime(currentTime)}</div>
         <input
           type="range"
           className="progress-bar"
@@ -161,9 +162,13 @@ function MusicControl() {
           onChange={handleProgressChange}
           style={progressBarStyle}
         />
-        <div className="time-text">{formatTime(totalTime)}</div>
+        <div className="time-row">
+          <span>{formatTime(currentTime)}</span>
+          <span>{formatTime(totalTime)}</span>
+        </div>
       </div>
 
+      {/* BOTTOM SECTION: Playback buttons */}
       <div className="music-buttons">
         <button className="music-btn">
           <img src={rewind} alt="Previous" />
