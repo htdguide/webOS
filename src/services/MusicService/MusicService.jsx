@@ -73,7 +73,7 @@ export function MusicServiceProvider({ children }) {
    */
   const [volume, setVolume] = useState(musicServiceConfig.DEFAULT_VOLUME);
 
-  // This effect syncs volume → gain node
+  // This effect syncs volume → gain node whenever volume changes
   useEffect(() => {
     if (gainNodeRef.current) {
       const fraction = volume / 100;
@@ -95,8 +95,7 @@ export function MusicServiceProvider({ children }) {
       })
       .then((data) => {
         setMusicList(data);
-        // Optionally auto-load first track
-        // loadTrackByIndex(0);
+        // Optionally auto-load first track: loadTrackByIndex(0);
       })
       .catch((err) => {
         console.error('Error loading music list:', err);
@@ -111,8 +110,14 @@ export function MusicServiceProvider({ children }) {
     if (!audioContextRef.current) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       audioContextRef.current = new AudioContext();
+
       gainNodeRef.current = audioContextRef.current.createGain();
       gainNodeRef.current.connect(audioContextRef.current.destination);
+
+      // Immediately set the gain to the default volume so there's no mismatch
+      const fraction = volume / 100;
+      const exponented = Math.pow(fraction, musicServiceConfig.VOLUME_EXPONENT);
+      gainNodeRef.current.gain.setValueAtTime(exponented, 0);
     }
     // If context is suspended, try to resume
     if (audioContextRef.current.state === 'suspended') {
@@ -120,7 +125,7 @@ export function MusicServiceProvider({ children }) {
         console.warn('AudioContext resume error:', err);
       });
     }
-  }, []);
+  }, [volume]);
 
   /**
    * 8) loadTrackByIndex: fetch/ decode the MP3 into an AudioBuffer, set ID3 tags, etc.
@@ -211,7 +216,7 @@ export function MusicServiceProvider({ children }) {
   );
 
   /**
-   * 9) Next / Prev must be declared before referencing them inside "play()" 
+   * 9) Next / Prev must be declared before referencing them inside "play()"
    */
   const handleNext = useCallback(() => {
     if (!musicList.length) return;
@@ -284,7 +289,8 @@ export function MusicServiceProvider({ children }) {
     if (!isPlaying) return;
 
     // How long we’ve played so far
-    const playedSoFar = pausedAtRef.current + (performance.now() - startTimestampRef.current) / 1000;
+    const playedSoFar =
+      pausedAtRef.current + (performance.now() - startTimestampRef.current) / 1000;
     pausedAtRef.current = playedSoFar;
 
     // Stop the current source
