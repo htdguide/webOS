@@ -1,6 +1,6 @@
 # WebOS
 
-Welcome to **WebOS**! This project brings a desktop-like experience into your web browser using modern web technologies like React, WebAssembly, and Vite.
+Welcome to **WebOS**! This project brings a desktop-like experience into your web browser using React, WebAssembly, and Vite.
 
 [Visit the Website](https://htdguide.com)
 
@@ -14,7 +14,7 @@ For detailed documentation and insights into the project structure, visit [Wiki]
 ## **Key Features**
 
 - **Interactive React Interface**  
-  A sleek and responsive UI built with React, providing a dynamic and engaging interface with draggable, resizable app windows.
+  A responsive UI built with React, providing a dynamic and engaging interface with draggable, resizable app windows.
 
 - **Dockerized Environment**  
   Containerized using **Docker** for consistent environments and seamless deployment across platforms.
