@@ -36,11 +36,12 @@ function MusicControl() {
       #888 80%)`
   };
 
-  // Convert seconds to mm:ss
+  // Convert seconds to mm:ss, cutting off milliseconds
   const formatTime = (secs) => {
     if (!secs || secs < 0) secs = 0;
-    const minutes = Math.floor(secs / 60);
-    const seconds = secs % 60;
+    const totalSeconds = Math.floor(secs);       // <-- Truncate decimal part
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 

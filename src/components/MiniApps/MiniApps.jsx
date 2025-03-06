@@ -69,7 +69,6 @@ function MiniApps() {
     .filter(app => app.available)
     .filter(app => {
       if (app.id === 'battery' && deviceInfo.battery.level === null) return false;
-      if (app.id === 'user' && deviceInfo.orientation === 'portrait') return false;
       return true;
     })
     .slice()

@@ -8,6 +8,8 @@ import awaiIcon from '../media/icons/awai.png';
 /**
  * Each icon now has a `priority` which determines its order on the desktop grid.
  * Additionally, apps that are only links have a `link` property.
+ * The new `indock` field determines if the icon should be displayed on the desktop.
+ * If `indock` is true, the icon will not be rendered on the desktop.
  */
 const DesktopAppsList = [
   {
@@ -16,6 +18,7 @@ const DesktopAppsList = [
     icon: defaultIcon,
     component: SortingAlgorithms,
     priority: 4,
+    indock: false,
   },
 
   {
@@ -24,6 +27,7 @@ const DesktopAppsList = [
     icon: folderIcon,
     component: null,
     priority: 5,
+    indock: true,  // This icon will not display on the desktop
   },
 
   {
@@ -33,6 +37,7 @@ const DesktopAppsList = [
     link: 'http://linkedin.com/in/htdguide/',
     component: null,
     priority: 2,
+    indock: false,
   },
 
   {
@@ -42,6 +47,7 @@ const DesktopAppsList = [
     link: 'https://github.com/htdguide',
     component: null,
     priority: 1,
+    indock: true,  // This icon will not display on the desktop
   },
 
   {
@@ -51,6 +57,7 @@ const DesktopAppsList = [
     link: 'https://applywithai.com',
     component: null,
     priority: 3,
+    indock: false,
   },
 
   // Add more apps here as needed, with increasing `priority`
