@@ -1,8 +1,11 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useRef } from 'react';
 import { AppsContext } from '../../services/AppsContext/AppsContext';
 
 /**
  * A Mac-like Dock with discrete magnification effects.
+ * 
+ * In this version, the effect is triggered by the mouse's x-coordinate within the dock container.
+ * The nearest icon (determined by the computed index) is magnified and its immediate neighbors are slightly magnified.
  *
  * Usage:
  *   1. Ensure you have AppsContext providing an array of apps.
@@ -12,38 +15,59 @@ import { AppsContext } from '../../services/AppsContext/AppsContext';
 
 const Dock = () => {
   const { apps } = useContext(AppsContext);
-  // Filter out apps to appear in the dock
+  // Filter apps to appear in the dock
   const dockApps = apps.filter((app) => app.indock);
 
-  // Track the index of the icon currently hovered over
+  // We'll track a floating active index based on the mouse x-position over the dock
   const [activeIndex, setActiveIndex] = useState(null);
+  const dockRef = useRef(null);
 
-  // Compute transform based on the hovered icon's index
+  // Constants that match the inline styles:
+  const CONTAINER_HORIZONTAL_PADDING = 15; // from padding '10px 15px'
+  const ICON_MARGIN = 8; // margin: '0 8px'
+  const ICON_SIZE = 48; // icon width/height
+  const ICON_SPACING = ICON_SIZE + ICON_MARGIN * 2; // 48 + 16 = 64
+  // The center of the first icon is offset from the left edge by:
+  const FIRST_ICON_CENTER_OFFSET = CONTAINER_HORIZONTAL_PADDING + ICON_MARGIN + ICON_SIZE / 2; // 15 + 8 + 24 = 47
+
+  // Update activeIndex based on mouse x-position within the dock container
+  const handleMouseMove = (e) => {
+    if (!dockRef.current) return;
+    const dockRect = dockRef.current.getBoundingClientRect();
+    const relativeX = e.clientX - dockRect.left;
+    // Compute a floating index: when the cursor is at the center of the first icon, index = 0;
+    // the spacing between icon centers is ICON_SPACING.
+    const computedIndex = (relativeX - FIRST_ICON_CENTER_OFFSET) / ICON_SPACING;
+    setActiveIndex(computedIndex);
+  };
+
+  // When the mouse leaves the dock, reset to default state.
+  const handleMouseLeave = () => {
+    setActiveIndex(null);
+  };
+
+  // Compute transformation for each icon based on its index relative to the computed active index.
   const getTransform = (index) => {
-    // If no icon is active, return default transform
     if (activeIndex === null) return 'scale(1) translateY(0px)';
-    const offset = index - activeIndex;
-    const absOffset = Math.abs(offset);
+    // Determine the focused icon as the one nearest to the mouse
+    const focusedIndex = Math.round(activeIndex);
+    const diff = Math.abs(index - focusedIndex);
     let scale = 1;
     let translateY = 0;
-
-    if (absOffset === 0) {
-      // Focused icon
+    if (diff === 0) {
       scale = 1.5;
       translateY = -10;
-    } else if (absOffset === 1) {
-      // Immediate neighbor icons
+    } else if (diff === 1) {
       scale = 1.2;
       translateY = -6;
-    } else if (absOffset === 2) {
-      // Next neighbors further out
+    } else if (diff === 2) {
       scale = 1.1;
       translateY = 0;
     }
     return `scale(${scale}) translateY(${translateY}px)`;
   };
 
-  // Open the app (using link or a system command)
+  // Open the app (either via a link or by another method)
   const openApp = (app) => {
     if (app.link) {
       window.open(app.link, '_blank', 'noopener,noreferrer');
@@ -71,13 +95,13 @@ const Dock = () => {
 
   // Inline styles for each icon container
   const iconContainerStyle = (transform) => ({
-    width: '48px',
-    height: '48px',
-    margin: '0 8px',
+    width: `${ICON_SIZE}px`,
+    height: `${ICON_SIZE}px`,
+    margin: `0 ${ICON_MARGIN}px`,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    transition: 'transform 0.3s ease',
+    transition: 'transform 0.15s ease',
     transform: transform,
     cursor: 'pointer',
   });
@@ -92,14 +116,15 @@ const Dock = () => {
 
   return (
     <div
+      ref={dockRef}
       style={dockContainerStyle}
-      onMouseLeave={() => setActiveIndex(null)}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
     >
       {dockApps.map((app, index) => (
         <div
           key={app.id}
           style={iconContainerStyle(getTransform(index))}
-          onMouseEnter={() => setActiveIndex(index)}
           onClick={() => openApp(app)}
         >
           <img
