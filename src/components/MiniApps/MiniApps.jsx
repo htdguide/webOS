@@ -67,10 +67,6 @@ function MiniApps() {
   // - For user app, hide in portrait orientation.
   const sortedApps = MiniAppsList
     .filter(app => app.available)
-    .filter(app => {
-      if (app.id === 'battery' && deviceInfo.battery.level === null) return false;
-      return true;
-    })
     .slice()
     .sort((a, b) => a.priority - b.priority)
     .reverse();

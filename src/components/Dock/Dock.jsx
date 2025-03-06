@@ -144,7 +144,7 @@ const Dock = () => {
     bottom: '20px',
     left: '50%',
     transform: 'translateX(-50%)',
-    zIndex: 9999,
+    zIndex: 10,
   };
 
   // Icons container style with computed width.

@@ -5,6 +5,11 @@ import SortingAlgorithms from '../../apps/SortingAlgorithms/SortingAlgorithms.js
 import linkedinIcon from '../../media/icons/linkedin.png';
 import githubIcon from '../../media/icons/github.png';
 import awaiIcon from '../../media/icons/awai.png';
+import finderIcon from '../../media/icons/finder.png';
+import launchpadIcon from '../../media/icons/launchpad.webp';
+import settingsIcon from '../../media/icons/settings.webp';
+import safariIcon from '../../media/icons/safari.png';
+import psxIcon from '../../media/icons/PSX.png';
 
 /**
  * The initial list of apps.
@@ -56,47 +61,45 @@ const initialAppsList = [
     indock: false,
   },
   {
-    id: 'sorting-algorithms2',
-    name: 'Sorting Algorithms',
-    icon: defaultIcon,
-    component: SortingAlgorithms,
-    priority: 4,
-    indock: true,
-  },
-  {
-    id: 'untitled-folder2',
-    name: 'untitled folder',
-    icon: folderIcon,
+    id: 'psx',
+    name: 'PSX',
+    icon: psxIcon,
+    link: 'https://applywithai.com',
     component: null,
-    priority: 5,
-    indock: true, // Initially in the dock, so not on desktop
+    priority: 6,
+    indock: false,
   },
   {
-    id: 'linkedin2',
-    name: 'LinkedIn',
-    icon: linkedinIcon,
-    link: 'http://linkedin.com/in/htdguide/',
-    component: null,
-    priority: 2,
-    indock: true,
-  },
-  {
-    id: 'github2',
-    name: 'Github',
-    icon: githubIcon,
-    link: 'https://github.com/htdguide',
+    id: 'finder',
+    name: 'finder',
+    icon: finderIcon,
     component: null,
     priority: 1,
     indock: true, // Initially in the dock, so not on desktop
   },
   {
-    id: 'awai2',
-    name: 'ApplyWithAI',
-    icon: awaiIcon,
-    link: 'https://applywithai.com',
+    id: 'launchpad',
+    name: 'Launchpad',
+    icon: launchpadIcon,
+    component: null,
+    priority: 2,
+    indock: true, // Initially in the dock, so not on desktop
+  },
+  {
+    id: 'safari',
+    name: 'Safari',
+    icon: safariIcon,
     component: null,
     priority: 3,
-    indock: true,
+    indock: true, // Initially in the dock, so not on desktop
+  },
+  {
+    id: 'settings',
+    name: 'Settings',
+    icon: settingsIcon,
+    component: null,
+    priority: 5,
+    indock: true, // Initially in the dock, so not on desktop
   },
 ];
 
