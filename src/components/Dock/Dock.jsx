@@ -1,4 +1,4 @@
-import React, { useContext, useState, useRef } from 'react';
+import React, { useContext, useState, useRef, useEffect } from 'react';
 import { AppsContext } from '../../services/AppsContext/AppsContext';
 import DOCK_CONFIG from '../../configs/DockConfig/DockConfig';
 
@@ -8,17 +8,15 @@ const {
   ADDITIONAL_MARGIN,
   DOCK_SPREAD,
   MAX_SCALE,
-  INITIAL_TRANSITION,
+  INITIAL_TRANSITION, // e.g. 'all 0.3s ease'
   NO_TRANSITION,
 } = DOCK_CONFIG;
 
 /**
  * A Mac-like Dock with smooth continuous magnification based on the mouse x-axis,
- * with icons locked on the y-axis. Their bottom edges remain fixed regardless of scaling.
+ * with icons locked on the y-axis (their bottom edges remain fixed).
  *
- * As the mouse moves over the dock container, each icon smoothly scales up based on its
- * distance from the mouse pointer. The transform origin is set to bottom center, ensuring
- * that the bottom edge of each icon stays at the same y coordinate.
+ * On initial hover, a smooth 0.3s transition is applied. After 0.3s, updates become immediate.
  *
  * Animation parameters are configured via a separate config file.
  *
@@ -31,22 +29,31 @@ const Dock = () => {
   const { apps } = useContext(AppsContext);
   const dockApps = apps.filter((app) => app.indock);
 
-  // Refs for outer container and icons container.
+  // Refs for outer container, icons container, and initial transition timer.
   const outerRef = useRef(null);
   const iconsContainerRef = useRef(null);
+  const initialTransitionTimeoutRef = useRef(null);
 
   // State for scales for each icon.
   const [scales, setScales] = useState(dockApps.map(() => 1));
-  // Controls whether to animate changes (true only for the initial transition after mouse enters)
+  // Controls whether to animate changes (true for initial transition, then false).
   const [shouldTransition, setShouldTransition] = useState(true);
+
+  // Handle mouse enter: enable smooth transition and schedule its disable.
+  const handleMouseEnter = () => {
+    if (initialTransitionTimeoutRef.current) {
+      clearTimeout(initialTransitionTimeoutRef.current);
+    }
+    setShouldTransition(true);
+    // Keep the initial transition active for 0.3 seconds.
+    initialTransitionTimeoutRef.current = setTimeout(() => {
+      setShouldTransition(false);
+    }, 300);
+  };
 
   // Update scales based on the mouse x-position.
   const handleMouseMove = (e) => {
     if (!iconsContainerRef.current) return;
-    // Disable smooth transition immediately after the first mouse move.
-    if (shouldTransition) {
-      setShouldTransition(false);
-    }
     const containerRect = iconsContainerRef.current.getBoundingClientRect();
     const mouseX = e.clientX - containerRect.left;
 
@@ -70,11 +77,9 @@ const Dock = () => {
     setScales(dockApps.map(() => 1));
     // Re-enable smooth transition for the next entry.
     setShouldTransition(true);
-  };
-
-  // On mouse enter, ensure the smooth transition is enabled.
-  const handleMouseEnter = () => {
-    setShouldTransition(true);
+    if (initialTransitionTimeoutRef.current) {
+      clearTimeout(initialTransitionTimeoutRef.current);
+    }
   };
 
   // Compute positions of icons based on dynamic margins and scales.
@@ -170,7 +175,8 @@ const Dock = () => {
 
   // Style for each icon container.
   // The dynamic margin increases with magnification.
-  // The transform origin is set to 'bottom center' to keep the bottom edge fixed.
+  // The transform origin is set to 'bottom center' so the bottom edge stays fixed.
+  // The initial transition is applied if shouldTransition is true.
   const iconContainerStyle = (index) => {
     const dynamicMargin = ICON_MARGIN + (scales[index] - 1) * ADDITIONAL_MARGIN;
     return {
