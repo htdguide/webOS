@@ -2,13 +2,11 @@ import React, { useContext, useState, useRef, useEffect } from 'react';
 import { AppsContext } from '../../services/AppsContext/AppsContext';
 
 /**
- * A Mac-like Dock with smooth continuous magnification and dynamic background.
+ * A Mac-like Dock with smooth continuous magnification based on the mouse x-axis.
  *
- * This version uses a nested structure:
- * - An outer fixed container (with high z-index) centers the dock.
- * - An inner icons container (which handles mouse events) calculates each icon's scale
- *   based on the mouse’s x-position relative to its center.
- * - A background div dynamically adjusts its bounds to cover the icons’ effective areas.
+ * As the mouse moves over the dock container, each icon smoothly scales up based on its
+ * distance from the mouse pointer. In addition, the side margins increase with the scale,
+ * and the dynamic background adjusts accordingly.
  *
  * Usage:
  *   1. Ensure you have AppsContext providing an array of apps.
@@ -24,9 +22,10 @@ const Dock = () => {
   const outerRef = useRef(null);
   const iconsContainerRef = useRef(null);
 
-  // Constants for icon dimensions and effect behavior.
+  // Constants for icon dimensions, margins, and effect parameters.
   const ICON_SIZE = 48;           // px
-  const ICON_MARGIN = 8;          // px (each side)
+  const ICON_MARGIN = 8;          // base margin (px)
+  const ADDITIONAL_MARGIN = 4;    // extra margin factor (px) per unit scale above 1
   const DOCK_SPREAD = 150;        // Range in px for the magnification effect.
   const MAX_SCALE = 1.5;          // Maximum scale when the cursor is directly over an icon.
   const MAX_TRANSLATE_Y = -10;    // Maximum vertical translation in px at full magnification.
@@ -35,7 +34,7 @@ const Dock = () => {
   const [scales, setScales] = useState(dockApps.map(() => 1));
   const [translateYs, setTranslateYs] = useState(dockApps.map(() => 0));
 
-  // Update scales and translateYs based on mouse x-position relative to the icons container.
+  // Update scales and translateYs continuously based on the mouse x-position.
   const handleMouseMove = (e) => {
     if (!iconsContainerRef.current) return;
     const containerRect = iconsContainerRef.current.getBoundingClientRect();
@@ -43,16 +42,12 @@ const Dock = () => {
 
     const newScales = [];
     const newTranslateYs = [];
+    // Use a static "base center" computed from the base margin and icon width.
     dockApps.forEach((_, index) => {
-      // Base center of icon: ICON_MARGIN + half ICON_SIZE + index * (ICON_SIZE + 2 * ICON_MARGIN)
       const baseCenter = ICON_MARGIN + ICON_SIZE / 2 + index * (ICON_SIZE + 2 * ICON_MARGIN);
       const distance = Math.abs(mouseX - baseCenter);
-      const scale =
-        distance > DOCK_SPREAD
-          ? 1
-          : 1 + (MAX_SCALE - 1) * (1 - distance / DOCK_SPREAD);
+      const scale = distance > DOCK_SPREAD ? 1 : 1 + (MAX_SCALE - 1) * (1 - distance / DOCK_SPREAD);
       newScales.push(scale);
-      // Interpolate translateY: 0 when scale = 1, MAX_TRANSLATE_Y when scale = MAX_SCALE.
       const translateY = ((scale - 1) / (MAX_SCALE - 1)) * MAX_TRANSLATE_Y;
       newTranslateYs.push(translateY);
     });
@@ -60,27 +55,45 @@ const Dock = () => {
     setTranslateYs(newTranslateYs);
   };
 
-  // Reset scales and translateY values when the mouse leaves the icons container.
+  // Reset scales and translateYs when the mouse leaves the icons container.
   const handleMouseLeave = () => {
     setScales(dockApps.map(() => 1));
     setTranslateYs(dockApps.map(() => 0));
   };
 
-  // Reset scales/translateYs only when the number of dock apps changes.
-  useEffect(() => {
-    setScales(dockApps.map(() => 1));
-    setTranslateYs(dockApps.map(() => 0));
-  }, [dockApps.length]);
+  // Compute the positions of icons based on dynamic margins and scales.
+  // Each icon's dynamic margin is calculated as: ICON_MARGIN + (scale - 1) * ADDITIONAL_MARGIN.
+  // This returns an array of icon center positions and the total container width.
+  const computeIconPositions = () => {
+    const centers = [];
+    let leftEdge = 0;
+    for (let i = 0; i < dockApps.length; i++) {
+      const dynamicMargin = ICON_MARGIN + (scales[i] - 1) * ADDITIONAL_MARGIN;
+      if (i === 0) {
+        leftEdge = dynamicMargin;
+      } else {
+        const prevDynamicMargin = ICON_MARGIN + (scales[i - 1] - 1) * ADDITIONAL_MARGIN;
+        leftEdge = leftEdge + ICON_SIZE + prevDynamicMargin + dynamicMargin;
+      }
+      const center = leftEdge + ICON_SIZE / 2;
+      centers.push(center);
+    }
+    const lastDynamicMargin = dockApps.length > 0 ? ICON_MARGIN + (scales[dockApps.length - 1] - 1) * ADDITIONAL_MARGIN : 0;
+    const containerWidth = dockApps.length > 0
+      ? centers[centers.length - 1] + ICON_SIZE / 2 + lastDynamicMargin
+      : 0;
+    return { centers, containerWidth };
+  };
 
   // Compute dynamic background bounds based on icons’ effective positions.
   const computeBackgroundBounds = () => {
     if (dockApps.length === 0) return { left: 0, width: 0 };
+    const { centers } = computeIconPositions();
     let minLeft = Infinity;
     let maxRight = -Infinity;
     dockApps.forEach((_, index) => {
-      const baseCenter = ICON_MARGIN + ICON_SIZE / 2 + index * (ICON_SIZE + 2 * ICON_MARGIN);
-      const effectiveLeft = baseCenter - (ICON_SIZE / 2) * scales[index];
-      const effectiveRight = baseCenter + (ICON_SIZE / 2) * scales[index];
+      const effectiveLeft = centers[index] - (ICON_SIZE / 2) * scales[index];
+      const effectiveRight = centers[index] + (ICON_SIZE / 2) * scales[index];
       if (effectiveLeft < minLeft) minLeft = effectiveLeft;
       if (effectiveRight > maxRight) maxRight = effectiveRight;
     });
@@ -88,6 +101,7 @@ const Dock = () => {
   };
 
   const { left: bgLeft, width: bgWidth } = computeBackgroundBounds();
+  const { containerWidth } = computeIconPositions();
 
   // Open the app (using link or another method).
   const openApp = (app) => {
@@ -107,14 +121,13 @@ const Dock = () => {
     zIndex: 9999,
   };
 
-  // Icons container style.
-  const iconsContainerWidth = dockApps.length * (ICON_SIZE + 2 * ICON_MARGIN);
+  // Icons container style with dynamically computed width.
   const iconsContainerStyle = {
     position: 'relative',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    width: `${iconsContainerWidth}px`,
+    width: `${containerWidth}px`,
     height: `${ICON_SIZE}px`,
   };
 
@@ -135,19 +148,23 @@ const Dock = () => {
   };
 
   // Style for each icon container.
-  const iconContainerStyle = (index) => ({
-    width: `${ICON_SIZE}px`,
-    height: `${ICON_SIZE}px`,
-    margin: `0 ${ICON_MARGIN}px`,
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    transition: 'transform 0.15s ease',
-    transform: `scale(${scales[index]}) translateY(${translateYs[index]}px)`,
-    cursor: 'pointer',
-    position: 'relative',
-    zIndex: 1,
-  });
+  // The margin is computed dynamically so that it increases with magnification.
+  const iconContainerStyle = (index) => {
+    const dynamicMargin = ICON_MARGIN + (scales[index] - 1) * ADDITIONAL_MARGIN;
+    return {
+      width: `${ICON_SIZE}px`,
+      height: `${ICON_SIZE}px`,
+      margin: `0 ${dynamicMargin}px`,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      transition: 'all 0.15s ease',
+      transform: `scale(${scales[index]}) translateY(${translateYs[index]}px)`,
+      cursor: 'pointer',
+      position: 'relative',
+      zIndex: 1,
+    };
+  };
 
   // Icon image style.
   const iconImageStyle = {
