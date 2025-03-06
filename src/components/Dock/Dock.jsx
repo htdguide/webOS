@@ -161,10 +161,10 @@ const Dock = () => {
   // Dynamic background style based on computed bounds.
   const backgroundStyle = {
     position: 'absolute',
-    top: 0,
-    left: `${bgLeft}px`,
-    width: `${bgWidth}px`,
-    height: '100%',
+    top: -5,
+    left: `${bgLeft - 5}px`,
+    width: `${bgWidth + 10}px`,
+    height: '120%',
     borderRadius: '16px',
     background: 'rgba(83, 83, 83, 0.25)',
     backdropFilter: 'blur(13px)',

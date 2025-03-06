@@ -6,7 +6,7 @@ const DOCK_CONFIG = {
     ICON_SIZE: 48,            // Icon size in pixels.
     
     // Margins
-    ICON_MARGIN: 5,           // Base margin between icons (in pixels) before magnification.
+    ICON_MARGIN: 8,           // Base margin between icons (in pixels) before magnification.
     ADDITIONAL_MARGIN: 20,     // Additional margin factor per unit scale above 1.
   
     // Magnification effect

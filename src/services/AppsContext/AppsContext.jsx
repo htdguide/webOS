@@ -6,8 +6,8 @@ import linkedinIcon from '../../media/icons/linkedin.png';
 import githubIcon from '../../media/icons/github.png';
 import awaiIcon from '../../media/icons/awai.png';
 import finderIcon from '../../media/icons/finder.png';
-import launchpadIcon from '../../media/icons/launchpad.webp';
-import settingsIcon from '../../media/icons/settings.webp';
+import launchpadIcon from '../../media/icons/launchpad.png';
+import settingsIcon from '../../media/icons/settings.png';
 import safariIcon from '../../media/icons/safari.png';
 import psxIcon from '../../media/icons/PSX.png';
 
