@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import './App.css';
 import Desktop from './components/Desktop/Desktop.jsx';
-import DesktopAppsList from './lists/DesktopAppsList.jsx';
+import { AppsContext } from './services/AppsContext/AppsContext.jsx';
 import { AppsProvider } from './services/AppsContext/AppsContext.jsx';
+import Dock from './components/Dock/Dock.jsx';
 
 function App() {
   const [openApps, setOpenApps] = useState([]);
 
   const handleOpenApp = (appId) => {
-    const appConfig = DesktopAppsList.find((app) => app.id === appId);
+    const appConfig = AppsContext.find((app) => app.id === appId);
 
     // If the app configuration has a link, open it in a new tab and do not add to openApps.
     if (appConfig?.link) {
@@ -28,6 +29,7 @@ function App() {
 
   return (
     <AppsProvider>
+      <Dock />
       <div className="App">
         <Desktop onOpenApp={handleOpenApp} />
         {openApps.map((appId) => {
