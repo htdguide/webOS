@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 import Desktop from './components/Desktop/Desktop.jsx';
 import DesktopAppsList from './lists/DesktopAppsList.jsx';
+import { AppsProvider } from './services/AppsContext/AppsContext.jsx';
 
 function App() {
   const [openApps, setOpenApps] = useState([]);
@@ -26,22 +27,24 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <Desktop onOpenApp={handleOpenApp} />
-      {openApps.map((appId) => {
-        const appConfig = DesktopAppsList.find((app) => app.id === appId);
-        const AppComponent = appConfig?.component;
+    <AppsProvider>
+      <div className="App">
+        <Desktop onOpenApp={handleOpenApp} />
+        {openApps.map((appId) => {
+          const appConfig = DesktopAppsList.find((app) => app.id === appId);
+          const AppComponent = appConfig?.component;
 
-        return (
-          AppComponent && (
-            <AppComponent
-              key={appId}
-              onClose={() => handleCloseApp(appId)}
-            />
-          )
-        );
-      })}
-    </div>
+          return (
+            AppComponent && (
+              <AppComponent
+                key={appId}
+                onClose={() => handleCloseApp(appId)}
+              />
+            )
+          );
+        })}
+      </div>
+      </AppsProvider>
   );
 }
 
