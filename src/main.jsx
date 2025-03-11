@@ -12,6 +12,7 @@ import { UIStateProvider } from './services/UIStateStorage/UIStateStorage.jsx';
 import { MiniWindowProvider } from './components/MiniWindow/MiniWindowProvider.jsx';
 import { DraggableWindowProvider } from './components/DraggableWindow/DraggableWindowProvider.jsx';
 import { MusicServiceProvider } from './services/MusicService/MusicService.jsx';
+import DisplayController from './services/DisplayController/DisplayController.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
@@ -49,19 +50,21 @@ const Main = () => {
         <UIStateProvider>
           <FocusProvider>
             <MusicServiceProvider>
-              <Wallpaper />
-              <MiniWindowProvider>
-                <DraggableWindowProvider>
-                  <div>
-                    <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
-                      <LoadingScreen />
+              <DisplayController>
+                <Wallpaper />
+                <MiniWindowProvider>
+                  <DraggableWindowProvider>
+                    <div>
+                      <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
+                        <LoadingScreen />
+                      </div>
+                      <App />
+                      <MenuBar />
+                      <Notification />
                     </div>
-                    <App />
-                    <MenuBar />
-                    <Notification />
-                  </div>
-                </DraggableWindowProvider>
-              </MiniWindowProvider>
+                  </DraggableWindowProvider>
+                </MiniWindowProvider>
+              </DisplayController>
             </MusicServiceProvider>
           </FocusProvider>
         </UIStateProvider>
