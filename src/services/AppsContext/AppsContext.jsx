@@ -1,5 +1,5 @@
 import React, { createContext, useState } from 'react';
-import defaultIcon from '../../media/icons/defaultapp.png'; // Example icon
+import defaultIcon from '../../media/icons/defaultapp.png';
 import folderIcon from '../../media/icons/folder.webp';
 import SortingAlgorithms from '../../apps/SortingAlgorithms/SortingAlgorithms.jsx';
 import linkedinIcon from '../../media/icons/linkedin.png';
@@ -31,7 +31,7 @@ const initialAppsList = [
     icon: folderIcon,
     component: null,
     priority: 5,
-    indock: false, // Initially in the dock, so not on desktop
+    indock: false,
   },
   {
     id: 'linkedin',
@@ -49,7 +49,7 @@ const initialAppsList = [
     link: 'https://github.com/htdguide',
     component: null,
     priority: 1,
-    indock: false, // Initially in the dock, so not on desktop
+    indock: false,
   },
   {
     id: 'awai',
@@ -75,7 +75,7 @@ const initialAppsList = [
     icon: finderIcon,
     component: null,
     priority: 1,
-    indock: true, // Initially in the dock, so not on desktop
+    indock: true,
   },
   {
     id: 'launchpad',
@@ -83,7 +83,7 @@ const initialAppsList = [
     icon: launchpadIcon,
     component: null,
     priority: 2,
-    indock: true, // Initially in the dock, so not on desktop
+    indock: true,
   },
   {
     id: 'safari',
@@ -91,7 +91,7 @@ const initialAppsList = [
     icon: safariIcon,
     component: null,
     priority: 3,
-    indock: true, // Initially in the dock, so not on desktop
+    indock: true,
   },
   {
     id: 'settings',
@@ -99,7 +99,7 @@ const initialAppsList = [
     icon: settingsIcon,
     component: null,
     priority: 5,
-    indock: true, // Initially in the dock, so not on desktop
+    indock: true,
   },
   {
     id: 'settings2',
@@ -107,7 +107,7 @@ const initialAppsList = [
     icon: settingsIcon,
     component: null,
     priority: 6,
-    indock: true, // Initially in the dock, so not on desktop
+    indock: true,
   },
 ];
 
