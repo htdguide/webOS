@@ -6,11 +6,9 @@ import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvi
 const Dock = () => {
   // Get device info (including orientation) from DeviceInfoProvider
   const deviceInfo = useDeviceInfo();
-  // If the device is in portrait orientation, merge in the vertical config overrides.
   const isPortrait = deviceInfo.orientation === 'portrait';
-  const config = isPortrait && DOCK_CONFIG.vertical
-    ? { ...DOCK_CONFIG, ...DOCK_CONFIG.vertical }
-    : DOCK_CONFIG;
+  // Merge vertical overrides when in portrait mode
+  const config = isPortrait && DOCK_CONFIG.vertical ? { ...DOCK_CONFIG, ...DOCK_CONFIG.vertical } : DOCK_CONFIG;
 
   const {
     ICON_SIZE,
@@ -31,15 +29,55 @@ const Dock = () => {
   const { apps } = useContext(AppsContext);
   const dockApps = apps.filter((app) => app.indock);
 
+  // Pagination settings: in portrait mode, show a configurable number of icons per page (default 4)
+  const iconsPerPage = isPortrait ? (config.ICONS_PER_PAGE || 4) : dockApps.length;
+  const paginationEnabled = isPortrait && dockApps.length > iconsPerPage;
+  const totalPages = paginationEnabled ? Math.ceil(dockApps.length / iconsPerPage) : 1;
+  const [currentPage, setCurrentPage] = useState(0);
+
+  // Determine which apps to render based on current page (if pagination is enabled)
+  const appsToRender = paginationEnabled
+    ? dockApps.slice(currentPage * iconsPerPage, (currentPage + 1) * iconsPerPage)
+    : dockApps;
+
   // Refs for outer container, icons container, and initial transition timer.
   const outerRef = useRef(null);
   const iconsContainerRef = useRef(null);
   const initialTransitionTimeoutRef = useRef(null);
 
-  // State for scales for each icon.
+  // State for scales for each icon (for the entire dockApps list)
   const [scales, setScales] = useState(dockApps.map(() => 1));
   // Controls whether to animate changes (true for initial transition, then false).
   const [shouldTransition, setShouldTransition] = useState(true);
+
+  // Touch events for swipe between pages (only when pagination is enabled)
+  const [touchStartX, setTouchStartX] = useState(null);
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const deltaX = touchEndX - touchStartX;
+    const swipeThreshold = 50; // threshold in pixels
+    if (deltaX < -swipeThreshold && currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1);
+    } else if (deltaX > swipeThreshold && currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+    setTouchStartX(null);
+    // Reset scales for the visible icons on page change
+    if (paginationEnabled) {
+      const newScales = [...scales];
+      const startIndex = currentPage * iconsPerPage;
+      for (let i = 0; i < appsToRender.length; i++) {
+        newScales[startIndex + i] = 1;
+      }
+      setScales(newScales);
+    }
+  };
 
   // Handle mouse enter: enable smooth transition and schedule its disable.
   const handleMouseEnter = () => {
@@ -57,7 +95,16 @@ const Dock = () => {
     if (!iconsContainerRef.current) return;
     // If magnification is disabled, keep scales at 1.
     if (!ENABLE_MAGNIFICATION) {
-      setScales(dockApps.map(() => 1));
+      if (paginationEnabled) {
+        const newScales = [...scales];
+        const startIndex = currentPage * iconsPerPage;
+        for (let i = 0; i < appsToRender.length; i++) {
+          newScales[startIndex + i] = 1;
+        }
+        setScales(newScales);
+      } else {
+        setScales(dockApps.map(() => 1));
+      }
       return;
     }
     const containerRect = iconsContainerRef.current.getBoundingClientRect();
@@ -65,69 +112,86 @@ const Dock = () => {
       ? e.clientY - containerRect.top
       : e.clientX - containerRect.left;
 
-    const newScales = [];
-    dockApps.forEach((_, index) => {
-      const baseCenter =
-        ICON_MARGIN + ICON_SIZE / 2 + index * (ICON_SIZE + 2 * ICON_MARGIN);
-      const distance = Math.abs(mousePos - baseCenter);
-      const scale =
-        distance > DOCK_SPREAD
-          ? 1
-          : 1 + (MAX_SCALE - 1) * (1 - distance / DOCK_SPREAD);
-      newScales.push(scale);
-    });
-    setScales(newScales);
+    if (paginationEnabled) {
+      const newScales = [...scales];
+      const startIndex = currentPage * iconsPerPage;
+      for (let i = 0; i < appsToRender.length; i++) {
+        const baseCenter = ICON_MARGIN + ICON_SIZE / 2 + i * (ICON_SIZE + 2 * ICON_MARGIN);
+        const distance = Math.abs(mousePos - baseCenter);
+        const scale = distance > DOCK_SPREAD ? 1 : 1 + (MAX_SCALE - 1) * (1 - distance / DOCK_SPREAD);
+        newScales[startIndex + i] = scale;
+      }
+      setScales(newScales);
+    } else {
+      const newScales = [];
+      dockApps.forEach((_, index) => {
+        const baseCenter = ICON_MARGIN + ICON_SIZE / 2 + index * (ICON_SIZE + 2 * ICON_MARGIN);
+        const distance = Math.abs(mousePos - baseCenter);
+        const scale = distance > DOCK_SPREAD ? 1 : 1 + (MAX_SCALE - 1) * (1 - distance / DOCK_SPREAD);
+        newScales.push(scale);
+      });
+      setScales(newScales);
+    }
   };
 
   // Reset scales when the mouse leaves the icons container.
   const handleMouseLeave = () => {
-    setScales(dockApps.map(() => 1));
+    if (paginationEnabled) {
+      const newScales = [...scales];
+      const startIndex = currentPage * iconsPerPage;
+      for (let i = 0; i < appsToRender.length; i++) {
+        newScales[startIndex + i] = 1;
+      }
+      setScales(newScales);
+    } else {
+      setScales(dockApps.map(() => 1));
+    }
     setShouldTransition(true);
     if (initialTransitionTimeoutRef.current) {
       clearTimeout(initialTransitionTimeoutRef.current);
     }
   };
 
-  // Compute icon positions based on dynamic margins and scales.
-  // For horizontal mode: computes x centers and container width.
-  // For vertical mode: computes y centers and container height.
+  // Compute icon positions based on dynamic margins and scales for visible icons.
   const computeIconPositions = () => {
     const centers = [];
     let startPos = 0;
-    for (let i = 0; i < dockApps.length; i++) {
-      const dynamicMargin = ICON_MARGIN + (scales[i] - 1) * ADDITIONAL_MARGIN;
+    // Use only the scales for the current page
+    const visibleScales = paginationEnabled
+      ? scales.slice(currentPage * iconsPerPage, currentPage * iconsPerPage + appsToRender.length)
+      : scales;
+    for (let i = 0; i < appsToRender.length; i++) {
+      const dynamicMargin = ICON_MARGIN + (visibleScales[i] - 1) * ADDITIONAL_MARGIN;
       if (i === 0) {
         startPos = dynamicMargin;
       } else {
-        const prevDynamicMargin =
-          ICON_MARGIN + (scales[i - 1] - 1) * ADDITIONAL_MARGIN;
+        const prevDynamicMargin = ICON_MARGIN + (visibleScales[i - 1] - 1) * ADDITIONAL_MARGIN;
         startPos = startPos + ICON_SIZE + prevDynamicMargin + dynamicMargin;
       }
       const center = startPos + ICON_SIZE / 2;
       centers.push(center);
     }
-    const lastDynamicMargin =
-      dockApps.length > 0
-        ? ICON_MARGIN + (scales[dockApps.length - 1] - 1) * ADDITIONAL_MARGIN
-        : 0;
-    const containerDimension =
-      dockApps.length > 0
-        ? centers[centers.length - 1] + ICON_SIZE / 2 + lastDynamicMargin
-        : 0;
+    const lastDynamicMargin = appsToRender.length > 0
+      ? ICON_MARGIN + (visibleScales[appsToRender.length - 1] - 1) * ADDITIONAL_MARGIN
+      : 0;
+    const containerDimension = appsToRender.length > 0
+      ? centers[centers.length - 1] + ICON_SIZE / 2 + lastDynamicMargin
+      : 0;
     return { centers, containerDimension };
   };
 
-  // Compute dynamic background bounds based on icons’ effective positions.
-  // For horizontal mode: returns left and width.
-  // For vertical mode: returns top and height.
+  // Compute dynamic background bounds based on icons’ effective positions for visible icons.
   const computeBackgroundBounds = () => {
-    if (dockApps.length === 0) return { start: 0, size: 0 };
+    if (appsToRender.length === 0) return { start: 0, size: 0 };
     const { centers } = computeIconPositions();
     let minPos = Infinity;
     let maxPos = -Infinity;
-    dockApps.forEach((_, index) => {
-      const effectiveStart = centers[index] - (ICON_SIZE / 2) * scales[index];
-      const effectiveEnd = centers[index] + (ICON_SIZE / 2) * scales[index];
+    const visibleScales = paginationEnabled
+      ? scales.slice(currentPage * iconsPerPage, currentPage * iconsPerPage + appsToRender.length)
+      : scales;
+    appsToRender.forEach((_, index) => {
+      const effectiveStart = centers[index] - (ICON_SIZE / 2) * visibleScales[index];
+      const effectiveEnd = centers[index] + (ICON_SIZE / 2) * visibleScales[index];
       if (effectiveStart < minPos) minPos = effectiveStart;
       if (effectiveEnd > maxPos) maxPos = effectiveEnd;
     });
@@ -233,12 +297,14 @@ const Dock = () => {
 
   // Style for each icon container.
   const iconContainerStyle = (index) => {
-    const dynamicMargin = ICON_MARGIN + (scales[index] - 1) * ADDITIONAL_MARGIN;
+    const dynamicMargin = ICON_MARGIN + (paginationEnabled
+      ? (scales[currentPage * iconsPerPage + index] - 1) * ADDITIONAL_MARGIN
+      : (scales[index] - 1) * ADDITIONAL_MARGIN);
     const baseStyle = {
       width: `${ICON_SIZE}px`,
       height: `${ICON_SIZE}px`,
       transition: shouldTransition ? INITIAL_TRANSITION : NO_TRANSITION,
-      transform: `scale(${scales[index]})`,
+      transform: `scale(${paginationEnabled ? scales[currentPage * iconsPerPage + index] : scales[index]})`,
       cursor: 'pointer',
       position: 'relative',
       zIndex: 1,
@@ -273,7 +339,12 @@ const Dock = () => {
   };
 
   return (
-    <div ref={outerRef} style={outerContainerStyle}>
+    <div
+      ref={outerRef}
+      style={outerContainerStyle}
+      onTouchStart={paginationEnabled ? handleTouchStart : null}
+      onTouchEnd={paginationEnabled ? handleTouchEnd : null}
+    >
       <div
         ref={iconsContainerRef}
         style={iconsContainerStyle}
@@ -282,12 +353,30 @@ const Dock = () => {
         onMouseLeave={handleMouseLeave}
       >
         <div style={backgroundStyle} />
-        {dockApps.map((app, index) => (
+        {appsToRender.map((app, index) => (
           <div key={app.id} style={iconContainerStyle(index)} onClick={() => openApp(app)}>
             <img src={app.icon} alt={app.name} style={iconImageStyle} />
           </div>
         ))}
       </div>
+      {paginationEnabled && totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
+          {Array.from({ length: totalPages }).map((_, idx) => (
+            <div
+              key={idx}
+              onClick={() => setCurrentPage(idx)}
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                margin: '0 4px',
+                background: idx === currentPage ? 'black' : 'lightgray',
+                cursor: 'pointer',
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

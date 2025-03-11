@@ -101,6 +101,14 @@ const initialAppsList = [
     priority: 5,
     indock: true, // Initially in the dock, so not on desktop
   },
+  {
+    id: 'settings2',
+    name: 'Settings2',
+    icon: settingsIcon,
+    component: null,
+    priority: 6,
+    indock: true, // Initially in the dock, so not on desktop
+  },
 ];
 
 export const AppsContext = createContext({

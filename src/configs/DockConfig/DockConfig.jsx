@@ -16,7 +16,7 @@ const DOCK_CONFIG = {
   NO_TRANSITION: 'none',                // CSS value for immediate updates without inertion.
 
   // Feature: Enable/disable magnification effect.
-  ENABLE_MAGNIFICATION: true,
+  ENABLE_MAGNIFICATION: false,
 
   // Feature: Dock position. Options: 'bottom', 'left', 'right'.
   DOCK_POSITION: 'bottom',
@@ -34,7 +34,7 @@ const DOCK_CONFIG = {
     MAX_SCALE: 1.4,
     INITIAL_TRANSITION: 'all 0.15s ease',
     NO_TRANSITION: 'none',
-    ENABLE_MAGNIFICATION: true,
+    ENABLE_MAGNIFICATION: false,
     DOCK_POSITION: 'bottom', // For portrait devices, the dock remains at the bottom.
     DOCK_MARGIN: 15,
   },
