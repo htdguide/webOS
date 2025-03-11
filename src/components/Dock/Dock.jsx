@@ -21,6 +21,7 @@ const Dock = () => {
     ENABLE_MAGNIFICATION,
     DOCK_POSITION,
     DOCK_MARGIN,
+    DOTS_MARGIN_BOTTOM,
   } = config;
 
   // Determine dock layout orientation: horizontal if bottom, vertical if left/right.
@@ -345,38 +346,40 @@ const Dock = () => {
       onTouchStart={paginationEnabled ? handleTouchStart : null}
       onTouchEnd={paginationEnabled ? handleTouchEnd : null}
     >
-      <div
-        ref={iconsContainerRef}
-        style={iconsContainerStyle}
-        onMouseEnter={handleMouseEnter}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      >
-        <div style={backgroundStyle} />
-        {appsToRender.map((app, index) => (
-          <div key={app.id} style={iconContainerStyle(index)} onClick={() => openApp(app)}>
-            <img src={app.icon} alt={app.name} style={iconImageStyle} />
-          </div>
-        ))}
-      </div>
-      {paginationEnabled && totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
-          {Array.from({ length: totalPages }).map((_, idx) => (
-            <div
-              key={idx}
-              onClick={() => setCurrentPage(idx)}
-              style={{
-                width: '8px',
-                height: '8px',
-                borderRadius: '50%',
-                margin: '0 4px',
-                background: idx === currentPage ? 'black' : 'lightgray',
-                cursor: 'pointer',
-              }}
-            />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div
+          ref={iconsContainerRef}
+          style={iconsContainerStyle}
+          onMouseEnter={handleMouseEnter}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div style={backgroundStyle} />
+          {appsToRender.map((app, index) => (
+            <div key={app.id} style={iconContainerStyle(index)} onClick={() => openApp(app)}>
+              <img src={app.icon} alt={app.name} style={iconImageStyle} />
+            </div>
           ))}
         </div>
-      )}
+        {paginationEnabled && totalPages > 1 && (
+          <div style={{ marginTop: `${DOTS_MARGIN_BOTTOM}px`, display: 'flex', justifyContent: 'center' }}>
+            {Array.from({ length: totalPages }).map((_, idx) => (
+              <div
+                key={idx}
+                onClick={() => setCurrentPage(idx)}
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  margin: '0 4px',
+                  background: idx === currentPage ? 'white' : 'black',
+                  cursor: 'pointer',
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

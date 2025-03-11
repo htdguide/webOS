@@ -25,6 +25,9 @@ const DOCK_CONFIG = {
   // For 'bottom', this is the bottom margin; for 'left' or 'right', this is the side margin.
   DOCK_MARGIN: 20,
 
+  // Adjustments for dots: margin from the bottom of the screen.
+  DOTS_MARGIN_BOTTOM: 10,
+
   // Vertical orientation overrides (for devices in portrait mode).
   vertical: {
     ICON_SIZE: 56,
@@ -36,7 +39,8 @@ const DOCK_CONFIG = {
     NO_TRANSITION: 'none',
     ENABLE_MAGNIFICATION: false,
     DOCK_POSITION: 'bottom', // For portrait devices, the dock remains at the bottom.
-    DOCK_MARGIN: 15,
+    DOCK_MARGIN: 8,
+    DOTS_MARGIN_BOTTOM: 15,
   },
 };
 
