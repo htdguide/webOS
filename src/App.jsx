@@ -46,6 +46,9 @@ function AppContent() {
           );
         })}
       </div>
+      <div className="version">
+        v0.2.2 alpha
+      </div>
     </>
   );
 }

@@ -14,3 +14,32 @@ body, html {
 #react-error-overlay {
   display: none !important;
 }
+
+/* styles.css */
+
+/* Default label style */
+.version {
+  position: fixed;
+  right: 10px;
+  bottom: 8px;
+  font-size: 12px;
+  color: #000;
+  background-color: rgba(255, 255, 255, 0.6);
+  padding: 4px 4px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Mobile view: Rotate the label vertically */
+@media (max-width: 600px) {
+  .version {
+    /* Rotate 90° counter-clockwise */
+    font-size: 8px;
+    bottom: 1px;
+    right: 1px;
+    /* Optional: adjust translation to center it along the side */
+    /* transform: rotate(-90deg) translate(-50%, 0); */
+  }
+}
