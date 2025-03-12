@@ -61,14 +61,6 @@ const initialAppsList = [
     indock: false,
   },
   {
-    id: 'psx',
-    name: 'PSX',
-    icon: psxIcon,
-    component: null,
-    priority: 6,
-    indock: false,
-  },
-  {
     id: 'finder',
     name: 'Finder',
     icon: finderIcon,
@@ -101,9 +93,9 @@ const initialAppsList = [
     indock: true,
   },
   {
-    id: 'testapp1',
-    name: 'TestApp1',
-    icon: defaultIcon,
+    id: 'psx',
+    name: 'PSX',
+    icon: psxIcon,
     component: null,
     priority: 6,
     indock: true,
