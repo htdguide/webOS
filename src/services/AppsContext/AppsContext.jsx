@@ -1,5 +1,6 @@
 import React, { createContext, useState } from 'react';
 import defaultIcon from '../../media/icons/defaultapp.png';
+import defaultIcon2 from '../../media/icons/defaultapp2.png';
 import folderIcon from '../../media/icons/folder.webp';
 import SortingAlgorithms from '../../apps/SortingAlgorithms/SortingAlgorithms.jsx';
 import linkedinIcon from '../../media/icons/linkedin.png';
@@ -103,7 +104,7 @@ const initialAppsList = [
   {
     id: 'testapp2',
     name: 'TestApp2',
-    icon: defaultIcon,
+    icon: defaultIcon2,
     component: null,
     priority: 7,
     indock: true,
@@ -111,7 +112,7 @@ const initialAppsList = [
   {
     id: 'testapp3',
     name: 'TestApp3',
-    icon: defaultIcon,
+    icon: defaultIcon2,
     component: null,
     priority: 8,
     indock: true,
@@ -119,7 +120,7 @@ const initialAppsList = [
   {
     id: 'testapp4',
     name: 'TestApp4',
-    icon: defaultIcon,
+    icon: defaultIcon2,
     component: null,
     priority: 9,
     indock: true,
