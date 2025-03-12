@@ -32,9 +32,9 @@ const DOCK_CONFIG = {
   // APP_NAME_TOOLTIP_OFFSET: Distance (in pixels) between the icon and the tooltip.
   // APP_NAME_BACKGROUND_PADDING: Padding for the tooltip background.
   // APP_NAME_FONT_SIZE: Font size of the app name.
-  APP_NAME_TOOLTIP_OFFSET: 10,
-  APP_NAME_BACKGROUND_PADDING: '2px 6px',
-  APP_NAME_FONT_SIZE: 12,
+  APP_NAME_TOOLTIP_OFFSET: 25,
+  APP_NAME_BACKGROUND_PADDING: '5px 15px',
+  APP_NAME_FONT_SIZE: 14,
 
   // Vertical orientation overrides (for devices in portrait mode).
   vertical: {
@@ -51,8 +51,8 @@ const DOCK_CONFIG = {
     DOTS_MARGIN_BOTTOM: 25,
 
     // Tooltip configuration for portrait mode (if you want different values)
-    APP_NAME_TOOLTIP_OFFSET: 5,
-    APP_NAME_BACKGROUND_PADDING: '2px 6px',
+    APP_NAME_TOOLTIP_OFFSET: 25,
+    APP_NAME_BACKGROUND_PADDING: '5px 15px',
     APP_NAME_FONT_SIZE: 12,
   },
 };

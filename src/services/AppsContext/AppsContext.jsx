@@ -71,7 +71,7 @@ const initialAppsList = [
   },
   {
     id: 'finder',
-    name: 'finder',
+    name: 'Finder',
     icon: finderIcon,
     component: null,
     priority: 1,
