@@ -47,8 +47,8 @@ const DOCK_CONFIG = {
     NO_TRANSITION: 'none',
     ENABLE_MAGNIFICATION: false,
     DOCK_POSITION: 'bottom', // For portrait devices, the dock remains at the bottom.
-    DOCK_MARGIN: 8,
-    DOTS_MARGIN_BOTTOM: 25,
+    DOCK_MARGIN: 5,
+    DOTS_MARGIN_BOTTOM: 20,
     // Tooltip configuration for portrait mode (if you want different values)
     APP_NAME_TOOLTIP_OFFSET: 25,
     APP_NAME_BACKGROUND_PADDING: '5px 15px',
