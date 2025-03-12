@@ -273,10 +273,19 @@ const Dock = () => {
               onMouseEnter={() => setHoveredApp(app.id)}
               onMouseLeave={() => setHoveredApp(null)}
             >
-              {/* Tooltip (app name) is rendered only when not in portrait and if this icon is not active */}
-              {!isPortrait && hoveredApp === app.id && activeApp !== app.id && (
+              {/* Tooltip (app name) with fade-out only on mouse leave */}
+              {!isPortrait && (
                 <div style={getTooltipWrapperStyle(DOCK_POSITION, APP_NAME_TOOLTIP_OFFSET)}>
-                  <div style={getTooltipBubbleStyle(APP_NAME_BACKGROUND_PADDING, APP_NAME_FONT_SIZE)}>
+                  <div
+                    style={{
+                      ...getTooltipBubbleStyle(APP_NAME_BACKGROUND_PADDING, APP_NAME_FONT_SIZE),
+                      opacity: hoveredApp === app.id && activeApp !== app.id ? 1 : 0,
+                      // If an icon is hovered, remove any transition so the new tooltip appears immediately;
+                      // otherwise (when hoveredApp is null) use fade-out.
+                      transition: hoveredApp === null ? 'opacity 0.3s ease' : 'none',
+                      pointerEvents: 'none',
+                    }}
+                  >
                     {app.name}
                     <div style={getTooltipArrowStyle(DOCK_POSITION)} />
                   </div>

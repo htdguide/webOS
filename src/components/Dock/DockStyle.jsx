@@ -199,7 +199,7 @@ export const getOuterContainerStyle = (DOCK_POSITION, DOCK_MARGIN) => {
     background: 'rgba(200, 200, 200, 0.6)',
     backdropFilter: 'blur(10px)',
     WebkitBackdropFilter: 'blur(10px)',
-    color: '#000',
+    color: '#111',
     padding: APP_NAME_BACKGROUND_PADDING,
     borderRadius: '4px',
     fontSize: APP_NAME_FONT_SIZE,
