@@ -17,8 +17,16 @@ const Dock = () => {
   // Get device info (including orientation) from DeviceInfoProvider
   const deviceInfo = useDeviceInfo();
   const isPortrait = deviceInfo.orientation === 'portrait';
-  // Merge vertical overrides when in portrait mode
-  const config = isPortrait && DOCK_CONFIG.vertical ? { ...DOCK_CONFIG, ...DOCK_CONFIG.vertical } : DOCK_CONFIG;
+
+  // Determine configuration overrides based on device orientation and dock position
+  let config = { ...DOCK_CONFIG };
+  if (isPortrait && config.vertical) {
+    config = { ...config, ...config.vertical };
+  } else if (config.DOCK_POSITION === 'left' && config.left) {
+    config = { ...config, ...config.left };
+  } else if (config.DOCK_POSITION === 'right' && config.right) {
+    config = { ...config, ...config.right };
+  }
 
   const {
     ICON_SIZE,
@@ -246,12 +254,12 @@ const Dock = () => {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div
           ref={iconsContainerRef}
-          style={getIconsContainerStyle(isVerticalDock, ICON_SIZE, containerDimension)}
+          style={getIconsContainerStyle(isVerticalDock, DOCK_POSITION, ICON_SIZE, containerDimension)}
           onMouseEnter={handleMouseEnter}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
         >
-          <div style={getBackgroundStyle(isVerticalDock, bgStart, bgSize)} />
+          <div style={getBackgroundStyle(isVerticalDock, bgStart, bgSize, DOCK_POSITION)} />
           {appsToRender.map((app, index) => (
             <div
               key={app.id}

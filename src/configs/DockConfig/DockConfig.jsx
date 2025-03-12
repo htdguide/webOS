@@ -18,7 +18,7 @@ const DOCK_CONFIG = {
   // Feature: Enable/disable magnification effect.
   ENABLE_MAGNIFICATION: false,
 
-  // Feature: Dock position. Options: 'bottom', 'left', 'right'.
+  // Feature: Dock position. Options: 'bottom'(default), 'left', 'right'.
   DOCK_POSITION: 'bottom',
 
   // Feature: Margin from the edge.
@@ -49,10 +49,45 @@ const DOCK_CONFIG = {
     DOCK_POSITION: 'bottom', // For portrait devices, the dock remains at the bottom.
     DOCK_MARGIN: 8,
     DOTS_MARGIN_BOTTOM: 25,
-
     // Tooltip configuration for portrait mode (if you want different values)
     APP_NAME_TOOLTIP_OFFSET: 25,
     APP_NAME_BACKGROUND_PADDING: '5px 15px',
+    APP_NAME_FONT_SIZE: 12,
+  },
+
+  // Configurations for left side dock.
+  left: {
+    ICON_SIZE: 45,
+    ICON_MARGIN: 8,
+    ADDITIONAL_MARGIN: 20,
+    DOCK_SPREAD: 130,
+    MAX_SCALE: 1.4,
+    INITIAL_TRANSITION: 'all 0.15s ease',
+    NO_TRANSITION: 'none',
+    ENABLE_MAGNIFICATION: false,
+    DOCK_POSITION: 'left',
+    DOCK_MARGIN: 20,
+    DOTS_MARGIN_BOTTOM: 25,
+    APP_NAME_TOOLTIP_OFFSET: 15,
+    APP_NAME_BACKGROUND_PADDING: '5px 10px',
+    APP_NAME_FONT_SIZE: 12,
+  },
+
+  // Configurations for right side dock.
+  right: {
+    ICON_SIZE: 45,
+    ICON_MARGIN: 8,
+    ADDITIONAL_MARGIN: 25,
+    DOCK_SPREAD: 130,
+    MAX_SCALE: 1.4,
+    INITIAL_TRANSITION: 'all 0.15s ease',
+    NO_TRANSITION: 'none',
+    ENABLE_MAGNIFICATION: false,
+    DOCK_POSITION: 'right',
+    DOCK_MARGIN: 20,
+    DOTS_MARGIN_BOTTOM: 10,
+    APP_NAME_TOOLTIP_OFFSET: 15,
+    APP_NAME_BACKGROUND_PADDING: '5px 10px',
     APP_NAME_FONT_SIZE: 12,
   },
 };
