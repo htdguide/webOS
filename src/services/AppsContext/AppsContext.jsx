@@ -1,10 +1,15 @@
 import React, { createContext, useState } from 'react';
-import defaultIcon from '../../media/icons/defaultapp.png'; // Example icon
+import defaultIcon from '../../media/icons/defaultapp.png';
 import folderIcon from '../../media/icons/folder.webp';
 import SortingAlgorithms from '../../apps/SortingAlgorithms/SortingAlgorithms.jsx';
 import linkedinIcon from '../../media/icons/linkedin.png';
 import githubIcon from '../../media/icons/github.png';
 import awaiIcon from '../../media/icons/awai.png';
+import finderIcon from '../../media/icons/finder.png';
+import launchpadIcon from '../../media/icons/launchpad.png';
+import settingsIcon from '../../media/icons/settings.png';
+import safariIcon from '../../media/icons/safari.png';
+import psxIcon from '../../media/icons/PSX.png';
 
 /**
  * The initial list of apps.
@@ -26,7 +31,7 @@ const initialAppsList = [
     icon: folderIcon,
     component: null,
     priority: 5,
-    indock: true, // Initially in the dock, so not on desktop
+    indock: false,
   },
   {
     id: 'linkedin',
@@ -44,7 +49,7 @@ const initialAppsList = [
     link: 'https://github.com/htdguide',
     component: null,
     priority: 1,
-    indock: false, // Initially in the dock, so not on desktop
+    indock: false,
   },
   {
     id: 'awai',
@@ -54,6 +59,78 @@ const initialAppsList = [
     component: null,
     priority: 3,
     indock: false,
+  },
+  {
+    id: 'psx',
+    name: 'PSX',
+    icon: psxIcon,
+    component: null,
+    priority: 6,
+    indock: false,
+  },
+  {
+    id: 'finder',
+    name: 'Finder',
+    icon: finderIcon,
+    component: null,
+    priority: 1,
+    indock: true,
+  },
+  {
+    id: 'launchpad',
+    name: 'Launchpad',
+    icon: launchpadIcon,
+    component: null,
+    priority: 2,
+    indock: true,
+  },
+  {
+    id: 'safari',
+    name: 'Safari',
+    icon: safariIcon,
+    component: null,
+    priority: 3,
+    indock: true,
+  },
+  {
+    id: 'settings',
+    name: 'Settings',
+    icon: settingsIcon,
+    component: null,
+    priority: 5,
+    indock: true,
+  },
+  {
+    id: 'testapp1',
+    name: 'TestApp1',
+    icon: defaultIcon,
+    component: null,
+    priority: 6,
+    indock: true,
+  },
+  {
+    id: 'testapp2',
+    name: 'TestApp2',
+    icon: defaultIcon,
+    component: null,
+    priority: 7,
+    indock: true,
+  },
+  {
+    id: 'testapp3',
+    name: 'TestApp3',
+    icon: defaultIcon,
+    component: null,
+    priority: 8,
+    indock: true,
+  },
+  {
+    id: 'testapp4',
+    name: 'TestApp4',
+    icon: defaultIcon,
+    component: null,
+    priority: 9,
+    indock: true,
   },
 ];
 

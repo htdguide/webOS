@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import './App.css';
 import Desktop from './components/Desktop/Desktop.jsx';
-import DesktopAppsList from './lists/DesktopAppsList.jsx';
-import { AppsProvider } from './services/AppsContext/AppsContext.jsx';
+import { AppsContext, AppsProvider } from './services/AppsContext/AppsContext.jsx';
+import Dock from './components/Dock/Dock.jsx';
 
-function App() {
+// Move the logic that uses the context into a component that is rendered inside the provider
+function AppContent() {
+  const { apps } = useContext(AppsContext);
   const [openApps, setOpenApps] = useState([]);
 
   const handleOpenApp = (appId) => {
-    const appConfig = DesktopAppsList.find((app) => app.id === appId);
+    const appConfig = apps.find((app) => app.id === appId);
 
     // If the app configuration has a link, open it in a new tab and do not add to openApps.
     if (appConfig?.link) {
@@ -27,13 +29,13 @@ function App() {
   };
 
   return (
-    <AppsProvider>
+    <>
+      <Dock />
       <div className="App">
         <Desktop onOpenApp={handleOpenApp} />
         {openApps.map((appId) => {
-          const appConfig = DesktopAppsList.find((app) => app.id === appId);
+          const appConfig = apps.find((app) => app.id === appId);
           const AppComponent = appConfig?.component;
-
           return (
             AppComponent && (
               <AppComponent
@@ -44,7 +46,18 @@ function App() {
           );
         })}
       </div>
-      </AppsProvider>
+      <div className="version">
+        v0.2.2 alpha
+      </div>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <AppsProvider>
+      <AppContent />
+    </AppsProvider>
   );
 }
 

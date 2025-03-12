@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useBrightness } from '../../../../services/DisplayController/DisplayController'; // adjust the relative path as needed
 import SliderControlWidgetAsset from '../../WidgetsComponents/SliderControl/SliderControlAsset';
 import brightnessIcon from '../../../../media/assets/brightness.png';
 
 function DisplayControl() {
-  const [brightness, setBrightness] = useState(50);
+  const { brightness, setBrightness } = useBrightness();
 
   const handleBrightnessChange = (newValue) => {
     setBrightness(newValue);
