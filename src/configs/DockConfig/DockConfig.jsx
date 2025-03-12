@@ -38,7 +38,7 @@ const DOCK_CONFIG = {
 
   // Vertical orientation overrides (for devices in portrait mode).
   vertical: {
-    ICON_SIZE: 56,
+    ICON_SIZE: 50,
     ICON_MARGIN: 8,
     ADDITIONAL_MARGIN: 12,
     DOCK_SPREAD: 120,
