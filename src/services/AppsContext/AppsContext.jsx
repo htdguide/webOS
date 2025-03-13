@@ -1,6 +1,6 @@
 import React, { createContext, useState } from 'react';
 import defaultIcon from '../../media/icons/defaultapp.png';
-import folderIcon from '../../media/icons/folder.webp';
+import folderIcon from '../../media/icons/folder.png';
 import SortingAlgorithms from '../../apps/SortingAlgorithms/SortingAlgorithms.jsx';
 import linkedinIcon from '../../media/icons/linkedin.png';
 import githubIcon from '../../media/icons/github.png';
