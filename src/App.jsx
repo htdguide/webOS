@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import './App.css';
 import Desktop from './components/Desktop/Desktop.jsx';
-import { AppsContext, AppsProvider } from './services/AppsContext/AppsContext.jsx';
+import { AppsContext, AppsProvider } from './contexts/AppsContext/AppsContext.jsx';
 import Dock from './components/Dock/Dock.jsx';
 
 // Move the logic that uses the context into a component that is rendered inside the provider

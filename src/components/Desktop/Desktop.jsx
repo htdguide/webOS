@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { AppsContext } from '../../services/AppsContext/AppsContext.jsx';
+import { AppsContext } from '../../contexts/AppsContext/AppsContext.jsx';
 import DesktopIcon from '../DesktopIcon/DesktopIcon.jsx';
 import { GRID_GAP, TOP_MARGIN, LEFT_MARGIN } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 import { GRID_SIZE } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';

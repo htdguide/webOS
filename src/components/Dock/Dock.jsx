@@ -1,5 +1,5 @@
 import React, { useContext, useState, useRef } from 'react';
-import { AppsContext } from '../../services/AppsContext/AppsContext';
+import { AppsContext } from '../../contexts/AppsContext/AppsContext';
 import DOCK_CONFIG from '../../configs/DockConfig/DockConfig';
 import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider';
 import {
