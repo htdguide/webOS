@@ -11,12 +11,28 @@ export const DraggableWindowProvider = ({ children }) => {
     title,
     windowWidth,
     windowHeight,
+    minWindowWidth,
+    minWindowHeight,
+    maxWindowWidth,
+    maxWindowHeight,
     content,
     onClose,
     onMount,
     onUnmount,
   }) => {
-    setWindowProps({ title, windowWidth, windowHeight, content, onClose, onMount, onUnmount });
+    setWindowProps({
+      title,
+      windowWidth,
+      windowHeight,
+      minWindowWidth,
+      minWindowHeight,
+      maxWindowWidth,
+      maxWindowHeight,
+      content,
+      onClose,
+      onMount,
+      onUnmount,
+    });
   };
 
   const closeDraggableWindow = () => {
@@ -37,7 +53,9 @@ export const DraggableWindowProvider = ({ children }) => {
   };
 
   return (
-    <DraggableWindowContext.Provider value={{ openDraggableWindow, closeDraggableWindow, showLoading, hideLoading }}>
+    <DraggableWindowContext.Provider
+      value={{ openDraggableWindow, closeDraggableWindow, showLoading, hideLoading }}
+    >
       {children}
       {windowProps && (
         <DraggableWindow
@@ -45,6 +63,10 @@ export const DraggableWindowProvider = ({ children }) => {
           title={windowProps.title}
           windowWidth={windowProps.windowWidth}
           windowHeight={windowProps.windowHeight}
+          minWindowWidth={windowProps.minWindowWidth}
+          minWindowHeight={windowProps.minWindowHeight}
+          maxWindowWidth={windowProps.maxWindowWidth}
+          maxWindowHeight={windowProps.maxWindowHeight}
           onClose={() => {
             if (windowProps.onClose) windowProps.onClose();
             closeDraggableWindow();

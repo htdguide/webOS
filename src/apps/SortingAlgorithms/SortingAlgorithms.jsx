@@ -101,6 +101,11 @@ function SortingAlgorithms({ onClose }) {
       title: 'Sorting Algorithms',
       windowWidth: 400,
       windowHeight: 530,
+      // Set minimal size; maximum size is unconstrained by not passing these values.
+      minWindowWidth: 400,
+      minWindowHeight: 530,
+      maxWindowWidth: 400,
+      maxWindowHeight: 530,
       content: (
         <canvas
           ref={canvasRef}

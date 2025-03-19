@@ -2,7 +2,8 @@ import React, {
   useRef,
   useState,
   forwardRef,
-  useImperativeHandle
+  useImperativeHandle,
+  useEffect
 } from 'react';
 import useDraggable from '../../interactions/useDraggable/useDraggable.jsx';
 import LoadingScreen from '../LoadingScreen/LoadingScreen.jsx';
@@ -14,6 +15,10 @@ const DraggableWindow = forwardRef(
       title,
       windowWidth,
       windowHeight,
+      minWindowWidth,
+      minWindowHeight,
+      maxWindowWidth,
+      maxWindowHeight,
       onClose,
       onMount,
       onUnmount,
@@ -23,25 +28,47 @@ const DraggableWindow = forwardRef(
   ) => {
     const windowRef = useRef(null);
 
-    // isLoading => controls whether we actually render the loading overlay in the DOM
+    // isLoading controls whether we render the loading overlay
     const [isLoading, setIsLoading] = useState(true);
-    // isFadingOut => controls the fade-out class
+    // isFadingOut controls the fade-out CSS class
     const [isFadingOut, setIsFadingOut] = useState(false);
 
-    // Make the window draggable/resizable
-    useDraggable(windowRef, windowWidth, windowHeight, onMount, onUnmount);
+    // Initialize the draggable/resizable functionality with size constraints.
+    useDraggable(
+      windowRef,
+      {
+        width: windowWidth,
+        height: windowHeight,
+        minWidth: minWindowWidth,
+        minHeight: minWindowHeight,
+        maxWidth: maxWindowWidth,
+        maxHeight: maxWindowHeight,
+      },
+      onMount,
+      onUnmount
+    );
 
-    // Imperative handle for parent
+    // Fallback: Ensure onMount and onUnmount are called if not triggered by useDraggable.
+    useEffect(() => {
+      if (onMount) {
+        onMount();
+      }
+      return () => {
+        if (onUnmount) {
+          onUnmount();
+        }
+      };
+    }, [onMount, onUnmount]);
+
+    // Expose imperative methods for parent components.
     useImperativeHandle(ref, () => ({
       showLoading: () => {
-        // If we show loading again, reset any fade-out
         setIsFadingOut(false);
         setIsLoading(true);
       },
       hideLoading: () => {
-        // Trigger the CSS fade-out
         setIsFadingOut(true);
-        // After the fade-out duration, remove from DOM
+        // After the fade-out duration, remove the loading overlay
         setTimeout(() => {
           setIsLoading(false);
           setIsFadingOut(false);
@@ -58,6 +85,26 @@ const DraggableWindow = forwardRef(
           height: `${windowHeight}px`,
           top: '50px',
           left: '50px',
+          minWidth: minWindowWidth
+            ? typeof minWindowWidth === 'number'
+              ? `${minWindowWidth}px`
+              : minWindowWidth
+            : undefined,
+          minHeight: minWindowHeight
+            ? typeof minWindowHeight === 'number'
+              ? `${minWindowHeight}px`
+              : minWindowHeight
+            : undefined,
+          maxWidth: maxWindowWidth
+            ? typeof maxWindowWidth === 'number'
+              ? `${maxWindowWidth}px`
+              : maxWindowWidth
+            : undefined,
+          maxHeight: maxWindowHeight
+            ? typeof maxWindowHeight === 'number'
+              ? `${maxWindowHeight}px`
+              : maxWindowHeight
+            : undefined,
         }}
       >
         {/* --- Window Header --- */}
