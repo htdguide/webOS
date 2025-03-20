@@ -99,4 +99,11 @@ function SortingAlgorithms({ onClose }) {
   return null;
 }
 
+// Attach connectorInfo
+SortingAlgorithms.connectorInfo = {
+  name: 'Sorting Algorithms',
+  icon: defaultIcon,
+  priority: 4,
+}
+
 export default SortingAlgorithms;

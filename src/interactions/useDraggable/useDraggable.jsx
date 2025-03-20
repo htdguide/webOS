@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
 
-function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount) {
+function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
   const [isDragging, setIsDragging] = useState(false);
   const [resizeType, setResizeType] = useState(null);
   
   const dragStartPos = useRef({ x: 0, y: 0 });
   const windowStartPos = useRef({ x: 50, y: 50 });
-  const resizeStartSize = useRef({ width: initialWidth, height: initialHeight });
+  const resizeStartSize = useRef({ width: sizeProps.width, height: sizeProps.height });
 
   useEffect(() => {
     if (onMount) onMount();
@@ -46,7 +46,6 @@ function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount
           newWidth = Math.max(resizeStartSize.current.width + (clientX - dragStartPos.current.x), 200);
           
           const newCalculatedHeight = resizeStartSize.current.height - (clientY - dragStartPos.current.y);
-
           if (newCalculatedHeight > 200) {
             newHeight = newCalculatedHeight;
             newY = windowStartPos.current.y + (clientY - dragStartPos.current.y);
@@ -58,11 +57,9 @@ function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount
         if (resizeType === 'bottom-left') {
           const widthDiff = dragStartPos.current.x - clientX;
           newWidth = Math.max(resizeStartSize.current.width + widthDiff, 200);
-
           if (newWidth > 200) {
             newX = windowStartPos.current.x - widthDiff;
           }
-
           newHeight = Math.max(resizeStartSize.current.height + (clientY - dragStartPos.current.y), 200);
         }
 
@@ -75,6 +72,10 @@ function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount
 
         if (resizeType === 'bottom-left' && newWidth > 200) {
           windowRef.current.style.left = `${newX}px`;
+        }
+
+        if (onResize) {
+          onResize(newWidth, newHeight);
         }
       }
     };
@@ -95,7 +96,7 @@ function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount
       window.removeEventListener('touchmove', handleMove);
       window.removeEventListener('touchend', handleEnd);
     };
-  }, [isDragging, resizeType]);
+  }, [isDragging, resizeType, onResize, windowRef, sizeProps]);
 
   const handleDragStart = (event) => {
     if (resizeType) return; // Prevent drag when resizing
@@ -160,6 +161,8 @@ function useDraggable(windowRef, initialWidth, initialHeight, onMount, onUnmount
       resizerBL.removeEventListener('touchstart', handleResizeStart);
     };
   }, []);
+
+  // No need to return anything from the hook.
 }
 
 export default useDraggable;

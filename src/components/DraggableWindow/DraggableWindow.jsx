@@ -22,6 +22,7 @@ const DraggableWindow = forwardRef(
       onClose,
       onMount,
       onUnmount,
+      onResize, // new prop
       children
     },
     ref
@@ -45,7 +46,8 @@ const DraggableWindow = forwardRef(
         maxHeight: maxWindowHeight,
       },
       onMount,
-      onUnmount
+      onUnmount,
+      onResize // pass onResize to the hook
     );
 
     // Fallback: Ensure onMount and onUnmount are called if not triggered by useDraggable.

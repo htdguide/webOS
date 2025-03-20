@@ -19,6 +19,7 @@ export const DraggableWindowProvider = ({ children }) => {
     onClose,
     onMount,
     onUnmount,
+    onResize, // new optional callback
   }) => {
     setWindowProps({
       title,
@@ -32,6 +33,7 @@ export const DraggableWindowProvider = ({ children }) => {
       onClose,
       onMount,
       onUnmount,
+      onResize,
     });
   };
 
@@ -73,6 +75,7 @@ export const DraggableWindowProvider = ({ children }) => {
           }}
           onMount={windowProps.onMount}
           onUnmount={windowProps.onUnmount}
+          onResize={windowProps.onResize} // pass onResize prop
         >
           {windowProps.content}
         </DraggableWindow>
