@@ -1,11 +1,17 @@
 import React, { createContext, useContext, useState, useRef } from 'react';
 import DraggableWindow from './DraggableWindow.jsx';
+import { useFocus } from '../../interactions/FocusControl/FocusControl.jsx';
 
 const DraggableWindowContext = createContext();
 
 export const DraggableWindowProvider = ({ children }) => {
   const [windowProps, setWindowProps] = useState(null);
   const draggableWindowRef = useRef(null);
+
+  // Get the current focused component from the FocusControl context.
+  const { focusedComponent } = useFocus();
+  // Determine if the draggable window is currently focused by comparing its title.
+  const isWindowFocused = windowProps ? focusedComponent === windowProps.title : false;
 
   const openDraggableWindow = ({
     title,
@@ -39,6 +45,8 @@ export const DraggableWindowProvider = ({ children }) => {
       initialX,
       initialY,
     });
+    // Removed automatic focus update here.
+    // The DraggableWindow component sets focus once on mount.
   };
 
   const closeDraggableWindow = () => {
@@ -79,6 +87,7 @@ export const DraggableWindowProvider = ({ children }) => {
         hideLoading,
         resizeDraggableWindow,
         moveDraggableWindow,
+        isWindowFocused,
       }}
     >
       {children}

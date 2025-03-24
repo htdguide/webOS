@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import useDraggable from '../../interactions/useDraggable/useDraggable.jsx';
 import LoadingScreen from '../LoadingScreen/LoadingScreen.jsx';
+import { useFocus } from '../../interactions/FocusControl/FocusControl.jsx';
 import './DraggableWindow.css';
 
 const DraggableWindow = forwardRef(
@@ -30,6 +31,15 @@ const DraggableWindow = forwardRef(
     ref
   ) => {
     const windowRef = useRef(null);
+
+    // Focus handling using the FocusControl context
+    const { focusedComponent, updateFocus } = useFocus();
+    const isFocused = focusedComponent === title;
+
+    // Set initial focus only once on mount.
+    useEffect(() => {
+      updateFocus(title);
+    }, []); // run once when the window mounts
 
     // isLoading controls whether we render the loading overlay
     const [isLoading, setIsLoading] = useState(true);
@@ -146,6 +156,7 @@ const DraggableWindow = forwardRef(
           setIsProgrammaticMove(false);
         }, 350);
       },
+      isFocused: isFocused
     }));
 
     // Compute transition style: only animate if a programmatic call is active and no manual interaction.
@@ -157,7 +168,7 @@ const DraggableWindow = forwardRef(
     return (
       <div
         ref={windowRef}
-        className="draggable-window"
+        className={`draggable-window ${isFocused ? 'focused' : ''}`}
         style={{
           width: `${currentWidth}px`,
           height: `${currentHeight}px`,
@@ -185,6 +196,9 @@ const DraggableWindow = forwardRef(
               : maxWindowHeight
             : undefined,
         }}
+        onClick={() => updateFocus(title)}
+        onTouchStart={() => updateFocus(title)}
+        onKeyDown={() => updateFocus(title)}
       >
         {/* --- Window Header --- */}
         <div

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
+import { useDraggableWindow } from '../../../components/DraggableWindow/DraggableWindowProvider';
 import '../Noterminal.css';
 
 function TerminalInput({ onCommandSubmit, onCtrlC, onInputFocus, fontSize, fontFamily, fontColor }) {
@@ -9,6 +10,23 @@ function TerminalInput({ onCommandSubmit, onCtrlC, onInputFocus, fontSize, fontF
   const promptRef = useRef(null);
   const [cursorLeft, setCursorLeft] = useState(10);
   const [cursorWidth, setCursorWidth] = useState(7);
+
+  // Get the focused state from our draggable window provider.
+  const { isWindowFocused } = useDraggableWindow();
+
+  // Whenever the window becomes focused, force focus the input.
+  useEffect(() => {
+    if (isWindowFocused && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isWindowFocused]);
+
+  // Initially focus the input when the component mounts.
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
 
   const updateCaretIndex = () => {
     if (inputRef.current) {
@@ -41,6 +59,7 @@ function TerminalInput({ onCommandSubmit, onCtrlC, onInputFocus, fontSize, fontF
   }, [fontSize, fontFamily]);
 
   const handleKeyDown = (e) => {
+    // Handle Ctrl+C to exit an active app.
     if (e.ctrlKey && e.key.toLowerCase() === 'c') {
       e.preventDefault();
       if (onCtrlC) onCtrlC();
@@ -48,6 +67,7 @@ function TerminalInput({ onCommandSubmit, onCtrlC, onInputFocus, fontSize, fontF
       setCaretIndex(0);
       return;
     }
+    // On Enter, submit the command.
     if (e.key === 'Enter') {
       e.preventDefault();
       if (currentInput.trim()) {
@@ -89,6 +109,7 @@ function TerminalInput({ onCommandSubmit, onCtrlC, onInputFocus, fontSize, fontF
         autoFocus
         style={{ caretColor: 'transparent' }}
       />
+      {/* Dummy element for measuring "M" */}
       <span
         ref={dummyRef}
         style={{
@@ -103,6 +124,7 @@ function TerminalInput({ onCommandSubmit, onCtrlC, onInputFocus, fontSize, fontF
       >
         M
       </span>
+      {/* Custom blinking cursor */}
       <div
         className="terminal-cursor"
         style={{
