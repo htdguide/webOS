@@ -2,12 +2,50 @@ import React, { useState, useEffect } from 'react';
 import './Noterminal.css';
 import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowProvider';
 import { useTerminalSettings } from '../../contexts/TerminalSettingsContext/TerminalSettingsProvider';
-import FlowManager from './FlowManager';
+import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider';
+import FlowManager from './components/FlowManager';
 
 function Terminal({ onClose }) {
-  const [windowSize, setWindowSize] = useState({ width: 600, height: 400 });
-  const { openDraggableWindow, closeDraggableWindow, hideLoading } = useDraggableWindow();
+  const {
+    openDraggableWindow,
+    closeDraggableWindow,
+    updateDraggableWindow,
+    hideLoading,
+  } = useDraggableWindow();
   const { fontSize, fontColor, fontFamily, backgroundColor } = useTerminalSettings();
+  const deviceInfo = useDeviceInfo();
+
+  // Default window parameters for desktop.
+  const defaultParams = {
+    windowWidth: 600,
+    windowHeight: 400,
+    initialX: undefined,
+    initialY: undefined,
+  };
+
+  // For mobile devices, open terminal full width, top half of viewport,
+  // and positioned at the top left corner.
+  const windowParams =
+    deviceInfo.deviceType !== 'desktop'
+      ? {
+          windowWidth: window.innerWidth,
+          windowHeight: Math.floor(window.innerHeight / 2),
+          initialX: 0,
+          initialY: 0,
+        }
+      : defaultParams;
+
+  // When input is focused on mobile devices, reposition/rescale the terminal.
+  const handleInputFocus = () => {
+    if (deviceInfo.deviceType !== 'desktop' && updateDraggableWindow) {
+      updateDraggableWindow({
+        windowWidth: window.innerWidth,
+        windowHeight: Math.floor(window.innerHeight / 2),
+        x: 0,
+        y: 0,
+      });
+    }
+  };
 
   const terminalContent = (
     <FlowManager 
@@ -15,14 +53,15 @@ function Terminal({ onClose }) {
       fontColor={fontColor}
       fontFamily={fontFamily}
       backgroundColor={backgroundColor}
+      onInputFocus={handleInputFocus}
     />
   );
 
   useEffect(() => {
     openDraggableWindow({
       title: 'Noterminal',
-      windowWidth: windowSize.width,
-      windowHeight: windowSize.height,
+      windowWidth: windowParams.windowWidth,
+      windowHeight: windowParams.windowHeight,
       minWindowWidth: 300,
       minWindowHeight: 200,
       content: terminalContent,
@@ -33,17 +72,24 @@ function Terminal({ onClose }) {
       onUnmount: () => {
         console.log('Terminal draggable window unmounted.');
       },
-      onResize: (width, height) => {
-        setWindowSize({ width, height });
-      },
+      initialX: windowParams.initialX,
+      initialY: windowParams.initialY,
     });
 
     return () => {
       closeDraggableWindow();
     };
-  }, [openDraggableWindow, closeDraggableWindow, onClose, terminalContent, hideLoading, windowSize]);
+  }, [
+    openDraggableWindow,
+    closeDraggableWindow,
+    onClose,
+    terminalContent,
+    hideLoading,
+    windowParams,
+  ]);
 
   return null;
 }
 
 export default Terminal;
+

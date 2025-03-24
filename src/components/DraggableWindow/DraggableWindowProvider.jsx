@@ -20,6 +20,8 @@ export const DraggableWindowProvider = ({ children }) => {
     onMount,
     onUnmount,
     onResize, // new optional callback
+    initialX, // new prop for initial horizontal position
+    initialY, // new prop for initial vertical position
   }) => {
     setWindowProps({
       title,
@@ -34,6 +36,8 @@ export const DraggableWindowProvider = ({ children }) => {
       onMount,
       onUnmount,
       onResize,
+      initialX,
+      initialY,
     });
   };
 
@@ -54,9 +58,28 @@ export const DraggableWindowProvider = ({ children }) => {
     }
   };
 
+  const resizeDraggableWindow = (newWidth, newHeight) => {
+    if (draggableWindowRef.current && draggableWindowRef.current.resizeWindow) {
+      draggableWindowRef.current.resizeWindow(newWidth, newHeight);
+    }
+  };
+
+  const moveDraggableWindow = (newX, newY) => {
+    if (draggableWindowRef.current && draggableWindowRef.current.moveWindow) {
+      draggableWindowRef.current.moveWindow(newX, newY);
+    }
+  };
+
   return (
     <DraggableWindowContext.Provider
-      value={{ openDraggableWindow, closeDraggableWindow, showLoading, hideLoading }}
+      value={{
+        openDraggableWindow,
+        closeDraggableWindow,
+        showLoading,
+        hideLoading,
+        resizeDraggableWindow,
+        moveDraggableWindow,
+      }}
     >
       {children}
       {windowProps && (
@@ -76,6 +99,8 @@ export const DraggableWindowProvider = ({ children }) => {
           onMount={windowProps.onMount}
           onUnmount={windowProps.onUnmount}
           onResize={windowProps.onResize} // pass onResize prop
+          initialX={windowProps.initialX}
+          initialY={windowProps.initialY}
         >
           {windowProps.content}
         </DraggableWindow>

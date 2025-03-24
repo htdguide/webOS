@@ -1,7 +1,7 @@
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import './Noterminal.css';
+import '../Noterminal.css';
 
-function TerminalInput({ onCommandSubmit, onCtrlC, fontSize, fontFamily, fontColor }) {
+function TerminalInput({ onCommandSubmit, onCtrlC, onInputFocus, fontSize, fontFamily, fontColor }) {
   const [currentInput, setCurrentInput] = useState('');
   const [caretIndex, setCaretIndex] = useState(0);
   const inputRef = useRef(null);
@@ -41,7 +41,6 @@ function TerminalInput({ onCommandSubmit, onCtrlC, fontSize, fontFamily, fontCol
   }, [fontSize, fontFamily]);
 
   const handleKeyDown = (e) => {
-    // Handle ctrl-C to exit an active app.
     if (e.ctrlKey && e.key.toLowerCase() === 'c') {
       e.preventDefault();
       if (onCtrlC) onCtrlC();
@@ -49,7 +48,6 @@ function TerminalInput({ onCommandSubmit, onCtrlC, fontSize, fontFamily, fontCol
       setCaretIndex(0);
       return;
     }
-    // On Enter, process the command.
     if (e.key === 'Enter') {
       e.preventDefault();
       if (currentInput.trim()) {
@@ -82,13 +80,15 @@ function TerminalInput({ onCommandSubmit, onCtrlC, fontSize, fontFamily, fontCol
           setCurrentInput(e.target.value);
           updateCaretIndex();
         }}
+        onFocus={() => {
+          if (onInputFocus) onInputFocus();
+        }}
         onSelect={handleSelect}
         onKeyDown={handleKeyDown}
         onKeyUp={handleKeyUp}
         autoFocus
         style={{ caretColor: 'transparent' }}
       />
-      {/* Dummy element for measuring "M" */}
       <span
         ref={dummyRef}
         style={{
@@ -103,7 +103,6 @@ function TerminalInput({ onCommandSubmit, onCtrlC, fontSize, fontFamily, fontCol
       >
         M
       </span>
-      {/* Custom blinking cursor */}
       <div
         className="terminal-cursor"
         style={{

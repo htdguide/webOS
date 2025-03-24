@@ -1,27 +1,30 @@
 import React, { useRef, useState } from 'react';
 import TerminalInput from './TerminalInput';
 import TerminalOutput from './TerminalOutput';
-import { appsList } from './AppsList';
+import { apps } from './AppsList';
 
-function FlowManager({ fontSize, fontColor, fontFamily, backgroundColor }) {
+function FlowManager({ fontSize, fontColor, fontFamily, backgroundColor, onInputFocus }) {
   const outputRef = useRef(null);
   const [activeApp, setActiveApp] = useState(null);
   const activeAppRef = useRef(null);
   const scrollContainerRef = useRef(null);
 
-  // Check if the command matches an app command.
+  // Check if the command matches any app command.
   const getAppComponentForCommand = (command) => {
     const normalized = command.trim().toLowerCase();
-    return appsList[normalized] || null;
+    for (const app of apps) {
+      if (app.commands.map((cmd) => cmd.toLowerCase()).includes(normalized)) {
+        return app.component;
+      }
+    }
+    return null;
   };
 
-  // Handle input submission.
   const handleCommandSubmit = (command) => {
     if (activeApp && activeAppRef.current && activeAppRef.current.processInput) {
-      // Forward the input to the active app.
+      // Forward input to the active app.
       activeAppRef.current.processInput(command);
     } else {
-      // Check if the input should launch an app.
       const AppComponent = getAppComponentForCommand(command);
       if (AppComponent) {
         setActiveApp(() => AppComponent);
@@ -29,13 +32,11 @@ function FlowManager({ fontSize, fontColor, fontFamily, backgroundColor }) {
           outputRef.current.writeln(`Launching app: ${command}`);
         }
       } else {
-        // Normal processing – echo the command.
         if (outputRef.current) {
-          outputRef.current.writeln(`You typed: ${command}`);
+          outputRef.current.writeln(`noterminal: command not found: "${command}"`);
         }
       }
     }
-    // Auto-scroll to the bottom.
     setTimeout(() => {
       if (scrollContainerRef.current) {
         scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
@@ -43,7 +44,6 @@ function FlowManager({ fontSize, fontColor, fontFamily, backgroundColor }) {
     }, 0);
   };
 
-  // Handle ctrl-C to exit an active app.
   const handleCtrlC = () => {
     if (activeApp) {
       if (outputRef.current) {
@@ -71,6 +71,7 @@ function FlowManager({ fontSize, fontColor, fontFamily, backgroundColor }) {
         <TerminalInput
           onCommandSubmit={handleCommandSubmit}
           onCtrlC={handleCtrlC}
+          onInputFocus={onInputFocus}
           fontSize={fontSize}
           fontFamily={fontFamily}
           fontColor={fontColor}

@@ -1,5 +1,5 @@
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
-import './Noterminal.css';
+import '../Noterminal.css';
 
 const TerminalOutput = forwardRef((props, ref) => {
   const [lines, setLines] = useState(['']);
