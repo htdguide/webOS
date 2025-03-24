@@ -41,3 +41,12 @@ const AppConnector = ({ componentApp, open = false }) => {
 };
 
 export default AppConnector;
+
+
+//Example of the connector info:
+
+//SortingAlgorithms.connectorInfo = {
+//  name: 'Sorting Algorithms',
+//  icon: defaultIcon,
+//  priority: 4,
+//}

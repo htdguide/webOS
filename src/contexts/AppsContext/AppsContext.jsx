@@ -10,7 +10,7 @@ import launchpadIcon from '../../media/icons/launchpad.png';
 import settingsIcon from '../../media/icons/settings.png';
 import safariIcon from '../../media/icons/safari.png';
 import psxIcon from '../../media/icons/PSX.png';
-import Terminal from '../../apps/Terminal/Terminal.jsx';
+import Noterminal from '../../apps/Noterminal/Noterminal.jsx';
 import terminalIcon from '../../media/icons/terminal.png';
 
 /**
@@ -19,10 +19,10 @@ import terminalIcon from '../../media/icons/terminal.png';
  */
 const initialAppsList = [
   {
-    id: 'terminal',
+    id: 'interminal',
     name: 'Terminal',
     icon: terminalIcon,
-    component: Terminal,
+    component: Noterminal,
     priority: 4,
     indock: false,
   },
