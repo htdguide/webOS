@@ -63,8 +63,11 @@ const DraggableWindow = forwardRef(
       return defaultValue;
     };
 
+    // No clamping for X; clamp Y to be at least 26.
     const [currentX, setCurrentX] = useState(getInitialCoordinate(initialX, 10));
-    const [currentY, setCurrentY] = useState(getInitialCoordinate(initialY, 10));
+    const [currentY, setCurrentY] = useState(
+      Math.max(getInitialCoordinate(initialY, 10), 26)
+    );
 
     // State to track if the user is manually dragging or resizing
     const [isUserDragging, setIsUserDragging] = useState(false);
@@ -126,6 +129,9 @@ const DraggableWindow = forwardRef(
       };
     }, [onMount, onUnmount]);
 
+    // For rendering, ensure the y-coordinate is never less than 26.
+    const clampedY = Math.max(currentY, 26);
+
     // Expose imperative methods for parent components.
     useImperativeHandle(ref, () => ({
       showLoading: () => {
@@ -150,8 +156,9 @@ const DraggableWindow = forwardRef(
       },
       moveWindow: (newX, newY) => {
         setIsProgrammaticMove(true);
+        // No clamping for X; clamp newY so that it never goes below 26px.
         setCurrentX(newX);
-        setCurrentY(newY);
+        setCurrentY(Math.max(newY, 26));
         setTimeout(() => {
           setIsProgrammaticMove(false);
         }, 350);
@@ -174,7 +181,7 @@ const DraggableWindow = forwardRef(
           height: `${currentHeight}px`,
           transition: transitionValue,
           left: `${currentX}px`,
-          top: `${currentY}px`,
+          top: `${clampedY}px`,
           minWidth: minWindowWidth
             ? typeof minWindowWidth === 'number'
               ? `${minWindowWidth}px`

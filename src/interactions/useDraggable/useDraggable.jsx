@@ -26,9 +26,9 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
       if (isDragging) {
         const newX = windowStartPos.current.x + (clientX - dragStartPos.current.x);
         const newY = windowStartPos.current.y + (clientY - dragStartPos.current.y);
-
+        const clampedY = Math.max(newY, 26);
         windowRef.current.style.left = `${newX}px`;
-        windowRef.current.style.top = `${newY}px`;
+        windowRef.current.style.top = `${clampedY}px`;
       }
 
       if (resizeType) {
@@ -49,6 +49,7 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
           if (newCalculatedHeight > 200) {
             newHeight = newCalculatedHeight;
             newY = windowStartPos.current.y + (clientY - dragStartPos.current.y);
+            newY = Math.max(newY, 26); // Clamp top to 26px
           } else {
             newHeight = 200; // Keep the height at minimum
           }
