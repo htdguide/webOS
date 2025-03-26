@@ -3,10 +3,12 @@ import { useEffect, useState, useRef } from 'react';
 function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
   const [isDragging, setIsDragging] = useState(false);
   const [resizeType, setResizeType] = useState(null);
+  const [shouldSnap, setShouldSnap] = useState(false);
   
   const dragStartPos = useRef({ x: 0, y: 0 });
   const windowStartPos = useRef({ x: 50, y: 50 });
   const resizeStartSize = useRef({ width: sizeProps.width, height: sizeProps.height });
+  const snapTimerRef = useRef(null);
 
   useEffect(() => {
     if (onMount) onMount();
@@ -26,6 +28,23 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
       if (isDragging) {
         const newX = windowStartPos.current.x + (clientX - dragStartPos.current.x);
         const newY = windowStartPos.current.y + (clientY - dragStartPos.current.y);
+
+        // Start snap timer if dragging above the threshold (i.e. newY < 26)
+        if (newY < 26) {
+          if (!snapTimerRef.current) {
+            snapTimerRef.current = setTimeout(() => {
+              setShouldSnap(true);
+            }, 500);
+          }
+        } else {
+          if (snapTimerRef.current) {
+            clearTimeout(snapTimerRef.current);
+            snapTimerRef.current = null;
+          }
+          setShouldSnap(false);
+        }
+
+        // Clamp newY so it never goes above (i.e. less than) 26px.
         const clampedY = Math.max(newY, 26);
         windowRef.current.style.left = `${newX}px`;
         windowRef.current.style.top = `${clampedY}px`;
@@ -44,14 +63,13 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
 
         if (resizeType === 'top-right') {
           newWidth = Math.max(resizeStartSize.current.width + (clientX - dragStartPos.current.x), 200);
-          
           const newCalculatedHeight = resizeStartSize.current.height - (clientY - dragStartPos.current.y);
           if (newCalculatedHeight > 200) {
             newHeight = newCalculatedHeight;
             newY = windowStartPos.current.y + (clientY - dragStartPos.current.y);
-            newY = Math.max(newY, 26); // Clamp top to 26px
+            newY = Math.max(newY, 26); // Clamp top to 26px during top-right resize
           } else {
-            newHeight = 200; // Keep the height at minimum
+            newHeight = 200;
           }
         }
 
@@ -82,8 +100,33 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     };
 
     const handleEnd = () => {
+      if (isDragging) {
+        // If the snap flag was set during dragging, perform the full-screen snap
+        if (shouldSnap) {
+          // Apply smooth transition for snapping movement and resizing
+          windowRef.current.style.transition = "left 300ms ease, top 300ms ease, width 300ms ease, height 300ms ease";
+          windowRef.current.style.left = `0px`;
+          windowRef.current.style.top = `26px`;
+          const newWidth = window.innerWidth;
+          const newHeight = window.innerHeight - 26;
+          windowRef.current.style.width = `${newWidth}px`;
+          windowRef.current.style.height = `${newHeight}px`;
+          if (onResize) {
+            onResize(newWidth, newHeight);
+          }
+          // Remove the transition after the animation is complete
+          setTimeout(() => {
+            windowRef.current.style.transition = "";
+          }, 300);
+        }
+      }
       setIsDragging(false);
       setResizeType(null);
+      if (snapTimerRef.current) {
+        clearTimeout(snapTimerRef.current);
+        snapTimerRef.current = null;
+      }
+      setShouldSnap(false);
     };
 
     window.addEventListener('mousemove', handleMove);
@@ -97,12 +140,12 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
       window.removeEventListener('touchmove', handleMove);
       window.removeEventListener('touchend', handleEnd);
     };
-  }, [isDragging, resizeType, onResize, windowRef, sizeProps]);
+  }, [isDragging, resizeType, onResize, windowRef, sizeProps, shouldSnap]);
 
   const handleDragStart = (event) => {
     if (resizeType) return; // Prevent drag when resizing
 
-    // 🔴 Ignore drag if clicking the close button
+    // Ignore drag if clicking the close button
     if (event.target.closest('.close-button')) {
       return;
     }
