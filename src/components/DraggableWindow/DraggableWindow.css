@@ -7,7 +7,7 @@
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(12px);
-  z-index: 9999;  /* ensures this window is above most other elements in the page */
+  z-index: 1000;  /* ensures this window is above most other elements in the page */
 
   user-select: none;
   -webkit-user-select: none;

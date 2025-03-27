@@ -6,7 +6,7 @@
 export const getOuterContainerStyle = (DOCK_POSITION, DOCK_MARGIN) => {
   const style = {
     position: 'fixed',
-    zIndex: 10,
+    zIndex: 9998,
   };
 
   if (DOCK_POSITION === 'bottom') {

@@ -35,7 +35,7 @@ function MiniWindow({ anchorPos, onClose, children, className = '', visible = tr
         top: position.top,
         left: position.left,
         opacity: visible ? 1 : 0,
-
+        zIndex: 9999,
         transition: 'opacity 300ms ease-in-out, backdrop-filter 300ms ease-in-out'
       }}
     >
