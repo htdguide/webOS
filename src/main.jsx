@@ -48,10 +48,10 @@ const Main = () => {
 
   return (
     <StrictMode>
-      <WelcomeWrap />
       <DeviceInfoProvider>
         <TerminalSettingsProvider>
           <UIStateProvider>
+            <WelcomeWrap />
             <MusicServiceProvider>
               <DisplayController>
                 <FocusProvider>
@@ -59,9 +59,6 @@ const Main = () => {
                   <MiniWindowProvider>
                     <DraggableWindowProvider>
                       <div>
-                        <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
-                          <LoadingScreen />
-                        </div>
                         <App />
                         <MenuBar />
                         <Notification />

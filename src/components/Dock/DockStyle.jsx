@@ -3,29 +3,38 @@
 // ---------------------------
 // Outer container (the dock)
 // ---------------------------
-export const getOuterContainerStyle = (DOCK_POSITION, DOCK_MARGIN) => {
+export const getOuterContainerStyle = (DOCK_POSITION, DOCK_MARGIN, isDockVisible) => {
   const style = {
     position: 'fixed',
     zIndex: 9998,
+    transition: 'transform 0.3s ease', // smooth sliding transition
   };
 
   if (DOCK_POSITION === 'bottom') {
     style.bottom = `${DOCK_MARGIN}px`;
     style.left = '50%';
-    style.transform = 'translateX(-50%)';
+    style.transform = isDockVisible
+      ? 'translateX(-50%)'
+      : 'translateX(-50%) translateY(calc(150% + 10px))'; // extra 10px lower when hidden
   } else if (DOCK_POSITION === 'left') {
     style.left = `${DOCK_MARGIN}px`;
     style.top = '50%';
-    style.transform = 'translateY(-50%)';
+    style.transform = isDockVisible
+      ? 'translateY(-50%)'
+      : 'translateX(-100%) translateY(-50%)';
   } else if (DOCK_POSITION === 'right') {
     style.right = `${DOCK_MARGIN}px`;
     style.top = '50%';
-    style.transform = 'translateY(-50%)';
+    style.transform = isDockVisible
+      ? 'translateY(-50%)'
+      : 'translateX(100%) translateY(-50%)';
   } else {
     // default/fallback: bottom
     style.bottom = `${DOCK_MARGIN}px`;
     style.left = '50%';
-    style.transform = 'translateX(-50%)';
+    style.transform = isDockVisible
+      ? 'translateX(-50%)'
+      : 'translateX(-50%) translateY(calc(150% + 10px))';
   }
 
   return style;

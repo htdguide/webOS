@@ -9,14 +9,14 @@
   align-items: center;
   justify-content: flex-start;
   user-select: none;
-  z-index: 5;  /* base stacking for the icon */
-  transition: left 0.2s, top 0.2s, box-shadow 0.2s;
+  z-index: 5;
+  transition: left 0.2s, top 0.2s, box-shadow 0.2s, opacity 0.5s;
 }
 
 /* Slight transparency only while dragging, not when selected. */
 .desktop-icon.dragging {
   opacity: 0.7;
-  z-index: 10;     /* bring to top while dragging */
+  z-index: 10;
   transition: none;
 }
 
@@ -29,17 +29,15 @@
  * The icon area (frame + highlight + image)
  *************************************************************/
 .icon-frame {
-  position: relative;  
-  /* No z-index here, so child elements can handle it themselves. */
+  position: relative;
   width: 45px;
   height: 45px;
-  margin-bottom: 8px; /* gap above label */
+  margin-bottom: 8px;
 }
 
 /* 
   The highlight behind the icon. 
   It's 50×50, absolutely positioned. 
-  We set z-index: 0 so it is behind the icon-image (z-index: 1).
 */
 .icon-highlight {
   position: absolute;
@@ -50,7 +48,7 @@
   background-color: rgba(0, 0, 0, 0.4); 
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 5px;
-  z-index: 0;  /* behind .icon-image */
+  z-index: 0;
   display: none; 
 }
 
@@ -61,7 +59,6 @@
 
 /* 
   The icon image, pinned to 45×45. 
-  We give it z-index: 1 to ensure it is above the highlight. 
 */
 .icon-image {
   position: relative;
@@ -70,7 +67,7 @@
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  z-index: 1;  /* above .icon-highlight */
+  z-index: 1;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
@@ -80,12 +77,11 @@
 .icon-label {
   display: inline-block;
   position: relative;
-  padding: 0 5px; /* 5px each side at all times */
+  padding: 0 5px;
   text-align: center;
   font-size: 12px;
   font-weight: 500;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color: white;
   line-height: 1.2;
   text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.8);

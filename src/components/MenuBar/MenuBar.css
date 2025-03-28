@@ -11,8 +11,16 @@
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   padding: 0 10px;
   z-index: 1100; /* Ensure the menubar is on top */
+  transition: transform 0.3s ease-in-out;
 }
 
+.menu-bar.visible {
+  transform: translateY(0);
+}
+
+.menu-bar.hidden {
+  transform: translateY(-100%);
+}
 
 .menu-bar.light-mode {
   background: rgba(255, 255, 255, 0.7);

@@ -10,6 +10,7 @@ import {
   ICON_WIDTH,
   ICON_HEIGHT
 } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
+import { useUIState } from '../../services/UIStateStorage/UIStateStorage';
 
 function DesktopIcon({
   name,
@@ -25,6 +26,7 @@ function DesktopIcon({
   const [lastTap, setLastTap] = useState(0);
 
   const iconRef = useRef(null);
+  const { isIconVisible } = useUIState();
 
   const handleMouseDown = (e) => {
     e.preventDefault();
@@ -50,19 +52,20 @@ function DesktopIcon({
     );
   };
 
+  const iconStyle = {
+    width: ICON_WIDTH,
+    height: ICON_HEIGHT,
+    left: position.x,
+    top: position.y,
+    opacity: isIconVisible ? 1 : 0,
+    transition: isDragging ? 'none' : 'left 0.3s, top 0.3s, opacity 0.5s'
+  };
+
   return (
     <div
       ref={iconRef}
-      className={`desktop-icon ${isSelected ? 'selected' : ''} ${
-        isDragging ? 'dragging' : ''
-      }`}
-      style={{
-        width: ICON_WIDTH,    // e.g., 64
-        height: ICON_HEIGHT,  // e.g., 80
-        left: position.x,
-        top: position.y,
-        transition: isDragging ? 'none' : 'left 0.3s, top 0.3s'
-      }}
+      className={`desktop-icon ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
+      style={iconStyle}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       onMouseUp={() => cancelHold(holdTimer, setHoldTimer)}
@@ -76,10 +79,6 @@ function DesktopIcon({
         handleTap(lastTap, setLastTap, onDoubleClick, onClick);
       }}
     >
-      {/* 
-        icon-frame is 45×45. 
-        The highlight (50×50) is placed behind the icon. 
-      */}
       <div className="icon-frame">
         <div className="icon-highlight" />
         <div
@@ -87,11 +86,6 @@ function DesktopIcon({
           style={{ backgroundImage: `url(${icon})` }}
         />
       </div>
-
-      {/* 
-        The label below, with consistent left/right padding 
-        so it never “jumps” on highlight. 
-      */}
       <div className="icon-label">{name}</div>
     </div>
   );

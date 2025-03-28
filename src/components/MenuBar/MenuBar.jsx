@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import './MenuBar.css';
 import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider';
 import MiniApps from '../MiniApps/MiniApps';
+import { useUIState } from '../../services/UIStateStorage/UIStateStorage';
 
 function MenuBar({ darkMode = false }) {
   const deviceInfo = useDeviceInfo();
+  const { isMenubarVisible } = useUIState();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -45,12 +47,12 @@ function MenuBar({ darkMode = false }) {
   }
 
   return (
-    <div className={`menu-bar ${darkMode ? 'dark-mode' : 'light-mode'}`}>
+    <div className={`menu-bar ${isMenubarVisible ? 'visible' : 'hidden'} ${darkMode ? 'dark-mode' : 'light-mode'}`}>
       <div className="menu-left">
         <a href="/" className="menu-item">Home</a>
       </div>
       <div className="menu-user-info">
-        {/* Icons appear to the left of the username */}
+        {/* You can include formatted time or additional UI elements here */}
         <MiniApps />
       </div>
     </div>

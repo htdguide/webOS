@@ -2,6 +2,7 @@ import React, { useContext, useState, useRef } from 'react';
 import { AppsContext } from '../../contexts/AppsContext/AppsContext';
 import DOCK_CONFIG from '../../configs/DockConfig/DockConfig';
 import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider';
+import { useUIState } from '../../services/UIStateStorage/UIStateStorage';
 import {
   getOuterContainerStyle,
   getIconsContainerStyle,
@@ -18,6 +19,9 @@ const Dock = () => {
   // Get device info (including orientation) from DeviceInfoProvider
   const deviceInfo = useDeviceInfo();
   const isPortrait = deviceInfo.orientation === 'portrait';
+
+  // Get dock visibility state from the UI state provider
+  const { isDockVisible } = useUIState();
 
   // Determine configuration overrides based on device orientation and dock position
   let config = { ...DOCK_CONFIG };
@@ -255,7 +259,7 @@ const Dock = () => {
   return (
     <div
       ref={outerRef}
-      style={getOuterContainerStyle(DOCK_POSITION, DOCK_MARGIN)}
+      style={getOuterContainerStyle(DOCK_POSITION, DOCK_MARGIN, isDockVisible)}
       onTouchStart={paginationEnabled ? handleTouchStart : null}
       onTouchEnd={paginationEnabled ? handleTouchEnd : null}
     >
