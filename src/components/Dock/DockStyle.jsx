@@ -21,13 +21,13 @@ export const getOuterContainerStyle = (DOCK_POSITION, DOCK_MARGIN, isDockVisible
     style.top = '50%';
     style.transform = isDockVisible
       ? 'translateY(-50%)'
-      : 'translateX(-100%) translateY(-50%)';
+      : 'translateX(calc(-150% - 10px)) translateY(-50%)';
   } else if (DOCK_POSITION === 'right') {
     style.right = `${DOCK_MARGIN}px`;
     style.top = '50%';
     style.transform = isDockVisible
       ? 'translateY(-50%)'
-      : 'translateX(100%) translateY(-50%)';
+      : 'translateX(calc(150% + 10px)) translateY(-50%)';
   } else {
     // default/fallback: bottom
     style.bottom = `${DOCK_MARGIN}px`;
