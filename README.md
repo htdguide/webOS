@@ -1,17 +1,10 @@
 # WebOS
 
-Welcome to **WebOS**! This project brings a desktop-like experience into your web browser using React, WebAssembly, and Vite.
+Welcome to **WebOS**! This project brings a desktop-like experience into your web browser using modern web technologies like React, WebAssembly, and Vite.
 
 [Visit the Website](https://htdguide.com)
 
 ---
-## **Latest Screenshots**
-<img width="1536" alt="Screenshot 2025-03-13 at 9 44 52 AM" src="https://github.com/user-attachments/assets/1155872d-05d3-4260-81ec-f2a0893b44d5" />
-<img width="1536" alt="Screenshot 2025-03-13 at 9 45 12 AM" src="https://github.com/user-attachments/assets/53092797-4f9a-446a-884d-03f3e838ce7b" />
-<img width="1536" alt="Screenshot 2025-03-13 at 9 45 26 AM" src="https://github.com/user-attachments/assets/af2db2b6-836c-49ef-8935-888b1274a69e" />
-<img width="373" alt="Screenshot 2025-03-13 at 9 45 44 AM" src="https://github.com/user-attachments/assets/6f1e5df5-75cb-4877-a89b-00716ffca29f" />
-<img width="373" alt="Screenshot 2025-03-13 at 9 45 59 AM" src="https://github.com/user-attachments/assets/e24aac56-f81c-4d50-beb6-11a3bedd6a67" />
-
 
 ## **Explore More**
 
@@ -21,7 +14,7 @@ For detailed documentation and insights into the project structure, visit [Wiki]
 ## **Key Features**
 
 - **Interactive React Interface**  
-  A responsive UI built with React, providing a dynamic and engaging interface with draggable, resizable app windows.
+  A sleek and responsive UI built with React, providing a dynamic and engaging interface with draggable, resizable app windows.
 
 - **Dockerized Environment**  
   Containerized using **Docker** for consistent environments and seamless deployment across platforms.
@@ -86,6 +79,12 @@ Simplifies WebAssembly builds:
 
 ### **Vite Integration**
 - Faster builds and hot module replacement (HMR) for improved development experience.
+
+---
+
+## **Screenshots**
+<img width="950" alt="Screenshot 2025-01-24 at 8 29 42 PM" src="https://github.com/user-attachments/assets/4ea658f1-1b8a-4194-9a5e-0da7e2658376" />
+<img width="951" alt="Screenshot 2025-01-24 at 8 29 58 PM" src="https://github.com/user-attachments/assets/f9ac9e0a-3c75-4043-b805-bd78fa2b8077" />
 
 ---
 

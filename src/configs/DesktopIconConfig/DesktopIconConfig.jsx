@@ -29,8 +29,8 @@ export const ICON_HEIGHT = 80;
 /**
  * If you also need separate image width/height inside the icon, define them:
  */
-export const ICON_IMAGE_WIDTH = 48;
-export const ICON_IMAGE_HEIGHT = 48;
+export const ICON_IMAGE_WIDTH = 40;
+export const ICON_IMAGE_HEIGHT = 40;
 
 /**
  * We'll base the grid size on the icon's height (you can change this logic).

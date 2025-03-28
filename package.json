@@ -1,7 +1,7 @@
 {
   "name": "webport",
   "private": true,
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,6 +11,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "dotenv": "^16.4.7",
     "framer-motion": "^12.4.7",
     "jsmediatags": "^3.9.7",
     "react": "19.0.0",

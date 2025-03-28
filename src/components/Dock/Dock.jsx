@@ -1,7 +1,8 @@
 import React, { useContext, useState, useRef } from 'react';
-import { AppsContext } from '../../services/AppsContext/AppsContext';
+import { AppsContext } from '../../contexts/AppsContext/AppsContext';
 import DOCK_CONFIG from '../../configs/DockConfig/DockConfig';
 import { useDeviceInfo } from '../../services/DeviceInfoProvider/DeviceInfoProvider';
+import { useUIState } from '../../services/UIStateStorage/UIStateStorage';
 import {
   getOuterContainerStyle,
   getIconsContainerStyle,
@@ -11,12 +12,16 @@ import {
   getTooltipWrapperStyle,
   getTooltipBubbleStyle,
   getTooltipArrowStyle,
+  getOpenIndicatorStyle,
 } from './DockStyle';
 
 const Dock = () => {
   // Get device info (including orientation) from DeviceInfoProvider
   const deviceInfo = useDeviceInfo();
   const isPortrait = deviceInfo.orientation === 'portrait';
+
+  // Get dock visibility state from the UI state provider
+  const { isDockVisible } = useUIState();
 
   // Determine configuration overrides based on device orientation and dock position
   let config = { ...DOCK_CONFIG };
@@ -43,16 +48,23 @@ const Dock = () => {
     APP_NAME_TOOLTIP_OFFSET,
     APP_NAME_BACKGROUND_PADDING,
     APP_NAME_FONT_SIZE,
+    ICONS_PER_PAGE,
   } = config;
 
   // Determine dock layout orientation: horizontal if bottom, vertical if left/right
   const isVerticalDock = DOCK_POSITION === 'left' || DOCK_POSITION === 'right';
 
-  const { apps } = useContext(AppsContext);
-  const dockApps = apps.filter((app) => app.indock);
+  const { apps, openedApps, setOpenedApps } = useContext(AppsContext);
+  // Include apps that are normally in the dock and those open but not in the dock.
+  const baseDockApps = apps.filter(app => app.indock);
+  const extraOpenApps = apps.filter(app => !app.indock && openedApps.includes(app.id));
+  const dockApps = [
+    ...baseDockApps.sort((a, b) => a.priority - b.priority),
+    ...extraOpenApps,
+  ];
 
   // Pagination settings
-  const iconsPerPage = isPortrait ? (config.ICONS_PER_PAGE || 4) : dockApps.length;
+  const iconsPerPage = isPortrait ? (ICONS_PER_PAGE || 4) : dockApps.length;
   const paginationEnabled = isPortrait && dockApps.length > iconsPerPage;
   const totalPages = paginationEnabled ? Math.ceil(dockApps.length / iconsPerPage) : 1;
   const [currentPage, setCurrentPage] = useState(0);
@@ -67,14 +79,10 @@ const Dock = () => {
   const iconsContainerRef = useRef(null);
   const initialTransitionTimeoutRef = useRef(null);
 
-  // State for scales for each icon (for the entire dockApps list)
+  // State for scales for each icon and control of transitions
   const [scales, setScales] = useState(dockApps.map(() => 1));
-  // Controls whether to animate changes (true for initial transition, then false)
   const [shouldTransition, setShouldTransition] = useState(true);
-
-  // Hovered app id to display the tooltip
   const [hoveredApp, setHoveredApp] = useState(null);
-  // Active app id (clicked icon) - its tooltip will be hidden
   const [activeApp, setActiveApp] = useState(null);
 
   // Touch events for pagination
@@ -105,7 +113,7 @@ const Dock = () => {
     }
   };
 
-  // Mouse enter: enable smooth transition, then disable after a short timeout
+  // Mouse events for enabling/disabling transition and updating magnification scales
   const handleMouseEnter = () => {
     if (initialTransitionTimeoutRef.current) {
       clearTimeout(initialTransitionTimeoutRef.current);
@@ -116,7 +124,6 @@ const Dock = () => {
     }, 300);
   };
 
-  // Mouse move: update magnification scales (if enabled)
   const handleMouseMove = (e) => {
     if (!iconsContainerRef.current) return;
     if (!ENABLE_MAGNIFICATION) {
@@ -160,7 +167,6 @@ const Dock = () => {
     }
   };
 
-  // Mouse leave: reset scales
   const handleMouseLeave = () => {
     if (paginationEnabled) {
       const newScales = [...scales];
@@ -178,7 +184,7 @@ const Dock = () => {
     }
   };
 
-  // Compute positions to size the container & background
+  // Compute positions for the container and background
   const computeIconPositions = () => {
     const centers = [];
     let startPos = 0;
@@ -234,12 +240,18 @@ const Dock = () => {
   const { start: bgStart, size: bgSize } = computeBackgroundBounds();
   const { containerDimension } = computeIconPositions();
 
-  // Function to open/focus app and mark it as active so its tooltip is hidden
+  // Open or focus an app
   const openApp = (app) => {
     setActiveApp(app.id);
     if (app.link) {
       window.open(app.link, '_blank', 'noopener,noreferrer');
     } else {
+      setOpenedApps(prevOpenedApps => {
+        if (!prevOpenedApps.includes(app.id)) {
+          return [...prevOpenedApps, app.id];
+        }
+        return prevOpenedApps;
+      });
       console.log(`Launching or focusing app: ${app.id}`);
     }
   };
@@ -247,7 +259,7 @@ const Dock = () => {
   return (
     <div
       ref={outerRef}
-      style={getOuterContainerStyle(DOCK_POSITION, DOCK_MARGIN)}
+      style={getOuterContainerStyle(DOCK_POSITION, DOCK_MARGIN, isDockVisible)}
       onTouchStart={paginationEnabled ? handleTouchStart : null}
       onTouchEnd={paginationEnabled ? handleTouchEnd : null}
     >
@@ -281,15 +293,12 @@ const Dock = () => {
               onMouseEnter={() => setHoveredApp(app.id)}
               onMouseLeave={() => setHoveredApp(null)}
             >
-              {/* Tooltip (app name) with fade-out only on mouse leave */}
               {!isPortrait && (
                 <div style={getTooltipWrapperStyle(DOCK_POSITION, APP_NAME_TOOLTIP_OFFSET)}>
                   <div
                     style={{
                       ...getTooltipBubbleStyle(APP_NAME_BACKGROUND_PADDING, APP_NAME_FONT_SIZE),
                       opacity: hoveredApp === app.id && activeApp !== app.id ? 1 : 0,
-                      // If an icon is hovered, remove any transition so the new tooltip appears immediately;
-                      // otherwise (when hoveredApp is null) use fade-out.
                       transition: hoveredApp === null ? 'opacity 0.3s ease' : 'none',
                       pointerEvents: 'none',
                     }}
@@ -300,6 +309,7 @@ const Dock = () => {
                 </div>
               )}
               <img src={app.icon} alt={app.name} style={iconImageStyle} />
+              {openedApps.includes(app.id) && <div style={getOpenIndicatorStyle(DOCK_POSITION)} />}
             </div>
           ))}
         </div>

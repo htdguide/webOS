@@ -3,29 +3,38 @@
 // ---------------------------
 // Outer container (the dock)
 // ---------------------------
-export const getOuterContainerStyle = (DOCK_POSITION, DOCK_MARGIN) => {
+export const getOuterContainerStyle = (DOCK_POSITION, DOCK_MARGIN, isDockVisible) => {
   const style = {
     position: 'fixed',
-    zIndex: 10,
+    zIndex: 9998,
+    transition: 'transform 0.3s ease', // smooth sliding transition
   };
 
   if (DOCK_POSITION === 'bottom') {
     style.bottom = `${DOCK_MARGIN}px`;
     style.left = '50%';
-    style.transform = 'translateX(-50%)';
+    style.transform = isDockVisible
+      ? 'translateX(-50%)'
+      : 'translateX(-50%) translateY(calc(150% + 10px))'; // extra 10px lower when hidden
   } else if (DOCK_POSITION === 'left') {
     style.left = `${DOCK_MARGIN}px`;
     style.top = '50%';
-    style.transform = 'translateY(-50%)';
+    style.transform = isDockVisible
+      ? 'translateY(-50%)'
+      : 'translateX(calc(-150% - 10px)) translateY(-50%)';
   } else if (DOCK_POSITION === 'right') {
     style.right = `${DOCK_MARGIN}px`;
     style.top = '50%';
-    style.transform = 'translateY(-50%)';
+    style.transform = isDockVisible
+      ? 'translateY(-50%)'
+      : 'translateX(calc(150% + 10px)) translateY(-50%)';
   } else {
     // default/fallback: bottom
     style.bottom = `${DOCK_MARGIN}px`;
     style.left = '50%';
-    style.transform = 'translateX(-50%)';
+    style.transform = isDockVisible
+      ? 'translateX(-50%)'
+      : 'translateX(-50%) translateY(calc(150% + 10px))';
   }
 
   return style;
@@ -46,7 +55,6 @@ export const getIconsContainerStyle = (isVerticalDock, DOCK_POSITION, ICON_SIZE,
           alignItems: 'flex-start',
           width: `${ICON_SIZE}px`,
           height: `${containerDimension}px`,
-          // Additional styles for left dock can be added here if needed.
         };
       case 'right':
         return {
@@ -57,7 +65,6 @@ export const getIconsContainerStyle = (isVerticalDock, DOCK_POSITION, ICON_SIZE,
           alignItems: 'flex-end',
           width: `${ICON_SIZE}px`,
           height: `${containerDimension}px`,
-          // Additional styles for right dock can be added here if needed.
         };
       default:
         return {
@@ -86,64 +93,49 @@ export const getIconsContainerStyle = (isVerticalDock, DOCK_POSITION, ICON_SIZE,
 // Background "glass" behind the dock’s icons
 // -------------------------------------------
 export const getBackgroundStyle = (isVerticalDock, bgStart, bgSize, DOCK_POSITION) => {
+  const commonStyle = {
+    position: 'absolute',
+    borderRadius: '16px',
+    background: 'rgba(220, 220, 220, 0.25)',
+    backdropFilter: 'blur(13px)',
+    WebkitBackdropFilter: 'blur(13px)',
+    border: '1px solid rgba(255, 255, 255, 0.18)',
+    pointerEvents: 'none',
+  };
+
   if (isVerticalDock) {
     if (DOCK_POSITION === 'left') {
       return {
-        position: 'absolute',
+        ...commonStyle,
         right: -10,
         top: `${bgStart - 10}px`,
         height: `${bgSize + 18}px`,
         width: '150%',
-        borderRadius: '16px',
-        background: 'rgba(83, 83, 83, 0.25)',
-        backdropFilter: 'blur(13px)',
-        WebkitBackdropFilter: 'blur(13px)',
-        border: '1px solid rgba(255, 255, 255, 0.18)',
-        pointerEvents: 'none',
       };
     } else if (DOCK_POSITION === 'right') {
       return {
-        position: 'absolute',
+        ...commonStyle,
         left: -10,
         top: `${bgStart - 10}px`,
         height: `${bgSize + 18}px`,
         width: '150%',
-        borderRadius: '16px',
-        background: 'rgba(83, 83, 83, 0.25)',
-        backdropFilter: 'blur(13px)',
-        WebkitBackdropFilter: 'blur(13px)',
-        border: '1px solid rgba(255, 255, 255, 0.18)',
-        pointerEvents: 'none',
       };
     } else {
-      // fallback to a default vertical style
       return {
-        position: 'absolute',
+        ...commonStyle,
         left: -16,
         top: `${bgStart - 10}px`,
         height: `${bgSize + 18}px`,
         width: '150%',
-        borderRadius: '16px',
-        background: 'rgba(83, 83, 83, 0.25)',
-        backdropFilter: 'blur(13px)',
-        WebkitBackdropFilter: 'blur(13px)',
-        border: '1px solid rgba(255, 255, 255, 0.18)',
-        pointerEvents: 'none',
       };
     }
   } else {
     return {
-      position: 'absolute',
+      ...commonStyle,
       top: -10,
       left: `${bgStart - 10}px`,
       width: `${bgSize + 20}px`,
       height: '150%',
-      borderRadius: '16px',
-      background: 'rgba(83, 83, 83, 0.25)',
-      backdropFilter: 'blur(13px)',
-      WebkitBackdropFilter: 'blur(13px)',
-      border: '1px solid rgba(255, 255, 255, 0.18)',
-      pointerEvents: 'none',
     };
   }
 };
@@ -185,7 +177,6 @@ export const getIconContainerStyle = ({
     alignItems: 'center',
   };
 
-  // For vertical docks, margin is vertical; for horizontal, margin is horizontal
   if (DOCK_POSITION === 'left' || DOCK_POSITION === 'right') {
     return {
       ...baseStyle,
@@ -193,12 +184,11 @@ export const getIconContainerStyle = ({
       transformOrigin: DOCK_POSITION === 'left' ? 'left center' : 'right center',
     };
   } else {
-    // bottom or fallback
     return {
       ...baseStyle,
       margin: `0 ${dynamicMargin}px`,
       transformOrigin: 'bottom center',
-      alignItems: 'flex-end', // push icon to bottom of container
+      alignItems: 'flex-end',
     };
   }
 };
@@ -240,7 +230,6 @@ export const getTooltipWrapperStyle = (DOCK_POSITION, APP_NAME_TOOLTIP_OFFSET) =
       style.transform = 'translateY(-50%)';
       break;
     default:
-      // fallback to bottom
       style.bottom = `calc(100% + ${APP_NAME_TOOLTIP_OFFSET}px)`;
       style.left = '50%';
       style.transform = 'translateX(-50%)';
@@ -272,33 +261,28 @@ export const getTooltipArrowStyle = (DOCK_POSITION) => {
     borderRight: '6px solid transparent',
   };
 
-  // Use same color as bubble background
   const arrowColor = 'rgba(200, 200, 200, 0.6)';
 
   switch (DOCK_POSITION) {
     case 'bottom':
-      // bubble is above icon => arrow at bubble’s bottom
       style.top = '100%';
       style.left = '50%';
       style.transform = 'translateX(-50%)';
       style.borderTop = `6px solid ${arrowColor}`;
       break;
     case 'left':
-      // bubble is to the right => arrow on bubble’s left edge
       style.right = '100%';
       style.top = '50%';
       style.transform = 'translateY(-50%)';
       style.borderRight = `6px solid ${arrowColor}`;
       break;
     case 'right':
-      // bubble is to the left => arrow on bubble’s right edge
       style.left = '100%';
       style.top = '50%';
       style.transform = 'translateY(-50%)';
       style.borderLeft = `6px solid ${arrowColor}`;
       break;
     default:
-      // fallback to bottom
       style.top = '100%';
       style.left = '50%';
       style.transform = 'translateX(-50%)';
@@ -307,4 +291,42 @@ export const getTooltipArrowStyle = (DOCK_POSITION) => {
   }
 
   return style;
+};
+
+// ---------------------
+// Open indicator dot style
+// ---------------------
+export const getOpenIndicatorStyle = (DOCK_POSITION) => {
+  const commonStyle = {
+    position: 'absolute',
+    width: '5px',
+    height: '5px',
+    borderRadius: '50%',
+    backgroundColor: '#111',
+  };
+
+  switch (DOCK_POSITION) {
+    case 'left':
+      return {
+        ...commonStyle,
+        left: -10,
+        top: '50%',
+        transform: 'translateY(-50%)',
+      };
+    case 'right':
+      return {
+        ...commonStyle,
+        right: -10,
+        top: '50%',
+        transform: 'translateY(-50%)',
+      };
+    case 'bottom':
+    default:
+      return {
+        ...commonStyle,
+        bottom: -10,
+        left: '50%',
+        transform: 'translateX(-50%)',
+      };
+  }
 };

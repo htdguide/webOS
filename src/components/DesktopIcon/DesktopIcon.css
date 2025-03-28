@@ -1,11 +1,8 @@
-/* Desktop Icon Container */
-.desktop-icon {
+/*************************************************************
+ * Container for the entire desktop icon
+ *************************************************************/
+ .desktop-icon {
   position: absolute;
-  /* 
-    Removed explicit width and height here—these are now inline-styled 
-    width: 64px;
-    height: 80px;
-  */
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -13,41 +10,74 @@
   justify-content: flex-start;
   user-select: none;
   z-index: 5;
-  transition: left 0.2s, top 0.2s, box-shadow 0.2s; /* Smooth snapping */
+  transition: left 0.2s, top 0.2s, box-shadow 0.2s, opacity 0.5s;
 }
 
+/* Slight transparency only while dragging, not when selected. */
 .desktop-icon.dragging {
-  opacity: 0.7; /* Make the icon slightly transparent while dragging */
-  z-index: 10;  /* Bring the dragging icon to the top */
-  transition: none; /* Disable snapping effect while dragging */
+  opacity: 0.7;
+  z-index: 10;
+  transition: none;
 }
 
+/* Increase z-index when selected if you like, but no need for a new stacking context. */
 .desktop-icon.selected {
-  z-index: 6; /* Slightly higher when selected */
+  z-index: 6;
 }
 
-/* Icon Image */
+/*************************************************************
+ * The icon area (frame + highlight + image)
+ *************************************************************/
+.icon-frame {
+  position: relative;
+  width: 45px;
+  height: 45px;
+  margin-bottom: 8px;
+}
+
+/* 
+  The highlight behind the icon. 
+  It's 50×50, absolutely positioned. 
+*/
+.icon-highlight {
+  position: absolute;
+  top: -4.5px;
+  left: -4.5px;
+  width: 50px;
+  height: 50px;
+  background-color: rgba(0, 0, 0, 0.4); 
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  z-index: 0;
+  display: none; 
+}
+
+/* Show highlight only when icon is selected */
+.desktop-icon.selected .icon-highlight {
+  display: block;
+}
+
+/* 
+  The icon image, pinned to 45×45. 
+*/
 .icon-image {
-  /* 
-    Removed the old fixed sizes:
-    width: 48px;
-    height: 48px; 
-  */
+  position: relative;
+  width: 45px;
+  height: 45px;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  margin-bottom: 5px;
-  border-radius: 5px;
-  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
-.desktop-icon.selected .icon-image {
-  background-color: rgba(0, 0, 0, 0.4); /* Dark transparent square */
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* Icon Label */
+/*************************************************************
+ * Label text
+ *************************************************************/
 .icon-label {
+  display: inline-block;
+  position: relative;
+  padding: 0 5px;
   text-align: center;
   font-size: 12px;
   font-weight: 500;
@@ -55,12 +85,12 @@
   color: white;
   line-height: 1.2;
   text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
+  background-color: transparent; 
 }
 
+/* If you want the label to also become highlighted when selected: */
 .desktop-icon.selected .icon-label {
-  color: white;
-  background-color: rgb(34, 91, 201); /* Opaque blue */
-  border-radius: 4px;
-  padding: 2px 4px;
-  text-shadow: none; /* Remove shadow for better readability */
+  background-color: rgb(34, 91, 201);
+  text-shadow: none; 
 }

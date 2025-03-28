@@ -30,7 +30,7 @@ body, html {
   color: #000;
   background-color: rgba(255, 255, 255, 0.6);
   padding: 4px 4px;
-  border-radius: 8px;
+  border-radius: 4px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -41,7 +41,7 @@ body, html {
   .version {
     font-size: 8px;
     top: 30px;
-    right: 1px;
+    right: 4px;
     bottom: auto; /* Override the default bottom property */
   }
 }

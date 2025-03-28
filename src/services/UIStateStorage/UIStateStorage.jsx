@@ -24,17 +24,82 @@ const getInitialDarkMode = () => {
   return getDefaultDarkMode();
 };
 
+// Retrieve the initial dock visibility state from local storage if available,
+// otherwise, default to visible (true)
+const getInitialDockVisibility = () => {
+  const stored = localStorage.getItem('isDockVisible');
+  if (stored !== null) {
+    return JSON.parse(stored);
+  }
+  return false;
+};
+
+// Retrieve the initial icon visibility state from local storage if available,
+// otherwise, default to visible (true)
+const getInitialIconVisibility = () => {
+  const stored = localStorage.getItem('isIconVisible');
+  if (stored !== null) {
+    return JSON.parse(stored);
+  }
+  return true;
+};
+
+// Retrieve the initial menubar visibility state from local storage if available,
+// otherwise, default to visible (true)
+const getInitialMenubarVisibility = () => {
+  const stored = localStorage.getItem('isMenubarVisible');
+  if (stored !== null) {
+    return JSON.parse(stored);
+  }
+  return true;
+};
+
 // Provider component that holds the UI state
 export const UIStateProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode());
+  const [isDockVisible, setIsDockVisible] = useState(getInitialDockVisibility());
+  const [isIconVisible, setIsIconVisible] = useState(getInitialIconVisibility());
+  const [isMenubarVisible, setIsMenubarVisible] = useState(getInitialMenubarVisibility());
 
   // Persist dark mode state to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('isDarkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
+  // Persist dock visibility state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('isDockVisible', JSON.stringify(isDockVisible));
+  }, [isDockVisible]);
+
+  // Persist icon visibility state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('isIconVisible', JSON.stringify(isIconVisible));
+  }, [isIconVisible]);
+
+  // Persist menubar visibility state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('isMenubarVisible', JSON.stringify(isMenubarVisible));
+  }, [isMenubarVisible]);
+
+  // Function to toggle icon visibility
+  const toggleIconVisibility = () => {
+    setIsIconVisible(prev => !prev);
+  };
+
+  // Function to toggle menubar visibility
+  const toggleMenubarVisibility = () => {
+    setIsMenubarVisible(prev => !prev);
+  };
+
   return (
-    <UIStateContext.Provider value={{ isDarkMode, setIsDarkMode }}>
+    <UIStateContext.Provider value={{
+      isDarkMode, setIsDarkMode,
+      isDockVisible, setIsDockVisible,
+      isIconVisible, setIsIconVisible,
+      isMenubarVisible, setIsMenubarVisible,
+      toggleIconVisibility,
+      toggleMenubarVisibility
+    }}>
       {children}
     </UIStateContext.Provider>
   );

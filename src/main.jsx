@@ -13,6 +13,8 @@ import { MiniWindowProvider } from './components/MiniWindow/MiniWindowProvider.j
 import { DraggableWindowProvider } from './components/DraggableWindow/DraggableWindowProvider.jsx';
 import { MusicServiceProvider } from './services/MusicService/MusicService.jsx';
 import DisplayController from './services/DisplayController/DisplayController.jsx';
+import { TerminalSettingsProvider } from './contexts/TerminalSettingsContext/TerminalSettingsProvider.jsx';
+import WelcomeWrap from './components/WelcomeWrap/WelcomeWrap.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
@@ -47,27 +49,27 @@ const Main = () => {
   return (
     <StrictMode>
       <DeviceInfoProvider>
-        <UIStateProvider>
-          <FocusProvider>
+        <TerminalSettingsProvider>
+          <UIStateProvider>
+            <WelcomeWrap />
             <MusicServiceProvider>
               <DisplayController>
-                <Wallpaper />
-                <MiniWindowProvider>
-                  <DraggableWindowProvider>
-                    <div>
-                      <div className={`loading-screen${loading ? '' : ' fade-out'}`}>
-                        <LoadingScreen />
+                <FocusProvider>
+                  <Wallpaper />
+                  <MiniWindowProvider>
+                    <DraggableWindowProvider>
+                      <div>
+                        <App />
+                        <MenuBar />
+                        <Notification />
                       </div>
-                      <App />
-                      <MenuBar />
-                      <Notification />
-                    </div>
-                  </DraggableWindowProvider>
-                </MiniWindowProvider>
+                    </DraggableWindowProvider>
+                  </MiniWindowProvider>
+                </FocusProvider>
               </DisplayController>
             </MusicServiceProvider>
-          </FocusProvider>
-        </UIStateProvider>
+          </UIStateProvider>
+        </TerminalSettingsProvider>
       </DeviceInfoProvider>
     </StrictMode>
   );

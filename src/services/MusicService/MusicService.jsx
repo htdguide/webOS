@@ -95,7 +95,7 @@ export function MusicServiceProvider({ children }) {
       })
       .then((data) => {
         setMusicList(data);
-        // Optionally auto-load first track: loadTrackByIndex(0);
+        // Optionally auto-load the first track: loadTrackByIndex(0);
       })
       .catch((err) => {
         console.error('Error loading music list:', err);
@@ -141,15 +141,15 @@ export function MusicServiceProvider({ children }) {
       const trackData = musicList[index];
       const mp3Url = trackData.src;
 
-      // First, read ID3 tags from the URL:
+      // First, set some default info
       setTrackInfo({
         title: trackData.title || '',
         artist: trackData.artist || '',
         albumArt: trackData.backupArt || '',
       });
 
+      // Attempt reading ID3 tags asynchronously
       try {
-        // Attempt reading ID3 tags asynchronously:
         jsmediatags.read(mp3Url, {
           onSuccess: (tag) => {
             const { title, artist, picture } = tag.tags;
@@ -164,7 +164,7 @@ export function MusicServiceProvider({ children }) {
               }
               albumArtUrl = `data:${format};base64,${window.btoa(base64String)}`;
             }
-            // Fallback to trackData.backupArt
+            // Otherwise fallback
             if (!albumArtUrl && trackData.backupArt) {
               albumArtUrl = trackData.backupArt;
             }
@@ -177,7 +177,7 @@ export function MusicServiceProvider({ children }) {
           },
           onError: (error) => {
             console.warn('jsmediatags error:', error.type, error.info);
-            // fallback to trackData data
+            // fallback to provided trackData
             setTrackInfo({
               title: trackData.title || '',
               artist: trackData.artist || '',
@@ -197,16 +197,16 @@ export function MusicServiceProvider({ children }) {
       }
       const arrayBuffer = await response.arrayBuffer();
 
-      // Decode using the AudioContext
+      // Decode the audio data
       const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
 
-      // Once we have an AudioBuffer, set duration in seconds
+      // Set the new track duration
       setDuration(audioBuffer.duration);
 
-      // Reset playback so we’re not playing the old track
+      // Reset playback so the old track won't keep playing
       stop();
 
-      // Store the newly loaded AudioBuffer
+      // Store the new AudioBuffer
       sourceNodeRef.current = { audioBuffer };
 
       // Update currentIndex
@@ -222,7 +222,7 @@ export function MusicServiceProvider({ children }) {
     if (!musicList.length) return;
     let newIndex = currentIndex + 1;
     if (newIndex >= musicList.length) {
-      newIndex = 0; // wrap
+      newIndex = 0; // wrap around to first
     }
     loadTrackByIndex(newIndex).then(() => {
       play();
@@ -233,7 +233,7 @@ export function MusicServiceProvider({ children }) {
     if (!musicList.length) return;
     let newIndex = currentIndex - 1;
     if (newIndex < 0) {
-      newIndex = musicList.length - 1;
+      newIndex = musicList.length - 1; // wrap to last
     }
     loadTrackByIndex(newIndex).then(() => {
       play();
@@ -244,14 +244,12 @@ export function MusicServiceProvider({ children }) {
    * 10) Basic playback functions
    */
   const play = useCallback(() => {
-    ensureAudioContext(); // make sure we have an AudioContext
+    ensureAudioContext(); // Make sure we have an AudioContext
 
-    // If we don’t have a loaded AudioBuffer, load the first track
+    // If we don’t have a loaded AudioBuffer, load the first track if possible
     if (!sourceNodeRef.current || !sourceNodeRef.current.audioBuffer) {
       if (musicList.length > 0) {
-        loadTrackByIndex(0).then(() => {
-          play();
-        });
+        loadTrackByIndex(0).then(() => play());
       }
       return;
     }
@@ -263,32 +261,35 @@ export function MusicServiceProvider({ children }) {
     newSource.buffer = sourceNodeRef.current.audioBuffer;
     newSource.connect(gainNodeRef.current);
 
-    // Start at the pausedAtRef offset
+    // Start from pausedAtRef offset (where we left off)
     const offset = pausedAtRef.current;
     newSource.start(0, offset);
 
-    // Keep reference so we can stop it
+    // Keep reference so we can stop it later
     sourceNodeRef.current.bufferSource = newSource;
 
-    // On ended, move to next track
+    // On ended, only call handleNext if we truly finished the track
     newSource.onended = () => {
-      const total = sourceNodeRef.current?.audioBuffer?.duration || 0;
-      const diff = Math.abs(currentTime - total);
-      if (diff < 0.5) {
+      const total = newSource.buffer.duration;
+      const playedSoFar =
+        pausedAtRef.current + (performance.now() - startTimestampRef.current) / 1000;
+
+      // If within half a second of the total length, assume the track truly ended
+      if (total - playedSoFar < 0.5) {
         handleNext();
       }
     };
 
-    // Mark the startTimestamp
+    // Mark the start time for our time tracking
     startTimestampRef.current = performance.now();
     setIsPlaying(true);
-  }, [isPlaying, loadTrackByIndex, musicList.length, ensureAudioContext, currentTime, handleNext]);
+  }, [isPlaying, loadTrackByIndex, musicList.length, ensureAudioContext, handleNext]);
 
   const pause = useCallback(() => {
     if (!sourceNodeRef.current?.bufferSource) return;
     if (!isPlaying) return;
 
-    // How long we’ve played so far
+    // Figure out how long we've played so far
     const playedSoFar =
       pausedAtRef.current + (performance.now() - startTimestampRef.current) / 1000;
     pausedAtRef.current = playedSoFar;
@@ -311,55 +312,58 @@ export function MusicServiceProvider({ children }) {
   }, []);
 
   /**
-   * 11) Seek function that doesn't explicitly pause
+   * 11) Seek function (no explicit pause)
    */
   const seek = useCallback(
     (timeInSeconds) => {
       if (!sourceNodeRef.current?.audioBuffer) {
+        // No track loaded; just store
         pausedAtRef.current = timeInSeconds;
         setCurrentTime(timeInSeconds);
         return;
       }
 
-      // Stop old source if it exists
+      // Stop the old source if it exists
       if (sourceNodeRef.current.bufferSource) {
         sourceNodeRef.current.bufferSource.stop();
         sourceNodeRef.current.bufferSource = null;
       }
 
+      // Update our pausedAt & currentTime
       pausedAtRef.current = timeInSeconds;
       setCurrentTime(timeInSeconds);
 
-      // If we’re still playing, create a new source at the new offset
+      // If still playing, create a new source at the new offset
       if (isPlaying) {
         const newSource = audioContextRef.current.createBufferSource();
         newSource.buffer = sourceNodeRef.current.audioBuffer;
         newSource.connect(gainNodeRef.current);
-        newSource.start(0, timeInSeconds);
 
+        newSource.start(0, timeInSeconds);
         sourceNodeRef.current.bufferSource = newSource;
 
-        // Handle end of track
+        // On ended => only next if we truly finished
         newSource.onended = () => {
-          const total = sourceNodeRef.current?.audioBuffer?.duration || 0;
-          const diff = Math.abs(currentTime - total);
-          if (diff < 0.5) {
+          const total = newSource.buffer.duration;
+          const playedSoFar =
+            pausedAtRef.current + (performance.now() - startTimestampRef.current) / 1000;
+          if (total - playedSoFar < 0.5) {
             handleNext();
           }
         };
 
-        // Reset startTimestamp for time tracking
+        // Reset the startTimestamp for time tracking
         startTimestampRef.current = performance.now();
       }
     },
-    [isPlaying, currentTime, handleNext]
+    [isPlaying, handleNext]
   );
 
   /**
    * 12) Toggle Play/Pause
    */
   const togglePlay = useCallback(() => {
-    // If no track is loaded, load the first
+    // If no track loaded, load the first track and play
     if (!sourceNodeRef.current?.audioBuffer) {
       if (musicList.length > 0) {
         loadTrackByIndex(0).then(() => play());
