@@ -12,7 +12,7 @@ RUN npm install --legacy-peer-deps
 # Copy the rest of the application files
 COPY . .
 
-# Build the Vite project (ensure your package.json "build" script outputs to the "dist" folder)
+# Build the Vite project
 RUN npm run build
 
 # Stage 2: Production container with nginx
@@ -24,14 +24,11 @@ RUN rm -rf /usr/share/nginx/html/*
 # Copy built static files to nginx's html directory
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy custom nginx configuration for SPA routing
+# Copy custom nginx configuration for SPA routing + SSL
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Copy entrypoint script and set executable permission
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 
 # Expose HTTP and HTTPS ports (metadata only)
 EXPOSE 80 443
 
-ENTRYPOINT ["/entrypoint.sh"]
+# Use the default Nginx startup command
+CMD ["nginx", "-g", "daemon off;"]
