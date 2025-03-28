@@ -14,6 +14,7 @@ import { DraggableWindowProvider } from './components/DraggableWindow/DraggableW
 import { MusicServiceProvider } from './services/MusicService/MusicService.jsx';
 import DisplayController from './services/DisplayController/DisplayController.jsx';
 import { TerminalSettingsProvider } from './contexts/TerminalSettingsContext/TerminalSettingsProvider.jsx';
+import WelcomeWrap from './components/WelcomeWrap/WelcomeWrap.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
@@ -47,12 +48,13 @@ const Main = () => {
 
   return (
     <StrictMode>
+      <WelcomeWrap />
       <DeviceInfoProvider>
-        <UIStateProvider>
-          <FocusProvider>
-            <TerminalSettingsProvider>
-              <MusicServiceProvider>
-                <DisplayController>
+        <TerminalSettingsProvider>
+          <UIStateProvider>
+            <MusicServiceProvider>
+              <DisplayController>
+                <FocusProvider>
                   <Wallpaper />
                   <MiniWindowProvider>
                     <DraggableWindowProvider>
@@ -66,11 +68,11 @@ const Main = () => {
                       </div>
                     </DraggableWindowProvider>
                   </MiniWindowProvider>
-                </DisplayController>
-              </MusicServiceProvider>
-            </TerminalSettingsProvider>
-          </FocusProvider>
-        </UIStateProvider>
+                </FocusProvider>
+              </DisplayController>
+            </MusicServiceProvider>
+          </UIStateProvider>
+        </TerminalSettingsProvider>
       </DeviceInfoProvider>
     </StrictMode>
   );
