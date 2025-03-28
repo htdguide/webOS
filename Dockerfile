@@ -27,20 +27,11 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Copy custom nginx configuration for SPA routing
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copy entrypoint script and set executable permission
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 # Expose HTTP and HTTPS ports (metadata only)
 EXPOSE 80 443
 
-# Inline entrypoint:
-# If both SSL_PRIVATE_KEY and SSL_CERT_CHAIN are provided, write them to file.
-# Otherwise, disable HTTPS by removing SSL-related directives from nginx config.
-ENTRYPOINT ["sh", "-c", "\
-if [ -n \"$SSL_PRIVATE_KEY\" ] && [ -n \"$SSL_CERT_CHAIN\" ]; then \
-  echo \"$SSL_PRIVATE_KEY\" > /etc/ssl/private/ssl.key && \
-  echo \"$SSL_CERT_CHAIN\" > /etc/ssl/certs/ssl.crt; \
-else \
-  echo 'No SSL certificates provided. Disabling SSL and using HTTP only.'; \
-  sed -iE '/^[[:space:]]*listen[[:space:]]+443[[:space:]]+ssl;/d' /etc/nginx/conf.d/default.conf; \
-  sed -iE '/^[[:space:]]*ssl_certificate[[:space:]]+/d' /etc/nginx/conf.d/default.conf; \
-  sed -iE '/^[[:space:]]*ssl_certificate_key[[:space:]]+/d' /etc/nginx/conf.d/default.conf; \
-fi; \
-exec nginx -g \"daemon off;\""]
+ENTRYPOINT ["/entrypoint.sh"]
