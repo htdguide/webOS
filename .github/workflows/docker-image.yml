@@ -2,7 +2,8 @@ name: Build and Deploy Docker Image to Server
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build-deploy:
@@ -30,11 +31,11 @@ jobs:
       - name: Build
         run: npm run build
 
-      # 6) Log in to Docker registry
+      # 6) Log in to Docker registry (example: Docker Hub)
       - name: Login to Docker Hub
         run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
-      # 7) Build Docker image (uses the minimal Dockerfile)
+      # 7) Build Docker image (uses a Dockerfile that only copies 'dist/' + 'nginx.conf')
       - name: Build Docker Image
         run: |
           docker build \
@@ -53,7 +54,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # 10) Optional: Upload SSL cert/key from secrets to server
+      # 10) Optional: Upload SSL cert/key from secrets to server (with fix for directories)
       - name: Upload SSL Cert & Key to Server
         uses: appleboy/ssh-action@v0.1.8
         with:
@@ -61,8 +62,11 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Write secrets to files on the server (caution: security risk).
-            # 'echo' is used for example, but be sure it doesn't appear in logs.
+            # If directories named ssl.crt or ssl.key exist, remove them:
+            if [ -d ssl.crt ]; then sudo rm -rf ssl.crt; fi
+            if [ -d ssl.key ]; then sudo rm -rf ssl.key; fi
+
+            # Write secrets to files on the server
             echo "${{ secrets.SSL_CERT_CHAIN }}" > ssl.crt
             echo "${{ secrets.SSL_PRIVATE_KEY }}" > ssl.key
 
@@ -90,9 +94,7 @@ jobs:
             # Pull latest image
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
 
-            # Option A) If Nginx is configured to read /etc/ssl directly:
-            #    The container can read the cert from the host if we volume-mount them:
-            #    (But we just placed them on the server in /etc/ssl, so let's mount them)
+            # Run container (mounting SSL certs if your nginx.conf references them)
             sudo docker run -d \
               --name webportfolio \
               -p 80:80 \
