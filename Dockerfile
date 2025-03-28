@@ -6,7 +6,7 @@ FROM nginx:stable-alpine
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy the already-built 'dist' folder from the GitHub Actions environment
-COPY dist /usr/share/nginx/html/
+COPY dist/ /usr/share/nginx/html/
 
 # Copy a custom Nginx config with SSL directives
 COPY nginx.conf /etc/nginx/conf.d/default.conf
