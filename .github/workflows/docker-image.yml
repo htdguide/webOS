@@ -2,53 +2,58 @@ name: Build and Deploy Docker Image to Server
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-  test:
-    name: Run Vitest
+  build-deploy:
     runs-on: ubuntu-latest
     steps:
+      # 1) Check out the repo
       - name: Check out repository
         uses: actions/checkout@v2
 
+      # 2) Set up Node
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
+      # 3) Install Dependencies
       - name: Install Dependencies
         run: npm install --legacy-peer-deps
 
+      # 4) Run Tests (optional)
       - name: Run Tests
         run: npm run test
 
-  build-deploy:
-    name: Build and Deploy Docker Image to Server
-    runs-on: ubuntu-latest
-    needs: test  # ensures we only build/deploy if tests pass
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
+      # 5) Build Production Artifacts -> "dist" folder
+      - name: Build
+        run: npm run build
 
+      # 6) Log in to Docker registry
       - name: Login to Docker Hub
         run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build the Docker Image
-        run: docker build . -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+      # 7) Build Docker image (uses the minimal Dockerfile)
+      - name: Build Docker Image
+        run: |
+          docker build \
+            -t ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest \
+            -f Dockerfile \
+            .
 
-      - name: Push the Docker Image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+      # 8) Push Docker Image to registry
+      - name: Push Docker Image
+        run: |
+          docker push ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
 
-      - name: Set up SSH key for server connection
+      # 9) Set up SSH key for server connection
+      - name: Set up SSH key
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # --------------------------------------------------------
-      # Step A: Upload SSL certificate and key to server
-      # --------------------------------------------------------
+      # 10) Optional: Upload SSL cert/key from secrets to server
       - name: Upload SSL Cert & Key to Server
         uses: appleboy/ssh-action@v0.1.8
         with:
@@ -56,39 +61,38 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Write the secrets into temp files
+            # Write secrets to files on the server (caution: security risk).
+            # 'echo' is used for example, but be sure it doesn't appear in logs.
             echo "${{ secrets.SSL_CERT_CHAIN }}" > ssl.crt
             echo "${{ secrets.SSL_PRIVATE_KEY }}" > ssl.key
 
-            # Create directories if they don't exist
-            sudo mkdir -p /etc/ssl/certs
-            sudo mkdir -p /etc/ssl/private
-
-            # Move cert & key into place
+            # Move them into place
+            sudo mkdir -p /etc/ssl/certs /etc/ssl/private
             sudo mv ssl.crt /etc/ssl/certs/ssl.crt
             sudo mv ssl.key /etc/ssl/private/ssl.key
 
-            # Set strict permissions so only root can read the private key
+            # Secure permissions
             sudo chmod 600 /etc/ssl/private/ssl.key
+            sudo chmod 644 /etc/ssl/certs/ssl.crt
 
-      # --------------------------------------------------------
-      # Step B: Stop/Remove old containers, pull, and run
-      # --------------------------------------------------------
-      - name: Deploy Docker Container
+      # 11) Deploy container
+      - name: Deploy Container
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Stop and remove any existing containers
+            # Stop and remove old containers
             sudo docker stop $(sudo docker ps -aq) || true
             sudo docker rm $(sudo docker ps -aq) || true
 
-            # Pull the latest image from Docker Hub
+            # Pull latest image
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
 
-            # Run the container with volumes pointing to SSL certs
+            # Option A) If Nginx is configured to read /etc/ssl directly:
+            #    The container can read the cert from the host if we volume-mount them:
+            #    (But we just placed them on the server in /etc/ssl, so let's mount them)
             sudo docker run -d \
               --name webportfolio \
               -p 80:80 \
