@@ -3,7 +3,6 @@
 # Stage 1: Build the Vite app
 FROM node:18-alpine AS build
 
-# Set working directory
 WORKDIR /app
 
 # Copy package files and install dependencies
@@ -33,15 +32,15 @@ EXPOSE 80 443
 
 # Inline entrypoint:
 # If both SSL_PRIVATE_KEY and SSL_CERT_CHAIN are provided, write them to file.
-# Otherwise, disable HTTPS by removing related directives.
+# Otherwise, disable HTTPS by removing SSL-related directives from nginx config.
 ENTRYPOINT ["sh", "-c", "\
 if [ -n \"$SSL_PRIVATE_KEY\" ] && [ -n \"$SSL_CERT_CHAIN\" ]; then \
   echo \"$SSL_PRIVATE_KEY\" > /etc/ssl/private/ssl.key && \
   echo \"$SSL_CERT_CHAIN\" > /etc/ssl/certs/ssl.crt; \
 else \
   echo 'No SSL certificates provided. Disabling SSL and using HTTP only.'; \
-  sed -i '/listen 443 ssl;/d' /etc/nginx/conf.d/default.conf; \
-  sed -i '/ssl_certificate/d' /etc/nginx/conf.d/default.conf; \
-  sed -i '/ssl_certificate_key/d' /etc/nginx/conf.d/default.conf; \
+  sed -iE '/^[[:space:]]*listen[[:space:]]+443[[:space:]]+ssl;/d' /etc/nginx/conf.d/default.conf; \
+  sed -iE '/^[[:space:]]*ssl_certificate[[:space:]]+/d' /etc/nginx/conf.d/default.conf; \
+  sed -iE '/^[[:space:]]*ssl_certificate_key[[:space:]]+/d' /etc/nginx/conf.d/default.conf; \
 fi; \
 exec nginx -g \"daemon off;\""]
