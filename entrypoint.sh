@@ -7,9 +7,11 @@ if [ -n "$SSL_PRIVATE_KEY" ] && [ -n "$SSL_CERT_CHAIN" ]; then
   printf "%s" "$SSL_CERT_CHAIN" > /etc/ssl/certs/ssl.crt
 else
   echo "No SSL certificates provided. Disabling SSL and using HTTP only."
-  sed -iE '/^[[:space:]]*listen[[:space:]]+443[[:space:]]+ssl;/d' /etc/nginx/conf.d/default.conf
-  sed -iE '/^[[:space:]]*ssl_certificate[[:space:]]+/d' /etc/nginx/conf.d/default.conf
-  sed -iE '/^[[:space:]]*ssl_certificate_key[[:space:]]+/d' /etc/nginx/conf.d/default.conf
+  # Remove any line containing "443 ssl;" to disable SSL listening
+  sed -i '/443 ssl;/d' /etc/nginx/conf.d/default.conf
+  # Remove any lines that contain SSL certificate directives
+  sed -i '/ssl_certificate/d' /etc/nginx/conf.d/default.conf
+  sed -i '/ssl_certificate_key/d' /etc/nginx/conf.d/default.conf
 fi
 
 exec nginx -g "daemon off;"
