@@ -1,0 +1,18 @@
+# .dockerignore
+
+node_modules
+.git
+.gitignore
+.vscode
+.eslint*
+*.log
+package-lock.json
+
+# If you have a root-level dev index.html you don't want in the image
+index.html
+
+# And any other dev-only folders or files
+public
+src
+tests
+coverage

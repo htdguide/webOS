@@ -38,7 +38,7 @@ jobs:
       # 7) Build Docker image (uses a Dockerfile that only copies 'dist/' + 'nginx.conf')
       - name: Build Docker Image
         run: |
-          docker build \
+          docker build --no-cache \
             -t ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest \
             -f Dockerfile \
             .
@@ -54,7 +54,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # 10) Optional: Upload SSL cert/key from secrets to server (with fix for directories)
+      # 10) Optional: Upload SSL cert/key from secrets to server
       - name: Upload SSL Cert & Key to Server
         uses: appleboy/ssh-action@v0.1.8
         with:
