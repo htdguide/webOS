@@ -27,29 +27,54 @@ jobs:
   build-deploy:
     name: Build and Deploy Docker Image to Server
     runs-on: ubuntu-latest
-    needs: test  # This ensures the build only runs if tests pass
+    needs: test  # ensures we only build/deploy if tests pass
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
 
       - name: Login to Docker Hub
-        run: |
-          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build the Docker Image
-        run: |
-          docker build . -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+        run: docker build . -f Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
 
       - name: Push the Docker Image
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
 
       - name: Set up SSH key for server connection
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Connect to server via SSH and deploy
+      # --------------------------------------------------------
+      # Step A: Upload SSL certificate and key to server
+      # --------------------------------------------------------
+      - name: Upload SSL Cert & Key to Server
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Write the secrets into temp files
+            echo "${{ secrets.SSL_CERT_CHAIN }}" > ssl.crt
+            echo "${{ secrets.SSL_PRIVATE_KEY }}" > ssl.key
+
+            # Create directories if they don't exist
+            sudo mkdir -p /etc/ssl/certs
+            sudo mkdir -p /etc/ssl/private
+
+            # Move cert & key into place
+            sudo mv ssl.crt /etc/ssl/certs/ssl.crt
+            sudo mv ssl.key /etc/ssl/private/ssl.key
+
+            # Set strict permissions so only root can read the private key
+            sudo chmod 600 /etc/ssl/private/ssl.key
+
+      # --------------------------------------------------------
+      # Step B: Stop/Remove old containers, pull, and run
+      # --------------------------------------------------------
+      - name: Deploy Docker Container
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -63,12 +88,7 @@ jobs:
             # Pull the latest image from Docker Hub
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/webportfolio:latest
 
-            # Make sure your SSL certificates are already on the server
-            # For example, /etc/ssl/private/ssl.key and /etc/ssl/certs/ssl.crt
-            # If you need to put them there, you can do so outside of this script
-            # or via scp, rsync, or some other secure method. DO NOT just echo secrets in plain text.
-
-            # Run the container with volumes mapping your existing SSL cert/key on the host
+            # Run the container with volumes pointing to SSL certs
             sudo docker run -d \
               --name webportfolio \
               -p 80:80 \
