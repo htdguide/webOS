@@ -1,19 +1,19 @@
 import { StrictMode, useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import App from './webOS/App.jsx';
-import Wallpaper from './webOS/components/Wallpaper/Wallpaper.jsx';
-import DeviceInfoProvider from './webOS/contexts/DeviceInfoProvider/DeviceInfoProvider.jsx';
-import Notification, { notify } from './webOS/components/Notification/Notification.jsx';
-import MenuBar from './webOS/components/MenuBar/MenuBar.jsx';
-import { FocusProvider } from './webOS/contexts/FocusControl/FocusControl.jsx';
-import { UIStateProvider } from './webOS/contexts/UIStateStorage/UIStateStorage.jsx';
-import { MiniWindowProvider } from './webOS/components/MiniWindow/MiniWindowProvider.jsx';
-import { DraggableWindowProvider } from './webOS/components/DraggableWindow/DraggableWindowProvider.jsx';
-import { MusicServiceProvider } from './webOS/drivers/MusicService/MusicService.jsx';
-import DisplayController from './webOS/drivers/DisplayController/DisplayController.jsx';
-import { TerminalSettingsProvider } from './webOS/contexts/TerminalSettingsContext/TerminalSettingsProvider.jsx';
-import WelcomeWrap from './webOS/components/WelcomeWrap/WelcomeWrap.jsx';
+import App from '../DesktopAssembler/App.jsx';
+import Wallpaper from '../../components/Wallpaper/Wallpaper.jsx';
+import DeviceInfoProvider from '../../contexts/DeviceInfoProvider/DeviceInfoProvider.jsx';
+import Notification, { notify } from '../../components/Notification/Notification.jsx';
+import MenuBar from '../../components/MenuBar/MenuBar.jsx';
+import { FocusProvider } from '../../contexts/FocusControl/FocusControl.jsx';
+import { UIStateProvider } from '../../contexts/UIStateStorage/UIStateStorage.jsx';
+import { MiniWindowProvider } from '../../components/MiniWindow/MiniWindowProvider.jsx';
+import { DraggableWindowProvider } from '../../components/DraggableWindow/DraggableWindowProvider.jsx';
+import { MusicServiceProvider } from '../../drivers/MusicService/MusicService.jsx';
+import DisplayController from '../../drivers/DisplayController/DisplayController.jsx';
+import { TerminalSettingsProvider } from '../../contexts/TerminalSettingsContext/TerminalSettingsProvider.jsx';
+import WelcomeWrap from '../../components/WelcomeWrap/WelcomeWrap.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);

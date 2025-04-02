@@ -1,9 +1,9 @@
 import React, { useRef, useEffect } from 'react';
 import './SortingAlgorithms.css';
-import { notify } from '../../components/Notification/Notification';
+import { notify } from '../../../../src/webOS/components/Notification/Notification';
 import defaultIcon from '../../media/icons/defaultapp.png';
-import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvider';
-import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowProvider';
+import { useDeviceInfo } from '../../../../src/webOS/contexts/DeviceInfoProvider/DeviceInfoProvider';
+import { useDraggableWindow } from '../../../../src/webOS/components/DraggableWindow/DraggableWindowProvider';
 
 function SortingAlgorithms({ onClose }) {
   const canvasRef = useRef(null);
@@ -15,7 +15,7 @@ function SortingAlgorithms({ onClose }) {
   const loadWasmScript = () => {
     const script = document.createElement('script');
     scriptRef.current = script;
-    script.src = '/WebintoshHD/Applications/wasm/sorting_algorithms.js';
+    script.src = '/WebintoshHD/Applications/SortingAlgorithms/wasm/sorting_algorithms.js';
     script.async = false;
     script.onload = () => {
       console.log('WASM script loaded successfully.');
