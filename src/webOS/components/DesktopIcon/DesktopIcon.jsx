@@ -1,3 +1,5 @@
+// DesktopIcon.jsx
+
 import React, { useState, useRef } from 'react';
 import './DesktopIcon.css';
 import {
@@ -10,7 +12,8 @@ import {
   ICON_WIDTH,
   ICON_HEIGHT
 } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
-import { useUIState } from '../../contexts/UIStateStorage/UIStateStorage.jsx';
+// Use the new StateManager hook instead of the old UIStateStorage.
+import { useStateManager } from '../../stores/StateManager/StateManager';
 
 function DesktopIcon({
   name,
@@ -20,13 +23,20 @@ function DesktopIcon({
   icon,
   position: initialPosition
 }) {
+  // Local state for position and dragging.
   const [position, setPosition] = useState(initialPosition || { x: 100, y: 100 });
   const [isDragging, setIsDragging] = useState(false);
   const [holdTimer, setHoldTimer] = useState(null);
   const [lastTap, setLastTap] = useState(0);
 
   const iconRef = useRef(null);
-  const { isIconVisible } = useUIState();
+  
+  // Get icon visibility from the new StateManager.
+  const { state } = useStateManager();
+  // Assume icon visibility is stored in a group named "desktop" as a string.
+  const iconVisibleStr = state.groups.desktop && state.groups.desktop.iconVisible;
+  // Only if the value is exactly "false", we consider icons hidden.
+  const isIconVisible = iconVisibleStr === "false" ? false : true;
 
   const handleMouseDown = (e) => {
     e.preventDefault();

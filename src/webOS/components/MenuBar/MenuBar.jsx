@@ -2,11 +2,17 @@ import React, { useState, useEffect } from 'react';
 import './MenuBar.css';
 import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvider';
 import MiniApps from '../MiniApps/MiniApps';
-import { useUIState } from '../../contexts/UIStateStorage/UIStateStorage';
+// Use the new StateManager hook instead of the old UIStateStorage.
+import { useStateManager } from '../../stores/StateManager/StateManager';
 
 function MenuBar({ darkMode = false }) {
   const deviceInfo = useDeviceInfo();
-  const { isMenubarVisible } = useUIState();
+  // Get state from the new StateManager.
+  const { state } = useStateManager();
+  // Read menubarVisible from the "desktop" group (stored as a string).
+  const menubarVisibleStr = state.groups.desktop && state.groups.desktop.menubarVisible;
+  // Only if the value is exactly "false" then it is hidden; otherwise it is visible.
+  const isMenubarVisible = menubarVisibleStr === "false" ? false : true;
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {

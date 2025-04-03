@@ -8,8 +8,8 @@ const StateManagerContext = createContext();
 
 /**
  * StateManagerProvider wraps your application (or parts of it) to provide
- * a persistent state context. It will load the state from localStorage if available,
- * and update localStorage on every state change.
+ * a persistent state context. It loads state from localStorage if available,
+ * and updates localStorage on every state change.
  */
 export const StateManagerProvider = ({ children, initialState }) => {
   // Determine initial state: load from localStorage or fall back to default.
@@ -200,6 +200,14 @@ export const StateManagerProvider = ({ children, initialState }) => {
     });
   };
 
+  /**
+   * refreshState forces a re-render by updating the state with a shallow copy.
+   * This can be useful if you need to trigger a refresh in components consuming the state.
+   */
+  const refreshState = () => {
+    setState(prevState => ({ ...prevState }));
+  };
+
   // Bundle state and operations into context value.
   const contextValue = {
     state,
@@ -214,6 +222,7 @@ export const StateManagerProvider = ({ children, initialState }) => {
     resetStates,
     setDebug,
     toggleDebug,
+    refreshState, // <-- New function to force a refresh.
   };
 
   return (

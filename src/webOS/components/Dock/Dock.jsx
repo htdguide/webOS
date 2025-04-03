@@ -2,7 +2,8 @@ import React, { useContext, useState, useRef } from 'react';
 import { AppsContext } from '../../contexts/AppsContext/AppsContext';
 import DOCK_CONFIG from '../../configs/DockConfig/DockConfig';
 import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvider';
-import { useUIState } from '../../contexts/UIStateStorage/UIStateStorage';
+// Use the new StateManager hook instead of the old UIStateStorage.
+import { useStateManager } from '../../stores/StateManager/StateManager';
 import {
   getOuterContainerStyle,
   getIconsContainerStyle,
@@ -16,14 +17,19 @@ import {
 } from './DockStyle';
 
 const Dock = () => {
-  // Get device info (including orientation) from DeviceInfoProvider
+  // Get device info (including orientation) from DeviceInfoProvider.
   const deviceInfo = useDeviceInfo();
   const isPortrait = deviceInfo.orientation === 'portrait';
 
-  // Get dock visibility state from the UI state provider
-  const { isDockVisible } = useUIState();
+  // Get dock visibility from the state manager.
+  const { state } = useStateManager();
+  // Read dockVisible from the "dock" group (stored as a string).
+  const isDockVisible =
+    state.groups.dock &&
+    state.groups.dock.dockVisible &&
+    state.groups.dock.dockVisible === "true";
 
-  // Determine configuration overrides based on device orientation and dock position
+  // Determine configuration overrides based on device orientation and dock position.
   let config = { ...DOCK_CONFIG };
   if (isPortrait && config.vertical) {
     config = { ...config, ...config.vertical };
@@ -51,7 +57,7 @@ const Dock = () => {
     ICONS_PER_PAGE,
   } = config;
 
-  // Determine dock layout orientation: horizontal if bottom, vertical if left/right
+  // Determine dock layout orientation: horizontal if bottom, vertical if left/right.
   const isVerticalDock = DOCK_POSITION === 'left' || DOCK_POSITION === 'right';
 
   const { apps, openedApps, setOpenedApps } = useContext(AppsContext);
@@ -63,29 +69,29 @@ const Dock = () => {
     ...extraOpenApps,
   ];
 
-  // Pagination settings
+  // Pagination settings.
   const iconsPerPage = isPortrait ? (ICONS_PER_PAGE || 4) : dockApps.length;
   const paginationEnabled = isPortrait && dockApps.length > iconsPerPage;
   const totalPages = paginationEnabled ? Math.ceil(dockApps.length / iconsPerPage) : 1;
   const [currentPage, setCurrentPage] = useState(0);
 
-  // Determine which apps to render based on current page
+  // Determine which apps to render based on current page.
   const appsToRender = paginationEnabled
     ? dockApps.slice(currentPage * iconsPerPage, (currentPage + 1) * iconsPerPage)
     : dockApps;
 
-  // Refs for outer container, icons container, and initial transition timer
+  // Refs for outer container, icons container, and initial transition timer.
   const outerRef = useRef(null);
   const iconsContainerRef = useRef(null);
   const initialTransitionTimeoutRef = useRef(null);
 
-  // State for scales for each icon and control of transitions
+  // State for scales for each icon and control of transitions.
   const [scales, setScales] = useState(dockApps.map(() => 1));
   const [shouldTransition, setShouldTransition] = useState(true);
   const [hoveredApp, setHoveredApp] = useState(null);
   const [activeApp, setActiveApp] = useState(null);
 
-  // Touch events for pagination
+  // Touch events for pagination.
   const [touchStartX, setTouchStartX] = useState(null);
 
   const handleTouchStart = (e) => {
@@ -113,7 +119,7 @@ const Dock = () => {
     }
   };
 
-  // Mouse events for enabling/disabling transition and updating magnification scales
+  // Mouse events for enabling/disabling transition and updating magnification scales.
   const handleMouseEnter = () => {
     if (initialTransitionTimeoutRef.current) {
       clearTimeout(initialTransitionTimeoutRef.current);
@@ -184,7 +190,7 @@ const Dock = () => {
     }
   };
 
-  // Compute positions for the container and background
+  // Compute positions for the container and background.
   const computeIconPositions = () => {
     const centers = [];
     let startPos = 0;
@@ -240,7 +246,7 @@ const Dock = () => {
   const { start: bgStart, size: bgSize } = computeBackgroundBounds();
   const { containerDimension } = computeIconPositions();
 
-  // Open or focus an app
+  // Open or focus an app.
   const openApp = (app) => {
     setActiveApp(app.id);
     if (app.link) {
