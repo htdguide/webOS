@@ -7,7 +7,6 @@ import DeviceInfoProvider from '../../contexts/DeviceInfoProvider/DeviceInfoProv
 import Notification, { notify } from '../../components/Notification/Notification.jsx';
 import MenuBar from '../../components/MenuBar/MenuBar.jsx';
 import { FocusProvider } from '../../contexts/FocusControl/FocusControl.jsx';
-import { UIStateProvider } from '../../contexts/UIStateStorage/UIStateStorage.jsx';
 import { MiniWindowProvider } from '../../components/MiniWindow/MiniWindowProvider.jsx';
 import { DraggableWindowProvider } from '../../components/DraggableWindow/DraggableWindowProvider.jsx';
 import { MusicServiceProvider } from '../../drivers/MusicService/MusicService.jsx';
@@ -51,7 +50,6 @@ const Main = () => {
       <StateManagerProvider>
       <DeviceInfoProvider>
         <TerminalSettingsProvider>
-          <UIStateProvider>
             <WelcomeWrap />
             <MusicServiceProvider>
               <DisplayController>
@@ -69,7 +67,6 @@ const Main = () => {
                 </FocusProvider>
               </DisplayController>
             </MusicServiceProvider>
-          </UIStateProvider>
         </TerminalSettingsProvider>
       </DeviceInfoProvider>
     </StateManagerProvider>

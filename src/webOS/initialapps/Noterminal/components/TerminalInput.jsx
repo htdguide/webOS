@@ -1,12 +1,13 @@
 // TerminalInput.jsx
 // This file handles the command input for the terminal.
-// Changes include:
-// 1. Command History: Users can navigate through previously entered commands using the up/down arrow keys.
-// 2. Autocomplete: When the user presses Tab, the input is autocompleted from the provided list of commands.
-//    The Tab key cycles through suggestions if there are multiple matches.
+// It includes features like command history, autocomplete, and an instant cursor update using flushSync.
+// When the Tab key is pressed, flushSync forces the state update (input value and autocomplete index)
+// to occur immediately, eliminating any delay in updating the cursor position.
 
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { useDraggableWindow } from '../../../components/DraggableWindow/DraggableWindowProvider';
+// Import flushSync to update state synchronously in the Tab handler.
+import { flushSync } from 'react-dom';
 import '../Noterminal.css';
 
 function TerminalInput({
@@ -18,11 +19,11 @@ function TerminalInput({
   fontColor,
   autocompleteCommands, // Array of available commands for autocomplete.
 }) {
-  // Current command input state.
+  // State for the current command input.
   const [currentInput, setCurrentInput] = useState('');
-  // Command history to store previous commands.
+  // State to store command history.
   const [commandHistory, setCommandHistory] = useState([]);
-  // History index for navigation (null means not currently browsing history).
+  // Index for navigating through command history (null means not browsing history).
   const [historyIndex, setHistoryIndex] = useState(null);
   // Index for cycling through autocomplete suggestions.
   const [autocompleteIndex, setAutocompleteIndex] = useState(0);
@@ -33,10 +34,10 @@ function TerminalInput({
   const [cursorLeft, setCursorLeft] = useState(10);
   const [cursorWidth, setCursorWidth] = useState(7);
 
-  // Get the focused state from our draggable window provider.
+  // Retrieve the focused state from the draggable window provider.
   const { isWindowFocused } = useDraggableWindow();
 
-  // When the window is focused, force focus the input.
+  // Focus the input when the window becomes focused.
   useEffect(() => {
     if (isWindowFocused && inputRef.current) {
       inputRef.current.focus();
@@ -50,7 +51,7 @@ function TerminalInput({
     }
   }, []);
 
-  // Update the caret (cursor) position based on the current input and caret index.
+  // Function to update the caret (cursor) position based on the current input.
   const updateCaretIndex = () => {
     if (inputRef.current && promptRef.current) {
       const textToMeasure = currentInput.slice(0, inputRef.current.selectionStart);
@@ -65,7 +66,7 @@ function TerminalInput({
     }
   };
 
-  // Update the cursor width based on a dummy element.
+  // Update the cursor width based on a dummy element that measures text width.
   useLayoutEffect(() => {
     if (dummyRef.current) {
       setCursorWidth(dummyRef.current.offsetWidth);
@@ -119,10 +120,14 @@ function TerminalInput({
         cmd.toLowerCase().startsWith(currentInput.toLowerCase())
       );
       if (suggestions.length > 0) {
-        // Cycle through suggestions using autocompleteIndex.
+        // Cycle through suggestions using the autocompleteIndex.
         const suggestion = suggestions[autocompleteIndex % suggestions.length];
-        setCurrentInput(suggestion);
-        setAutocompleteIndex(autocompleteIndex + 1);
+        // Use flushSync to update state synchronously, ensuring the input value updates immediately.
+        flushSync(() => {
+          setCurrentInput(suggestion);
+          setAutocompleteIndex(autocompleteIndex + 1);
+        });
+        // Immediately update the caret position after the state flush.
         updateCaretIndex();
       }
       return;
@@ -132,7 +137,7 @@ function TerminalInput({
       e.preventDefault();
       if (currentInput.trim()) {
         onCommandSubmit(currentInput);
-        // Add the submitted command to history.
+        // Add the submitted command to the history.
         setCommandHistory([...commandHistory, currentInput]);
       }
       setCurrentInput('');
@@ -163,7 +168,7 @@ function TerminalInput({
         value={currentInput}
         onChange={(e) => {
           setCurrentInput(e.target.value);
-          // Reset autocomplete index when the user types.
+          // Reset the autocomplete index when the user types.
           setAutocompleteIndex(0);
           updateCaretIndex();
         }}
@@ -176,7 +181,7 @@ function TerminalInput({
         autoFocus
         style={{ caretColor: 'transparent' }}
       />
-      {/* Dummy element for measuring the width of "M" */}
+      {/* Dummy element for measuring the width of "M" for the cursor width */}
       <span
         ref={dummyRef}
         style={{
