@@ -9,6 +9,12 @@
     "iconVisible": "true",
     "menubarVisible": "true"
   },
+  "terminalSettings": {
+    "fontSize": "12px",
+    "fontColor": "#000000",
+    "fontFamily": "monospace",
+    "backgroundColor": "#FFFFFF"
+  },
   "admin": {
     "dashboard": "active",
     "logs": "enabled"

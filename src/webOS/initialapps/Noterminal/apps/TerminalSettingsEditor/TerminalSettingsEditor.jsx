@@ -1,38 +1,33 @@
 // TerminalSettingsEditor.jsx
-// This component allows the user to update terminal settings via a form.
-// It also supports command input via the terminal. When active, it updates
-// the autocomplete suggestions (using the setAutocompleteCommands prop) so that
-// users can quickly access commands like "help" and "update".
+// This component allows the user to update terminal settings via a form and
+// supports command input for autocomplete commands such as "help" and "update".
 
-import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
-import { useTerminalSettings } from '../../../../contexts/TerminalSettingsContext/TerminalSettingsProvider';
+import React, { useState, forwardRef, useImperativeHandle, useEffect, useMemo } from 'react';
 import './TerminalSettingsEditor.css';
+// Import the StateManager hook directly.
+import { useStateManager } from '../../../../stores/StateManager/StateManager';
 
 const TerminalSettingsEditor = forwardRef(({ output, setAutocompleteCommands }, ref) => {
-  const {
-    fontSize,
-    setFontSize,
-    fontColor,
-    setFontColor,
-    fontFamily,
-    setFontFamily,
-    backgroundColor,
-    setBackgroundColor,
-  } = useTerminalSettings();
+  const { state, editStateValue } = useStateManager();
+  // Extract terminal settings from the state. If missing, fallback to defaults.
+  const terminalSettings = state.groups.terminalSettings || {
+    fontSize: '12px',
+    fontColor: '#000000',
+    fontFamily: 'monospace',
+    backgroundColor: '#FFFFFF',
+  };
 
   // Local state for the form inputs.
-  const [localFontSize, setLocalFontSize] = useState(fontSize);
-  const [localFontColor, setLocalFontColor] = useState(fontColor);
-  const [localFontFamily, setLocalFontFamily] = useState(fontFamily);
-  const [localBackgroundColor, setLocalBackgroundColor] = useState(backgroundColor);
+  const [localFontSize, setLocalFontSize] = useState(terminalSettings.fontSize);
+  const [localFontColor, setLocalFontColor] = useState(terminalSettings.fontColor);
+  const [localFontFamily, setLocalFontFamily] = useState(terminalSettings.fontFamily);
+  const [localBackgroundColor, setLocalBackgroundColor] = useState(terminalSettings.backgroundColor);
 
-  // When this app is active, update the terminal's autocomplete commands.
+  // When this component is active, update the terminal's autocomplete commands.
   useEffect(() => {
     if (setAutocompleteCommands) {
-      // Define available commands for autocomplete for this app.
       setAutocompleteCommands(['help', 'update']);
     }
-    // Clean up: clear autocomplete commands when this app unmounts.
     return () => {
       if (setAutocompleteCommands) {
         setAutocompleteCommands([]);
@@ -43,17 +38,17 @@ const TerminalSettingsEditor = forwardRef(({ output, setAutocompleteCommands }, 
   // Handle form submission to update terminal settings.
   const handleSubmit = (e) => {
     e.preventDefault();
-    setFontSize(localFontSize);
-    setFontColor(localFontColor);
-    setFontFamily(localFontFamily);
-    setBackgroundColor(localBackgroundColor);
+    // Update the terminalSettings group via editStateValue.
+    editStateValue("terminalSettings", "fontSize", localFontSize);
+    editStateValue("terminalSettings", "fontColor", localFontColor);
+    editStateValue("terminalSettings", "fontFamily", localFontFamily);
+    editStateValue("terminalSettings", "backgroundColor", localBackgroundColor);
     if (output && output.current && output.current.writeln) {
       output.current.writeln('Terminal settings updated.');
     }
   };
 
-  // processInput is used for text commands while the app is active.
-  // For example, typing "help" outputs a list of available fonts and commands.
+  // processInput handles text commands while this app is active.
   const processInput = (input) => {
     const trimmed = input.trim().toLowerCase();
     if (trimmed === 'help') {
@@ -73,12 +68,13 @@ const TerminalSettingsEditor = forwardRef(({ output, setAutocompleteCommands }, 
     }
   };
 
-  // Expose processInput function via ref so the parent (FlowManager) can call it.
+  // Expose processInput via ref so that the parent component can call it.
   useImperativeHandle(ref, () => ({
     processInput,
   }));
 
-  return (
+  // Memoize the rendered component to avoid unnecessary re-renders.
+  return useMemo(() => (
     <div className="terminal-settings-editor">
       <h3>Terminal Settings Editor</h3>
       <form onSubmit={handleSubmit}>
@@ -120,7 +116,7 @@ const TerminalSettingsEditor = forwardRef(({ output, setAutocompleteCommands }, 
       </form>
       <p>Type "help" for a list of available fonts.</p>
     </div>
-  );
+  ), [localFontSize, localFontColor, localFontFamily, localBackgroundColor, output, setAutocompleteCommands]);
 });
 
 export default TerminalSettingsEditor;

@@ -1,7 +1,8 @@
+// Noterminal.jsx
 import React, { useState, useEffect } from 'react';
 import './Noterminal.css';
 import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowProvider';
-import { useTerminalSettings } from '../../contexts/TerminalSettingsContext/TerminalSettingsProvider';
+import { useStateManager } from '../../stores/StateManager/StateManager';
 import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvider';
 import FlowManager from './components/FlowManager';
 
@@ -12,7 +13,18 @@ function Terminal({ onClose }) {
     updateDraggableWindow,
     hideLoading,
   } = useDraggableWindow();
-  const { fontSize, fontColor, fontFamily, backgroundColor } = useTerminalSettings();
+
+  // Get the state from the StateManager.
+  const { state } = useStateManager();
+  // Retrieve terminal settings from the state; provide fallback defaults if not present.
+  const terminalSettings = state.groups.terminalSettings || {
+    fontSize: '12px',
+    fontColor: '#000000',
+    fontFamily: 'monospace',
+    backgroundColor: '#FFFFFF',
+  };
+
+  const { fontSize, fontColor, fontFamily, backgroundColor } = terminalSettings;
   const deviceInfo = useDeviceInfo();
 
   // Default window parameters for desktop.
@@ -92,4 +104,3 @@ function Terminal({ onClose }) {
 }
 
 export default Terminal;
-

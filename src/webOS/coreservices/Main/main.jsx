@@ -11,7 +11,6 @@ import { MiniWindowProvider } from '../../components/MiniWindow/MiniWindowProvid
 import { DraggableWindowProvider } from '../../components/DraggableWindow/DraggableWindowProvider.jsx';
 import { MusicServiceProvider } from '../../drivers/MusicService/MusicService.jsx';
 import DisplayController from '../../drivers/DisplayController/DisplayController.jsx';
-import { TerminalSettingsProvider } from '../../contexts/TerminalSettingsContext/TerminalSettingsProvider.jsx';
 import WelcomeWrap from '../../components/WelcomeWrap/WelcomeWrap.jsx';
 import { StateManagerProvider } from '../../stores/StateManager/StateManager.jsx';
 
@@ -49,7 +48,6 @@ const Main = () => {
     <StrictMode>
       <StateManagerProvider>
       <DeviceInfoProvider>
-        <TerminalSettingsProvider>
             <WelcomeWrap />
             <MusicServiceProvider>
               <DisplayController>
@@ -67,7 +65,6 @@ const Main = () => {
                 </FocusProvider>
               </DisplayController>
             </MusicServiceProvider>
-        </TerminalSettingsProvider>
       </DeviceInfoProvider>
     </StateManagerProvider>
     </StrictMode>
