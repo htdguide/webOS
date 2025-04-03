@@ -1,0 +1,11 @@
+{
+    "default": {
+      "user": { "name": "John", "age": 30 },
+      "theme": "light"
+    },
+    "admin": {
+      "dashboard": "active",
+      "logs": "enabled"
+    }
+  }
+  

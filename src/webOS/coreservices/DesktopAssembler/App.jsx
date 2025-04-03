@@ -47,7 +47,7 @@ function AppContent() {
         })}
       </div>
       <div className="version">
-        v0.2.3 alpha
+        v0.2.4 alpha
       </div>
     </>
   );

@@ -14,6 +14,7 @@ import { MusicServiceProvider } from '../../drivers/MusicService/MusicService.js
 import DisplayController from '../../drivers/DisplayController/DisplayController.jsx';
 import { TerminalSettingsProvider } from '../../contexts/TerminalSettingsContext/TerminalSettingsProvider.jsx';
 import WelcomeWrap from '../../components/WelcomeWrap/WelcomeWrap.jsx';
+import { StateManagerProvider } from '../../stores/StateManager/StateManager.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
@@ -47,6 +48,7 @@ const Main = () => {
 
   return (
     <StrictMode>
+      <StateManagerProvider>
       <DeviceInfoProvider>
         <TerminalSettingsProvider>
           <UIStateProvider>
@@ -70,6 +72,7 @@ const Main = () => {
           </UIStateProvider>
         </TerminalSettingsProvider>
       </DeviceInfoProvider>
+    </StateManagerProvider>
     </StrictMode>
   );
 };

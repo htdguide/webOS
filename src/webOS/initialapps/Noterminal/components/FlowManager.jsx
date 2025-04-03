@@ -1,3 +1,9 @@
+// FlowManager.jsx
+// This file manages the flow between terminal output, input, and launching apps.
+// Changes include adding an autocompleteCommands state that holds the current list of
+// available commands. The active app (if any) is passed a function (setAutocompleteCommands)
+// so it can dynamically update the autocomplete suggestions.
+
 import React, { useRef, useState } from 'react';
 import TerminalInput from './TerminalInput';
 import TerminalOutput from './TerminalOutput';
@@ -8,6 +14,10 @@ function FlowManager({ fontSize, fontColor, fontFamily, backgroundColor, onInput
   const [activeApp, setActiveApp] = useState(null);
   const activeAppRef = useRef(null);
   const scrollContainerRef = useRef(null);
+
+  // State for autocomplete commands.
+  // Active apps can update this list dynamically to offer context-sensitive suggestions.
+  const [autocompleteCommands, setAutocompleteCommands] = useState([]);
 
   // Check if the command matches any app command.
   const getAppComponentForCommand = (command) => {
@@ -37,6 +47,7 @@ function FlowManager({ fontSize, fontColor, fontFamily, backgroundColor, onInput
         }
       }
     }
+    // After processing, scroll to the bottom of the terminal.
     setTimeout(() => {
       if (scrollContainerRef.current) {
         scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
@@ -65,9 +76,15 @@ function FlowManager({ fontSize, fontColor, fontFamily, backgroundColor, onInput
         height: '100%',
       }}
     >
-      <div className="terminal-scroll" ref={scrollContainerRef} style={{ overflow: 'auto', height: '100%' }}>
+      <div
+        className="terminal-scroll"
+        ref={scrollContainerRef}
+        style={{ overflow: 'auto', height: '100%' }}
+      >
         <TerminalOutput ref={outputRef} />
-        {activeApp && React.createElement(activeApp, { ref: activeAppRef, output: outputRef })}
+        {activeApp &&
+          // Pass the setAutocompleteCommands function to the active app so it can update the autocomplete list.
+          React.createElement(activeApp, { ref: activeAppRef, output: outputRef, setAutocompleteCommands })}
         <TerminalInput
           onCommandSubmit={handleCommandSubmit}
           onCtrlC={handleCtrlC}
@@ -75,6 +92,7 @@ function FlowManager({ fontSize, fontColor, fontFamily, backgroundColor, onInput
           fontSize={fontSize}
           fontFamily={fontFamily}
           fontColor={fontColor}
+          autocompleteCommands={autocompleteCommands}
         />
       </div>
     </div>
