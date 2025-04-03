@@ -77,6 +77,8 @@
   line-height: 0;
   -webkit-appearance: none;
   appearance: none;
+  position: relative;
+  top: -2px; /* Adjust this value as needed to move the button higher */
 }
 
 .close-button:hover {
