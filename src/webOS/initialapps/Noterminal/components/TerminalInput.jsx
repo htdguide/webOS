@@ -3,10 +3,12 @@
 // It includes features like command history, autocomplete, and an instant cursor update using flushSync.
 // When the Tab key is pressed, flushSync forces the state update (input value and autocomplete index)
 // to occur immediately, eliminating any delay in updating the cursor position.
+// Updated to only autocomplete the argument part (leaving the command intact) when appropriate,
+// to append a trailing space after a successful autocomplete, and to fix the issue where repeated Tab
+// presses on an empty or single-token input were appending multiple words.
 
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { useDraggableWindow } from '../../../components/DraggableWindow/DraggableWindowProvider';
-// Import flushSync to update state synchronously in the Tab handler.
 import { flushSync } from 'react-dom';
 import '../Noterminal.css';
 
@@ -17,7 +19,8 @@ function TerminalInput({
   fontSize,
   fontFamily,
   fontColor,
-  autocompleteCommands, // Array of available commands for autocomplete.
+  autocompleteCommands, // Static list of commands from the active app.
+  getDynamicAutocompleteSuggestions, // Optional function to get dynamic suggestions based on current input.
 }) {
   // State for the current command input.
   const [currentInput, setCurrentInput] = useState('');
@@ -31,11 +34,20 @@ function TerminalInput({
   const inputRef = useRef(null);
   const dummyRef = useRef(null);
   const promptRef = useRef(null);
+  // Ref for the cached canvas element.
+  const canvasRef = useRef(null);
   const [cursorLeft, setCursorLeft] = useState(10);
   const [cursorWidth, setCursorWidth] = useState(7);
 
   // Retrieve the focused state from the draggable window provider.
   const { isWindowFocused } = useDraggableWindow();
+
+  // Initialize the canvas once for measuring text widths.
+  useEffect(() => {
+    if (!canvasRef.current) {
+      canvasRef.current = document.createElement('canvas');
+    }
+  }, []);
 
   // Focus the input when the window becomes focused.
   useEffect(() => {
@@ -55,7 +67,7 @@ function TerminalInput({
   const updateCaretIndex = () => {
     if (inputRef.current && promptRef.current) {
       const textToMeasure = currentInput.slice(0, inputRef.current.selectionStart);
-      const canvas = document.createElement('canvas');
+      const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
       context.font = `${fontSize} ${fontFamily}`;
       const textWidth = context.measureText(textToMeasure).width;
@@ -66,7 +78,7 @@ function TerminalInput({
     }
   };
 
-  // Update the cursor width based on a dummy element that measures text width.
+  // Update the caret width based on a dummy element that measures text width.
   useLayoutEffect(() => {
     if (dummyRef.current) {
       setCursorWidth(dummyRef.current.offsetWidth);
@@ -86,7 +98,6 @@ function TerminalInput({
     if (e.key === 'ArrowUp') {
       e.preventDefault();
       if (commandHistory.length > 0) {
-        // If not browsing history, start with the last command.
         let newIndex = historyIndex === null ? commandHistory.length - 1 : historyIndex - 1;
         if (newIndex < 0) newIndex = 0;
         setHistoryIndex(newIndex);
@@ -105,7 +116,6 @@ function TerminalInput({
           setHistoryIndex(newIndex);
           setCurrentInput(commandHistory[newIndex]);
         } else {
-          // If at the latest history item, clear the input.
           setHistoryIndex(null);
           setCurrentInput('');
         }
@@ -115,19 +125,49 @@ function TerminalInput({
     // Handle Tab key for autocomplete.
     if (e.key === 'Tab') {
       e.preventDefault();
-      // Filter suggestions based on the current input (case-insensitive).
-      const suggestions = autocompleteCommands.filter((cmd) =>
-        cmd.toLowerCase().startsWith(currentInput.toLowerCase())
-      );
+      
+      // Use trimmed input to determine tokens.
+      const trimmedInput = currentInput.trim();
+      const tokens = trimmedInput ? trimmedInput.split(/\s+/) : [];
+      let prefix = "";
+      let lastToken = "";
+      
+      if (tokens.length === 0) {
+        // If input is empty, both prefix and lastToken are empty.
+        prefix = "";
+        lastToken = "";
+      } else if (tokens.length === 1) {
+        // Single token: replace the entire input.
+        prefix = "";
+        lastToken = tokens[0];
+      } else {
+        // Multiple tokens: preserve everything before the last token.
+        const lastTokenText = tokens[tokens.length - 1];
+        // Use lastIndexOf to preserve spacing.
+        const lastTokenStart = currentInput.lastIndexOf(lastTokenText);
+        prefix = currentInput.substring(0, lastTokenStart);
+        lastToken = currentInput.substring(lastTokenStart);
+      }
+      
+      // Use dynamic suggestions if provided; otherwise, fallback to static autocompleteCommands.
+      const dynamicSuggestions = getDynamicAutocompleteSuggestions
+        ? getDynamicAutocompleteSuggestions(currentInput)
+        : [];
+      const suggestions = dynamicSuggestions.length > 0
+        ? dynamicSuggestions
+        : autocompleteCommands.filter((cmd) =>
+            cmd.toLowerCase().startsWith(lastToken.toLowerCase())
+          );
+      
       if (suggestions.length > 0) {
         // Cycle through suggestions using the autocompleteIndex.
         const suggestion = suggestions[autocompleteIndex % suggestions.length];
-        // Use flushSync to update state synchronously, ensuring the input value updates immediately.
         flushSync(() => {
-          setCurrentInput(suggestion);
+          // Replace only the last token with the suggestion (plus a trailing space)
+          // while preserving the earlier part of the input.
+          setCurrentInput(prefix + suggestion + ' ');
           setAutocompleteIndex(autocompleteIndex + 1);
         });
-        // Immediately update the caret position after the state flush.
         updateCaretIndex();
       }
       return;
@@ -137,7 +177,6 @@ function TerminalInput({
       e.preventDefault();
       if (currentInput.trim()) {
         onCommandSubmit(currentInput);
-        // Add the submitted command to the history.
         setCommandHistory([...commandHistory, currentInput]);
       }
       setCurrentInput('');

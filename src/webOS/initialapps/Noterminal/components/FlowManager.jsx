@@ -1,8 +1,7 @@
 // FlowManager.jsx
 // This file manages the flow between terminal output, input, and launching apps.
-// Changes include adding an autocompleteCommands state that holds the current list of
-// available commands. The active app (if any) is passed a function (setAutocompleteCommands)
-// so it can dynamically update the autocomplete suggestions.
+// It now passes a dynamic autocomplete suggestions function to TerminalInput so that
+// when an app provides a getAutocompleteSuggestions method, it can be used for autocompletion.
 
 import React, { useRef, useState } from 'react';
 import TerminalInput from './TerminalInput';
@@ -64,6 +63,14 @@ function FlowManager({ fontSize, fontColor, fontFamily, backgroundColor, onInput
     }
   };
 
+  // Function to get dynamic autocomplete suggestions from the active app if available.
+  const getDynamicAutocompleteSuggestions = (input) => {
+    if (activeAppRef.current && activeAppRef.current.getAutocompleteSuggestions) {
+      return activeAppRef.current.getAutocompleteSuggestions(input);
+    }
+    return [];
+  };
+
   return (
     <div
       className="terminal"
@@ -93,6 +100,7 @@ function FlowManager({ fontSize, fontColor, fontFamily, backgroundColor, onInput
           fontFamily={fontFamily}
           fontColor={fontColor}
           autocompleteCommands={autocompleteCommands}
+          getDynamicAutocompleteSuggestions={getDynamicAutocompleteSuggestions}
         />
       </div>
     </div>

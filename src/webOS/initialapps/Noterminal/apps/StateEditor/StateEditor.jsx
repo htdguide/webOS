@@ -2,7 +2,8 @@
 // This component provides a terminal-like interface for managing state groups and states.
 // It processes various commands for group mode (when no group is selected) and state mode
 // (when a group is selected). It now integrates with autocomplete by setting the available
-// commands via the setAutocompleteCommands prop, and it displays the help hint only once upon opening.
+// commands via the setAutocompleteCommands prop and exposing a function to predict names
+// of states or groups based on the current input.
 
 import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 // Import the context hook to access state groups and operations.
@@ -279,14 +280,101 @@ const StateEditor = forwardRef(({ output, setAutocompleteCommands }, ref) => {
     writeln('Unknown command. Type "help" for a list of available commands.');
   };
 
-  // Expose the processInput function to parent components via ref.
+  /**
+   * getAutocompleteSuggestions dynamically generates suggestions for autocomplete
+   * based on the current input. It handles both the completion of command names and,
+   * once a valid command is entered, provides suggestions for state group or state names.
+   *
+   * The logic is as follows:
+   * - If no space is found (i.e. only the command is being typed), filter the static list of commands.
+   * - Once the command is complete and an argument is being typed (tokens.length > 1), return
+   *   the list of names (state group names or state names) that match the partial argument.
+   *
+   * @param {string} input - The current input string from the user.
+   * @returns {string[]} - An array of suggestions for autocompletion.
+   */
+  const getAutocompleteSuggestions = (input) => {
+    const trimmedInput = input.trim();
+    // Static command lists for group mode and state mode.
+    const groupModeCommands = ['list', 'select', 'create', 'delete', 'rename', 'reset', 'toggle debug', 'set debug', 'help'];
+    const stateModeCommands = ['list', 'select', 'back', 'create', 'delete', 'rename', 'edit', 'move', 'reset', 'toggle debug', 'set debug', 'help'];
+
+    // Determine which static commands to use based on the current mode.
+    const staticCommands = !selectedGroup ? groupModeCommands : stateModeCommands;
+    const tokens = trimmedInput.split(/\s+/);
+
+    // If only a command (or partial command) is typed, suggest matching commands.
+    if (tokens.length === 1) {
+      const partialCommand = tokens[0].toLowerCase();
+      return staticCommands.filter((cmd) => cmd.startsWith(partialCommand));
+    }
+
+    // When more than one token is present, the command is complete and we're suggesting arguments.
+    const command = tokens[0].toLowerCase();
+    const argPartial = tokens[tokens.length - 1]; // The last token is the current argument being typed.
+
+    switch (command) {
+      case 'select': {
+        // In both modes, "select" expects a group name.
+        const groupNames = Object.keys(state.groups);
+        return groupNames.filter((name) => name.toLowerCase().startsWith(argPartial.toLowerCase()));
+      }
+      case 'delete': {
+        if (!selectedGroup) {
+          // In group mode, expect a group name.
+          const groupNames = Object.keys(state.groups);
+          return groupNames.filter((name) => name.toLowerCase().startsWith(argPartial.toLowerCase()));
+        } else {
+          // In state mode, expect a state name.
+          const stateNames = Object.keys(state.groups[selectedGroup] || {});
+          return stateNames.filter((name) => name.toLowerCase().startsWith(argPartial.toLowerCase()));
+        }
+      }
+      case 'rename': {
+        // For "rename", we only autocomplete the first argument (existing name).
+        if (tokens.length === 2) {
+          if (!selectedGroup) {
+            const groupNames = Object.keys(state.groups);
+            return groupNames.filter((name) => name.toLowerCase().startsWith(argPartial.toLowerCase()));
+          } else {
+            const stateNames = Object.keys(state.groups[selectedGroup] || {});
+            return stateNames.filter((name) => name.toLowerCase().startsWith(argPartial.toLowerCase()));
+          }
+        }
+        return [];
+      }
+      case 'edit': {
+        if (!selectedGroup) return [];
+        // In state mode, "edit" expects a state name as the first argument.
+        const stateNames = Object.keys(state.groups[selectedGroup] || {});
+        return stateNames.filter((name) => name.toLowerCase().startsWith(argPartial.toLowerCase()));
+      }
+      case 'move': {
+        if (!selectedGroup) return [];
+        if (tokens.length === 2) {
+          // First argument for "move": a state name.
+          const stateNames = Object.keys(state.groups[selectedGroup] || {});
+          return stateNames.filter((name) => name.toLowerCase().startsWith(argPartial.toLowerCase()));
+        } else if (tokens.length === 3) {
+          // Second argument for "move": a target group name.
+          const groupNames = Object.keys(state.groups);
+          return groupNames.filter((name) => name.toLowerCase().startsWith(argPartial.toLowerCase()));
+        }
+        return [];
+      }
+      default:
+        return [];
+    }
+  };
+
+  // Expose functions to parent components via ref.
   useImperativeHandle(ref, () => ({
     processInput,
+    getAutocompleteSuggestions,
   }));
 
-  // Set autocomplete commands based on the current mode.
-  // When in group mode (no group selected), a certain list of commands is provided.
-  // When in state mode, additional commands (e.g., 'back', 'edit', 'move') are available.
+  // Set static autocomplete commands based on the current mode.
+  // These are default commands available regardless of further input.
   useEffect(() => {
     if (setAutocompleteCommands) {
       if (!selectedGroup) {
