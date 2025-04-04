@@ -1,3 +1,4 @@
+// main.jsx
 import { StrictMode, useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
@@ -13,6 +14,7 @@ import { MusicServiceProvider } from '../../drivers/MusicService/MusicService.js
 import DisplayController from '../../drivers/DisplayController/DisplayController.jsx';
 import WelcomeWrap from '../../components/WelcomeWrap/WelcomeWrap.jsx';
 import { StateManagerProvider } from '../../stores/StateManager/StateManager.jsx';
+import WasmModule from '../wasmModule/wasmModule.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
@@ -45,9 +47,11 @@ const Main = () => {
   }, []);
 
   return (
+    //<WasmModule>
     <StrictMode>
       <StateManagerProvider>
-      <DeviceInfoProvider>
+        
+          <DeviceInfoProvider>
             <WelcomeWrap />
             <MusicServiceProvider>
               <DisplayController>
@@ -65,9 +69,11 @@ const Main = () => {
                 </FocusProvider>
               </DisplayController>
             </MusicServiceProvider>
-      </DeviceInfoProvider>
-    </StateManagerProvider>
+          </DeviceInfoProvider>
+        
+      </StateManagerProvider>
     </StrictMode>
+    //</WasmModule>
   );
 };
 
