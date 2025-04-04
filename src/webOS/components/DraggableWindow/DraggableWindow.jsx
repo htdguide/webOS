@@ -1,3 +1,7 @@
+// DraggableWindow.jsx
+// This component renders a draggable and resizable window.
+// It now supports rendering an iframe in the content area if the iframeSrc prop is provided.
+
 import React, {
   useRef,
   useState,
@@ -23,34 +27,36 @@ const DraggableWindow = forwardRef(
       onClose,
       onMount,
       onUnmount,
-      onResize, // new prop
-      initialX, // new prop for initial horizontal position
-      initialY, // new prop for initial vertical position
+      onResize, // callback for resize events
+      initialX, // initial horizontal position
+      initialY, // initial vertical position
+      iframeSrc, // new prop: URL for the iframe content
       children
     },
     ref
   ) => {
+    // Reference to the window element
     const windowRef = useRef(null);
 
-    // Focus handling using the FocusControl context
+    // Use the FocusControl context for managing focus state
     const { focusedComponent, updateFocus } = useFocus();
     const isFocused = focusedComponent === title;
 
-    // Set initial focus only once on mount.
+    // Set initial focus when the window mounts
     useEffect(() => {
       updateFocus(title);
-    }, []); // run once when the window mounts
+    }, []); // run once on mount
 
-    // isLoading controls whether we render the loading overlay
+    // State to control the loading overlay
     const [isLoading, setIsLoading] = useState(true);
-    // isFadingOut controls the fade-out CSS class
+    // State to control fade-out animation for the loading overlay
     const [isFadingOut, setIsFadingOut] = useState(false);
 
-    // State for current width and height to allow smooth resizing via function
+    // States for the window dimensions, allowing smooth resizing
     const [currentWidth, setCurrentWidth] = useState(windowWidth);
     const [currentHeight, setCurrentHeight] = useState(windowHeight);
 
-    // State for current coordinates for smooth movement
+    // Helper function to safely parse initial coordinate values
     const getInitialCoordinate = (value, defaultValue) => {
       if (value !== undefined) {
         if (typeof value === 'number') {
@@ -63,21 +69,22 @@ const DraggableWindow = forwardRef(
       return defaultValue;
     };
 
-    // No clamping for X; clamp Y to be at least 26.
+    // States for the window position (x, y).
+    // The y-coordinate is clamped to a minimum of 26px (to avoid header overlap).
     const [currentX, setCurrentX] = useState(getInitialCoordinate(initialX, 10));
     const [currentY, setCurrentY] = useState(
       Math.max(getInitialCoordinate(initialY, 10), 26)
     );
 
-    // State to track if the user is manually dragging or resizing
+    // States to track whether the user is manually dragging or resizing the window
     const [isUserDragging, setIsUserDragging] = useState(false);
     const [isUserResizing, setIsUserResizing] = useState(false);
 
-    // State to track programmatic operations
+    // States to track if a programmatic move or resize is in progress
     const [isProgrammaticResize, setIsProgrammaticResize] = useState(false);
     const [isProgrammaticMove, setIsProgrammaticMove] = useState(false);
 
-    // Global event listeners to end manual dragging/resizing state
+    // Global event listeners to stop dragging/resizing when the mouse/touch is released
     useEffect(() => {
       const handleMouseUp = () => {
         setIsUserDragging(false);
@@ -95,13 +102,13 @@ const DraggableWindow = forwardRef(
       };
     }, []);
 
-    // Update state if props change for size only (position is updated via moveWindow)
+    // Update dimensions if the props change.
     useEffect(() => {
       setCurrentWidth(windowWidth);
       setCurrentHeight(windowHeight);
     }, [windowWidth, windowHeight]);
 
-    // Initialize the draggable/resizable functionality with size constraints.
+    // Initialize the draggable/resizable functionality using a custom hook.
     useDraggable(
       windowRef,
       {
@@ -114,10 +121,10 @@ const DraggableWindow = forwardRef(
       },
       onMount,
       onUnmount,
-      onResize // pass onResize to the hook
+      onResize // pass onResize callback to the draggable hook
     );
 
-    // Fallback: Ensure onMount and onUnmount are called if not triggered by useDraggable.
+    // Fallback: Ensure onMount and onUnmount are called even if not handled by useDraggable.
     useEffect(() => {
       if (onMount) {
         onMount();
@@ -129,10 +136,10 @@ const DraggableWindow = forwardRef(
       };
     }, [onMount, onUnmount]);
 
-    // For rendering, ensure the y-coordinate is never less than 26.
+    // Ensure the y-coordinate is never below 26px.
     const clampedY = Math.max(currentY, 26);
 
-    // Expose imperative methods for parent components.
+    // Expose imperative methods so parent components can control the window
     useImperativeHandle(ref, () => ({
       showLoading: () => {
         setIsFadingOut(false);
@@ -140,11 +147,11 @@ const DraggableWindow = forwardRef(
       },
       hideLoading: () => {
         setIsFadingOut(true);
-        // After the fade-out duration, remove the loading overlay
+        // Remove the loading overlay after the fade-out transition
         setTimeout(() => {
           setIsLoading(false);
           setIsFadingOut(false);
-        }, 1000); // match your CSS transition duration
+        }, 1000); // duration should match the CSS transition
       },
       resizeWindow: (newWidth, newHeight) => {
         setIsProgrammaticResize(true);
@@ -156,7 +163,7 @@ const DraggableWindow = forwardRef(
       },
       moveWindow: (newX, newY) => {
         setIsProgrammaticMove(true);
-        // No clamping for X; clamp newY so that it never goes below 26px.
+        // Clamp newY so that it never goes below 26px.
         setCurrentX(newX);
         setCurrentY(Math.max(newY, 26));
         setTimeout(() => {
@@ -166,7 +173,7 @@ const DraggableWindow = forwardRef(
       isFocused: isFocused
     }));
 
-    // Compute transition style: only animate if a programmatic call is active and no manual interaction.
+    // Compute the transition style based on programmatic operations and user interactions.
     const transitionValue =
       !isUserDragging && !isUserResizing && (isProgrammaticResize || isProgrammaticMove)
         ? 'width 300ms ease, height 300ms ease, left 300ms ease, top 300ms ease'
@@ -217,7 +224,7 @@ const DraggableWindow = forwardRef(
             <button
               className="close-button"
               onClick={(event) => {
-                event.stopPropagation(); // Prevent dragging
+                event.stopPropagation(); // Prevent dragging when clicking close
                 onClose?.();
               }}
               onTouchStart={(event) => {
@@ -233,19 +240,35 @@ const DraggableWindow = forwardRef(
 
         {/* --- Window Content Area --- */}
         <div className="window-content">
-          <div className="content-inner">
-            {children}
-            {isLoading && (
-              <div
-                className={`loading-overlay ${isFadingOut ? 'fade-out' : ''}`}
-              >
-                <LoadingScreen />
-              </div>
-            )}
-          </div>
+          {iframeSrc ? (
+            // If iframeSrc is provided, render an iframe that fills the content area.
+            <iframe
+              src={iframeSrc}
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              title={title}
+              onLoad={() => {
+                // Optionally, hide the loading overlay when the iframe content has loaded.
+                setIsFadingOut(true);
+                setTimeout(() => {
+                  setIsLoading(false);
+                  setIsFadingOut(false);
+                }, 1000);
+              }}
+            />
+          ) : (
+            // Otherwise, render the children inside a content-inner div.
+            <div className="content-inner">
+              {children}
+              {isLoading && (
+                <div className={`loading-overlay ${isFadingOut ? 'fade-out' : ''}`}>
+                  <LoadingScreen />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Resizers */}
+        {/* Resizers for handling window resize interactions */}
         <div
           className="resize-handle resize-br"
           onMouseDown={() => setIsUserResizing(true)}
