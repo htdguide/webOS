@@ -12,6 +12,7 @@ import psxIcon from '../../media/icons/PSX.png';
 import Noterminal from '../../initialapps/Noterminal/Noterminal.jsx';
 import terminalIcon from '../../media/icons/terminal.png';
 import Mario64 from '../../initialapps/Mario64/Mario64.jsx';
+import marioIcon from '../../media/icons/mario64.png';
 /**
  * The initial list of apps.
  * The `indock` field determines if the icon should be rendered on the desktop.
@@ -28,7 +29,7 @@ const initialAppsList = [
   {
     id: 'mario',
     name: 'Mario64',
-    icon: folderIcon,
+    icon: marioIcon,
     component: Mario64,
     priority: 5,
     indock: false,
