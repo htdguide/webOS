@@ -13,6 +13,8 @@ import Noterminal from '../../initialapps/Noterminal/Noterminal.jsx';
 import terminalIcon from '../../media/icons/terminal.png';
 import Mario64 from '../../initialapps/Mario64/Mario64.jsx';
 import marioIcon from '../../media/icons/mario64.png';
+import quakeIcon from '../../media/icons/quake3.png'
+import Quake3 from '../../initialapps/Quake3/Quake3.jsx';
 /**
  * The initial list of apps.
  * The `indock` field determines if the icon should be rendered on the desktop.
@@ -31,6 +33,14 @@ const initialAppsList = [
     name: 'Mario64',
     icon: marioIcon,
     component: Mario64,
+    priority: 5,
+    indock: false,
+  },
+  {
+    id: 'quake3',
+    name: 'Quake3',
+    icon: quakeIcon,
+    component: Quake3,
     priority: 5,
     indock: false,
   },
