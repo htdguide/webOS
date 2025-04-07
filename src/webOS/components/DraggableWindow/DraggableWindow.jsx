@@ -1,6 +1,11 @@
 // DraggableWindow.jsx
 // This component renders a draggable and resizable window.
-// It now supports rendering an iframe in the content area if the iframeSrc prop is provided.
+// It supports rendering an iframe in the content area if the iframeSrc prop is provided.
+// Fixes implemented:
+// 1. Prevents dragging interruption when the mouse moves over the iframe by disabling pointer events during drag.
+// 2. Enhances focus restoration logic so that if the draggable window (and its iframe) loses focus
+//    and then regains it, the canvas inside the WASM game (if available) is explicitly focused,
+//    ensuring that keyboard events are captured.
 
 import React, {
   useRef,
@@ -30,33 +35,35 @@ const DraggableWindow = forwardRef(
       onResize, // callback for resize events
       initialX, // initial horizontal position
       initialY, // initial vertical position
-      iframeSrc, // new prop: URL for the iframe content
+      iframeSrc, // URL for the iframe content (e.g., a WASM game)
       children
     },
     ref
   ) => {
-    // Reference to the window element
+    // Reference to the window element.
     const windowRef = useRef(null);
+    // Reference to the iframe element, if used.
+    const iframeRef = useRef(null);
 
-    // Use the FocusControl context for managing focus state
+    // Use the FocusControl context for managing focus state.
     const { focusedComponent, updateFocus } = useFocus();
     const isFocused = focusedComponent === title;
 
-    // Set initial focus when the window mounts
+    // Set initial focus when the window mounts.
     useEffect(() => {
       updateFocus(title);
     }, []); // run once on mount
 
-    // State to control the loading overlay
+    // State to control the loading overlay.
     const [isLoading, setIsLoading] = useState(true);
-    // State to control fade-out animation for the loading overlay
+    // State to control fade-out animation for the loading overlay.
     const [isFadingOut, setIsFadingOut] = useState(false);
 
-    // States for the window dimensions, allowing smooth resizing
+    // States for the window dimensions for smooth resizing.
     const [currentWidth, setCurrentWidth] = useState(windowWidth);
     const [currentHeight, setCurrentHeight] = useState(windowHeight);
 
-    // Helper function to safely parse initial coordinate values
+    // Helper function to safely parse initial coordinate values.
     const getInitialCoordinate = (value, defaultValue) => {
       if (value !== undefined) {
         if (typeof value === 'number') {
@@ -70,21 +77,21 @@ const DraggableWindow = forwardRef(
     };
 
     // States for the window position (x, y).
-    // The y-coordinate is clamped to a minimum of 26px (to avoid header overlap).
+    // The y-coordinate is clamped to a minimum of 26px to avoid header overlap.
     const [currentX, setCurrentX] = useState(getInitialCoordinate(initialX, 10));
     const [currentY, setCurrentY] = useState(
       Math.max(getInitialCoordinate(initialY, 10), 26)
     );
 
-    // States to track whether the user is manually dragging or resizing the window
+    // States to track whether the user is manually dragging or resizing the window.
     const [isUserDragging, setIsUserDragging] = useState(false);
     const [isUserResizing, setIsUserResizing] = useState(false);
 
-    // States to track if a programmatic move or resize is in progress
+    // States to track if a programmatic move or resize is in progress.
     const [isProgrammaticResize, setIsProgrammaticResize] = useState(false);
     const [isProgrammaticMove, setIsProgrammaticMove] = useState(false);
 
-    // Global event listeners to stop dragging/resizing when the mouse/touch is released
+    // Global event listeners to stop dragging/resizing when the mouse/touch is released.
     useEffect(() => {
       const handleMouseUp = () => {
         setIsUserDragging(false);
@@ -139,7 +146,7 @@ const DraggableWindow = forwardRef(
     // Ensure the y-coordinate is never below 26px.
     const clampedY = Math.max(currentY, 26);
 
-    // Expose imperative methods so parent components can control the window
+    // Expose imperative methods so parent components can control the window.
     useImperativeHandle(ref, () => ({
       showLoading: () => {
         setIsFadingOut(false);
@@ -147,7 +154,7 @@ const DraggableWindow = forwardRef(
       },
       hideLoading: () => {
         setIsFadingOut(true);
-        // Remove the loading overlay after the fade-out transition
+        // Remove the loading overlay after the fade-out transition.
         setTimeout(() => {
           setIsLoading(false);
           setIsFadingOut(false);
@@ -178,6 +185,35 @@ const DraggableWindow = forwardRef(
       !isUserDragging && !isUserResizing && (isProgrammaticResize || isProgrammaticMove)
         ? 'width 300ms ease, height 300ms ease, left 300ms ease, top 300ms ease'
         : 'none';
+
+    // Enhanced focus restoration:
+    // When the app regains focus, try to focus the canvas inside the iframe's document.
+    useEffect(() => {
+      const handleWindowFocus = () => {
+        if (isFocused && iframeSrc && iframeRef.current) {
+          const iframeWindow = iframeRef.current.contentWindow;
+          if (iframeWindow) {
+            try {
+              // Look for the canvas element (assumed to have id "canvas") inside the iframe.
+              const canvas = iframeWindow.document.getElementById("canvas");
+              if (canvas) {
+                canvas.focus();
+              } else {
+                // Fallback: focus the iframe's window.
+                iframeWindow.focus();
+              }
+            } catch (e) {
+              // If accessing the canvas fails, fallback to focusing the iframe element.
+              iframeRef.current.focus();
+            }
+          }
+        }
+      };
+      window.addEventListener("focus", handleWindowFocus);
+      return () => {
+        window.removeEventListener("focus", handleWindowFocus);
+      };
+    }, [isFocused, iframeSrc]);
 
     return (
       <div
@@ -224,7 +260,7 @@ const DraggableWindow = forwardRef(
             <button
               className="close-button"
               onClick={(event) => {
-                event.stopPropagation(); // Prevent dragging when clicking close
+                event.stopPropagation(); // Prevent dragging when clicking close.
                 onClose?.();
               }}
               onTouchStart={(event) => {
@@ -242,9 +278,19 @@ const DraggableWindow = forwardRef(
         <div className="window-content">
           {iframeSrc ? (
             // If iframeSrc is provided, render an iframe that fills the content area.
+            // - The ref and tabIndex enable programmatic focus for keyboard input.
+            // - pointerEvents are disabled during dragging to ensure uninterrupted movement.
+            // - onMouseDown forces focus to the iframe's content window when clicked.
             <iframe
+              ref={iframeRef}
               src={iframeSrc}
-              style={{ width: '100%', height: '100%', border: 'none' }}
+              tabIndex={0}
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                pointerEvents: isUserDragging ? 'none' : 'auto'
+              }}
               title={title}
               onLoad={() => {
                 // Optionally, hide the loading overlay when the iframe content has loaded.
@@ -253,6 +299,17 @@ const DraggableWindow = forwardRef(
                   setIsLoading(false);
                   setIsFadingOut(false);
                 }, 1000);
+              }}
+              onMouseDown={() => {
+                // When clicking inside the iframe, force focus to its content window.
+                if (iframeRef.current && iframeRef.current.contentWindow) {
+                  const canvas = iframeRef.current.contentWindow.document.getElementById("canvas");
+                  if (canvas) {
+                    canvas.focus();
+                  } else {
+                    iframeRef.current.contentWindow.focus();
+                  }
+                }
               }}
             />
           ) : (

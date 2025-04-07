@@ -34,6 +34,10 @@
     </style>
   </head>
   <body>
+    <div id="container">
+      <!-- Added tabindex="0" so that the canvas becomes focusable -->
+      <canvas class="emscripten" id="canvas" tabindex="0"></canvas>
+    </div>
     <div class="container text-light" id="controls">
       <figure>
         <blockquote class="blockquote">
@@ -85,10 +89,8 @@
         </tbody>
       </table>
     </div>
-    <div id="container">
-      <canvas class="emscripten" id="canvas"></canvas>
-    </div>
     <script type="text/javascript">
+      // Set up the Module object for the WASM game.
       var Module = {
         preRun: [],
         postRun: [],
@@ -106,8 +108,10 @@
         },
         canvas: (function () {
           var canvas = document.getElementById("canvas");
-          canvas.width = window.innerWidth; // Todo: how to do this from c++
-          canvas.height = window.innerHeight;
+          // Ensure the canvas is focusable.
+          canvas.tabIndex = 0;
+          canvas.width = window.innerWidth; // Set canvas width.
+          canvas.height = window.innerHeight; // Set canvas height.
           canvas.addEventListener(
             "webglcontextlost",
             function (e) {
@@ -120,6 +124,14 @@
         })(),
         setStatus: function (text) {},
       };
+
+      // Explicitly focus the canvas when the window loads so keyboard input works.
+      window.addEventListener("load", function () {
+        var canvas = document.getElementById("canvas");
+        if (canvas) {
+          canvas.focus();
+        }
+      });
     </script>
     <script async type="text/javascript" src="sm64.us.f3dex2e.js"></script>
     <script></script>
