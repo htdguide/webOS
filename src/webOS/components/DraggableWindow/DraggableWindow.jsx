@@ -3,9 +3,12 @@
 // It supports rendering an iframe in the content area if the iframeSrc prop is provided.
 // Fixes implemented:
 // 1. Prevents dragging interruption when the mouse moves over the iframe by disabling pointer events during drag.
-// 2. Enhances focus restoration logic so that if the draggable window (and its iframe) loses focus
-//    and then regains it, the canvas inside the WASM game (if available) is explicitly focused,
-//    ensuring that keyboard events are captured.
+// 2. Enhances focus restoration so that if focus control indicates focus is on the draggable window,
+//    the iframe (and its inner canvas) is automatically focused, ensuring keyboard events are captured.
+// 3. Adds an event listener inside the iframe's document so that clicking anywhere inside the iframe
+//    immediately focuses the inner canvas (or the iframe window), making keyboard input work.
+// 4. Removes focus logic from the header so that drag initiation is not interfered with.
+// 5. Adds a global "pointerup" listener to ensure that releasing the mouse (or touch) stops dragging.
 
 import React, {
   useRef,
@@ -58,6 +61,8 @@ const DraggableWindow = forwardRef(
     const [isLoading, setIsLoading] = useState(true);
     // State to control fade-out animation for the loading overlay.
     const [isFadingOut, setIsFadingOut] = useState(false);
+    // Track whether the iframe has finished loading.
+    const [isIframeLoaded, setIsIframeLoaded] = useState(false);
 
     // States for the window dimensions for smooth resizing.
     const [currentWidth, setCurrentWidth] = useState(windowWidth);
@@ -106,6 +111,17 @@ const DraggableWindow = forwardRef(
       return () => {
         window.removeEventListener('mouseup', handleMouseUp);
         window.removeEventListener('touchend', handleTouchEnd);
+      };
+    }, []);
+
+    // Additional global listener for pointerup to ensure dragging stops.
+    useEffect(() => {
+      const handlePointerUp = () => {
+        setIsUserDragging(false);
+      };
+      window.addEventListener('pointerup', handlePointerUp);
+      return () => {
+        window.removeEventListener('pointerup', handlePointerUp);
       };
     }, []);
 
@@ -187,33 +203,64 @@ const DraggableWindow = forwardRef(
         : 'none';
 
     // Enhanced focus restoration:
-    // When the app regains focus, try to focus the canvas inside the iframe's document.
+    // When focus control indicates that the draggable window is focused,
+    // if an iframe is present, focus its inner canvas (or fallback to the iframe window).
     useEffect(() => {
-      const handleWindowFocus = () => {
-        if (isFocused && iframeSrc && iframeRef.current) {
-          const iframeWindow = iframeRef.current.contentWindow;
-          if (iframeWindow) {
-            try {
-              // Look for the canvas element (assumed to have id "canvas") inside the iframe.
+      if (isFocused && iframeSrc && iframeRef.current) {
+        // Use a small delay to allow the focus state to settle.
+        setTimeout(() => {
+          try {
+            const iframeWindow = iframeRef.current.contentWindow;
+            if (iframeWindow) {
               const canvas = iframeWindow.document.getElementById("canvas");
               if (canvas) {
                 canvas.focus();
               } else {
-                // Fallback: focus the iframe's window.
                 iframeWindow.focus();
               }
-            } catch (e) {
-              // If accessing the canvas fails, fallback to focusing the iframe element.
-              iframeRef.current.focus();
             }
+          } catch (e) {
+            iframeRef.current.focus();
           }
-        }
-      };
-      window.addEventListener("focus", handleWindowFocus);
-      return () => {
-        window.removeEventListener("focus", handleWindowFocus);
-      };
+        }, 0);
+      }
     }, [isFocused, iframeSrc]);
+
+    // Attach a click listener to the iframe's inner document after it loads.
+    // This ensures that clicking inside the iframe focuses the inner canvas.
+    // However, if the user is currently dragging, the click listener does nothing.
+    useEffect(() => {
+      if (iframeSrc && isIframeLoaded && iframeRef.current) {
+        let iframeDoc;
+        try {
+          iframeDoc = iframeRef.current.contentDocument || iframeRef.current.contentWindow.document;
+        } catch (e) {
+          console.error("Unable to access iframe document.", e);
+          return;
+        }
+        if (iframeDoc) {
+          const onIframeClick = () => {
+            // Do not change focus if a drag is in progress.
+            if (!isUserDragging) {
+              try {
+                const canvas = iframeDoc.getElementById("canvas");
+                if (canvas) {
+                  canvas.focus();
+                } else if (iframeRef.current.contentWindow) {
+                  iframeRef.current.contentWindow.focus();
+                }
+              } catch (e) {
+                iframeRef.current.focus();
+              }
+            }
+          };
+          iframeDoc.addEventListener("click", onIframeClick);
+          return () => {
+            iframeDoc.removeEventListener("click", onIframeClick);
+          };
+        }
+      }
+    }, [iframeSrc, isIframeLoaded, isUserDragging]);
 
     return (
       <div
@@ -246,7 +293,22 @@ const DraggableWindow = forwardRef(
               : maxWindowHeight
             : undefined,
         }}
-        onClick={() => updateFocus(title)}
+        onClick={() => {
+          updateFocus(title);
+          // Only try to focus the iframe if a drag is not in progress.
+          if (!isUserDragging && iframeSrc && iframeRef.current && iframeRef.current.contentWindow) {
+            try {
+              const canvas = iframeRef.current.contentWindow.document.getElementById("canvas");
+              if (canvas) {
+                canvas.focus();
+              } else {
+                iframeRef.current.contentWindow.focus();
+              }
+            } catch (e) {
+              iframeRef.current.focus();
+            }
+          }
+        }}
         onTouchStart={() => updateFocus(title)}
         onKeyDown={() => updateFocus(title)}
       >
@@ -255,6 +317,7 @@ const DraggableWindow = forwardRef(
           className="window-header"
           onMouseDown={() => setIsUserDragging(true)}
           onTouchStart={() => setIsUserDragging(true)}
+          // No onClick here to allow dragging without focus interference.
         >
           <div className="header-left">
             <button
@@ -277,10 +340,6 @@ const DraggableWindow = forwardRef(
         {/* --- Window Content Area --- */}
         <div className="window-content">
           {iframeSrc ? (
-            // If iframeSrc is provided, render an iframe that fills the content area.
-            // - The ref and tabIndex enable programmatic focus for keyboard input.
-            // - pointerEvents are disabled during dragging to ensure uninterrupted movement.
-            // - onMouseDown forces focus to the iframe's content window when clicked.
             <iframe
               ref={iframeRef}
               src={iframeSrc}
@@ -293,27 +352,29 @@ const DraggableWindow = forwardRef(
               }}
               title={title}
               onLoad={() => {
-                // Optionally, hide the loading overlay when the iframe content has loaded.
                 setIsFadingOut(true);
                 setTimeout(() => {
                   setIsLoading(false);
                   setIsFadingOut(false);
                 }, 1000);
+                setIsIframeLoaded(true);
               }}
               onMouseDown={() => {
-                // When clicking inside the iframe, force focus to its content window.
                 if (iframeRef.current && iframeRef.current.contentWindow) {
-                  const canvas = iframeRef.current.contentWindow.document.getElementById("canvas");
-                  if (canvas) {
-                    canvas.focus();
-                  } else {
-                    iframeRef.current.contentWindow.focus();
+                  try {
+                    const canvas = iframeRef.current.contentWindow.document.getElementById("canvas");
+                    if (canvas) {
+                      canvas.focus();
+                    } else {
+                      iframeRef.current.contentWindow.focus();
+                    }
+                  } catch (e) {
+                    iframeRef.current.focus();
                   }
                 }
               }}
             />
           ) : (
-            // Otherwise, render the children inside a content-inner div.
             <div className="content-inner">
               {children}
               {isLoading && (
