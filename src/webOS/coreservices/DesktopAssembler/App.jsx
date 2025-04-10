@@ -1,14 +1,22 @@
 // App.jsx
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import './App.css';
 import Desktop from '../../components/Desktop/Desktop.jsx';
 import { AppsContext, AppsProvider } from '../../contexts/AppsContext/AppsContext.jsx';
 import Dock from '../../components/Dock/Dock.jsx';
+// Import the notification hook from the NotificationProvider wrapper.
+import { useNotification } from '../../components/Notification/NotificationProvider.jsx';
 
-// Component that uses the AppsContext and manages opened apps.
 function AppContent() {
   const { apps } = useContext(AppsContext);
   const [openApps, setOpenApps] = useState([]);
+  // Get the notify function from our NotificationProvider context.
+  const { notify } = useNotification();
+
+  useEffect(() => {
+    // Send a test notification when AppContent loads.
+    notify("Test Notification: App has loaded!", 3000, '');
+  }, [notify]);
 
   const handleOpenApp = (appId) => {
     const appConfig = apps.find((app) => app.id === appId);

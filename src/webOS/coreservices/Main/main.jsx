@@ -5,7 +5,6 @@ import './index.css';
 import App from '../DesktopAssembler/App.jsx';
 import Wallpaper from '../../components/Wallpaper/Wallpaper.jsx';
 import DeviceInfoProvider from '../../contexts/DeviceInfoProvider/DeviceInfoProvider.jsx';
-import Notification, { notify } from '../../components/Notification/Notification.jsx';
 import MenuBar from '../../components/MenuBar/MenuBar.jsx';
 import { FocusProvider } from '../../contexts/FocusControl/FocusControl.jsx';
 import { MiniWindowProvider } from '../../components/MiniWindow/MiniWindowProvider.jsx';
@@ -15,6 +14,7 @@ import DisplayController from '../../drivers/DisplayController/DisplayController
 import WelcomeWrap from '../../components/WelcomeWrap/WelcomeWrap.jsx';
 import { StateManagerProvider } from '../../stores/StateManager/StateManager.jsx';
 import WasmModule from '../wasmModule/wasmModule.jsx';
+import { NotificationProvider } from '../../components/Notification/NotificationProvider.jsx';
 
 const Main = () => {
   const [loading, setLoading] = useState(true);
@@ -36,15 +36,6 @@ const Main = () => {
     }
   }, [loading]);
 
-  useEffect(() => {
-    const handleNotification = (event) => {
-      notify(event.detail.message, event.detail.duration, event.detail.icon);
-    };
-
-    window.addEventListener('show-notification', handleNotification);
-    return () => window.removeEventListener('show-notification', handleNotification);
-  }, []);
-
   return (
     <StrictMode>
       <StateManagerProvider>
@@ -60,9 +51,11 @@ const Main = () => {
                     <Wallpaper />
                     <MiniWindowProvider>
                       <DraggableWindowProvider>
-                        <App />
-                        <MenuBar />
-                        <Notification />
+                        {/* Wrap the App and MenuBar in the NotificationProvider */}
+                        <NotificationProvider>
+                          <App />
+                          <MenuBar />
+                        </NotificationProvider>
                       </DraggableWindowProvider>
                     </MiniWindowProvider>
                   </FocusProvider>
