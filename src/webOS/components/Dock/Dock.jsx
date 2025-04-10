@@ -1,3 +1,4 @@
+// Dock.jsx
 import React, { useContext, useState, useRef } from 'react';
 import { AppsContext } from '../../contexts/AppsContext/AppsContext';
 import DOCK_CONFIG from '../../configs/DockConfig/DockConfig';

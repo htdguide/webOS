@@ -1,3 +1,4 @@
+// MiniApps.jsx
 import React, { useState, useRef, useEffect } from 'react';
 import MiniAppsList from '../../lists/MiniAppsList';
 import { FocusWrapper, useFocus } from '../../contexts/FocusControl/FocusControl.jsx';
@@ -13,11 +14,25 @@ function MiniApps() {
   const deviceInfo = useDeviceInfo();
   const { openMiniWindow, closeMiniWindow } = useMiniWindow();
 
-  // Update anchor position and, if needed, update the mini window position
+  // Helper: Get the bounding rectangle of the monitor container.
+  // Here we assume the monitor container has the class "desktop-monitor".
+  const getMonitorRect = () => {
+    const monitorDiv = document.querySelector('.desktop-monitor');
+    return monitorDiv ? monitorDiv.getBoundingClientRect() : null;
+  };
+
+  // Update the anchor position relative to the monitor container.
+  // The anchor is now set so that its x is the left side of the icon.
   const updateAnchorPosition = (appId) => {
     if (iconRefs.current[appId]) {
-      const rect = iconRefs.current[appId].getBoundingClientRect();
-      const newAnchor = { x: rect.left, y: rect.top + rect.height };
+      const iconEl = iconRefs.current[appId];
+      const monitorRect = getMonitorRect() || iconEl.parentNode.getBoundingClientRect();
+      const rect = iconEl.getBoundingClientRect();
+      // Anchor position: left edge of the icon; y is at the bottom.
+      const newAnchor = {
+        x: rect.left - monitorRect.left,
+        y: (rect.top - monitorRect.top) + rect.height,
+      };
       setAnchorPos(newAnchor);
       if (activeApp) {
         openMiniWindow(<activeApp.miniApp />, newAnchor);
@@ -25,7 +40,7 @@ function MiniApps() {
     }
   };
 
-  // Handle app click by toggling the mini window via the provider
+  // Handle app click by toggling the mini window.
   const handleAppClick = (appItem) => {
     if (activeApp && activeApp.id === appItem.id) {
       setActiveApp(null);
@@ -33,15 +48,20 @@ function MiniApps() {
     } else {
       setActiveApp(appItem);
       if (iconRefs.current[appItem.id]) {
-        const rect = iconRefs.current[appItem.id].getBoundingClientRect();
-        const newAnchor = { x: rect.left, y: rect.top + rect.height };
+        const iconEl = iconRefs.current[appItem.id];
+        const monitorRect = getMonitorRect() || iconEl.parentNode.getBoundingClientRect();
+        const rect = iconEl.getBoundingClientRect();
+        const newAnchor = {
+          x: rect.left - monitorRect.left,
+          y: (rect.top - monitorRect.top) + rect.height,
+        };
         setAnchorPos(newAnchor);
         openMiniWindow(<appItem.miniApp />, newAnchor);
       }
     }
   };
 
-  // Close mini window when focus is lost
+  // Close mini window when focus is lost.
   useEffect(() => {
     if (focusedComponent !== 'MiniApps') {
       setActiveApp(null);
@@ -49,7 +69,7 @@ function MiniApps() {
     }
   }, [focusedComponent, closeMiniWindow]);
 
-  // Update mini window position on window resize
+  // Update mini window position on window (or container) resize.
   useEffect(() => {
     const handleResize = () => {
       if (activeApp) {
@@ -61,10 +81,7 @@ function MiniApps() {
     return () => window.removeEventListener('resize', handleResize);
   }, [activeApp]);
 
-  // Filter apps:
-  // - Only include apps with available: true.
-  // - For battery app, hide if battery info is not available.
-  // - For user app, hide in portrait orientation.
+  // Filter and sort the apps.
   const sortedApps = MiniAppsList
     .filter(app => app.available)
     .slice()

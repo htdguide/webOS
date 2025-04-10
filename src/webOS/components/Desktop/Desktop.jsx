@@ -1,3 +1,4 @@
+// Desktop.jsx
 import React, { useState, useContext } from 'react';
 import { AppsContext } from '../../contexts/AppsContext/AppsContext.jsx';
 import DesktopIcon from '../DesktopIcon/DesktopIcon.jsx';
@@ -8,11 +9,10 @@ import { FocusWrapper } from '../../contexts/FocusControl/FocusControl.jsx';
 
 /**
  * Helper to convert a priority number into an (x,y) position on the desktop.
- * This version uses both GRID_SIZE and GRID_GAP to space icons out.
+ * Uses GRID_SIZE and GRID_GAP to space icons out relative to the desktop content.
  */
 function getPositionFromPriority(priority) {
   const safePriority = priority && priority > 0 ? priority : 1;
-  // Single-column approach: each subsequent icon moves (GRID_SIZE + GRID_GAP) down
   const effectiveCellSize = GRID_SIZE + GRID_GAP;
   const x = LEFT_MARGIN;
   const y = TOP_MARGIN + (safePriority - 1) * effectiveCellSize;
@@ -33,12 +33,10 @@ function Desktop({ onOpenApp }) {
 
   return (
     <FocusWrapper name="Desktop">
-      <div className="desktop" onClick={handleWallpaperClick}>
+      {/* The desktop content fills its parent monitor */}
+      <div className="desktop-content" onClick={handleWallpaperClick}>
         {apps.filter(iconConfig => !iconConfig.indock).map((iconConfig) => {
-          // Convert the icon's priority into an (x,y) position,
-          // now using GRID_GAP to keep them spaced out.
           const position = getPositionFromPriority(iconConfig.priority);
-
           return (
             <DesktopIcon
               key={iconConfig.id}

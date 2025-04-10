@@ -1,5 +1,5 @@
 // main.jsx
-import { StrictMode, useState, useEffect } from 'react';
+import React, { StrictMode, useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from '../DesktopAssembler/App.jsx';
@@ -42,38 +42,37 @@ const Main = () => {
     };
 
     window.addEventListener('show-notification', handleNotification);
-    return () =>
-      window.removeEventListener('show-notification', handleNotification);
+    return () => window.removeEventListener('show-notification', handleNotification);
   }, []);
 
   return (
-    //<WasmModule>
     <StrictMode>
       <StateManagerProvider>
-        
-          <DeviceInfoProvider>
-            <WelcomeWrap />
-            <MusicServiceProvider>
-              <DisplayController>
-                <FocusProvider>
-                  <Wallpaper />
-                  <MiniWindowProvider>
-                    <DraggableWindowProvider>
-                      <div>
+        <DeviceInfoProvider>
+          <WelcomeWrap />
+          <MusicServiceProvider>
+            <DisplayController>
+              {/* Full-window container with a black background */}
+              <div className="desktop-container">
+                {/* The monitor defines the overall "screen" size */}
+                <div className="desktop-monitor">
+                  <FocusProvider>
+                    <Wallpaper />
+                    <MiniWindowProvider>
+                      <DraggableWindowProvider>
                         <App />
                         <MenuBar />
                         <Notification />
-                      </div>
-                    </DraggableWindowProvider>
-                  </MiniWindowProvider>
-                </FocusProvider>
-              </DisplayController>
-            </MusicServiceProvider>
-          </DeviceInfoProvider>
-        
+                      </DraggableWindowProvider>
+                    </MiniWindowProvider>
+                  </FocusProvider>
+                </div>
+              </div>
+            </DisplayController>
+          </MusicServiceProvider>
+        </DeviceInfoProvider>
       </StateManagerProvider>
     </StrictMode>
-    //</WasmModule>
   );
 };
 

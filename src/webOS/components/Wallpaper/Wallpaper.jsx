@@ -1,7 +1,8 @@
+// Wallpaper.jsx
 import React, { useState } from 'react';
 import './Wallpaper.css';
 import SequoiaSunriseImage from '../../media/wallpaper/SequoiaSunrise.jpg';
-import { FocusWrapper } from '../../contexts/FocusControl/FocusControl.jsx'; // Import FocusWrapper
+import { FocusWrapper } from '../../contexts/FocusControl/FocusControl.jsx';
 
 function Wallpaper() {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);

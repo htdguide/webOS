@@ -1,32 +1,47 @@
-body {
+/* Global styles */
+body, html {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
   padding: 0;
-  box-sizing: border-box;
-  
-  /* Disable text selection */
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+  width: 100%;
+  height: 100%;
+  background-color: black; /* Outside the monitor: black */
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  z-index: 0;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* Container for the full-window monitor */
+.desktop-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-/* Optional: Add a fade-out effect */
-.loading-screen.fade-out {
-  opacity: 0;
-  pointer-events: none;
+/* The monitor (desktop container) */
+.desktop-monitor {
+  width: 1024px;
+  height: 768px;
+  background-color: #2e2e2e; /* Monitor background, e.g., dark grey */
+  position: relative; /* So internal absolutely positioned elements use this as reference */
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  z-index: 1;
 }
 
-/* Disable tap highlight color for all elements */
-* {
-  -webkit-tap-highlight-color: transparent;
+/* Optional loading screen styles */
+.loading-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #2e2e2e;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 1s ease;
 }

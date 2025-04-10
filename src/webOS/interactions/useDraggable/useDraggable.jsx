@@ -1,3 +1,4 @@
+// useDraggable.jsx
 import { useEffect, useState, useRef } from 'react';
 
 function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
@@ -5,8 +6,9 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
   const [resizeType, setResizeType] = useState(null);
   // snapDirection: "top", "left", "right", or null
   const [snapDirection, setSnapDirection] = useState(null);
-  
+
   const dragStartPos = useRef({ x: 0, y: 0 });
+  // Store the window's initial position relative to its parent.
   const windowStartPos = useRef({ x: 50, y: 50 });
   const resizeStartSize = useRef({ width: sizeProps.width, height: sizeProps.height });
   const snapTimerRef = useRef(null);
@@ -23,7 +25,8 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
   const showSnapPreview = () => {
     if (!previewRef.current && snapDirection) {
       const preview = document.createElement("div");
-      preview.style.position = "fixed";
+      // Set position to absolute so that it is positioned relative to the container.
+      preview.style.position = "absolute";
       preview.style.zIndex = "9999";
       preview.style.pointerEvents = "none";
       preview.style.backgroundColor = "rgba(255, 255, 255, 0.2)";
@@ -32,26 +35,29 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
       const topMargin = 32;
       const sideMargin = 8;
       const bottomMargin = 8;
+      // Use the container’s dimensions rather than the window’s.
+      const container = windowRef.current.parentNode;
+      const containerRect = container.getBoundingClientRect();
       if (snapDirection === "top") {
         preview.style.left = `${sideMargin}px`;
         preview.style.top = `${topMargin}px`;
-        preview.style.width = `${window.innerWidth - sideMargin * 2}px`;
-        preview.style.height = `${window.innerHeight - topMargin - bottomMargin}px`;
+        preview.style.width = `${containerRect.width - sideMargin * 2}px`;
+        preview.style.height = `${containerRect.height - topMargin - bottomMargin}px`;
       } else if (snapDirection === "left") {
         preview.style.left = `${sideMargin}px`;
         preview.style.top = `${topMargin}px`;
-        preview.style.width = `${(window.innerWidth - sideMargin * 2) / 2}px`;
-        preview.style.height = `${window.innerHeight - topMargin - bottomMargin}px`;
+        preview.style.width = `${(containerRect.width - sideMargin * 2) / 2}px`;
+        preview.style.height = `${containerRect.height - topMargin - bottomMargin}px`;
       } else if (snapDirection === "right") {
-        preview.style.left = `${sideMargin + (window.innerWidth - sideMargin * 2) / 2}px`;
+        preview.style.left = `${sideMargin + (containerRect.width - sideMargin * 2) / 2}px`;
         preview.style.top = `${topMargin}px`;
-        preview.style.width = `${(window.innerWidth - sideMargin * 2) / 2}px`;
-        preview.style.height = `${window.innerHeight - topMargin - bottomMargin}px`;
+        preview.style.width = `${(containerRect.width - sideMargin * 2) / 2}px`;
+        preview.style.height = `${containerRect.height - topMargin - bottomMargin}px`;
       }
-      // Transition for opacity only (fade in 175ms).
+      // Transition for opacity (fade in 175ms).
       preview.style.transition = "opacity 175ms ease";
       preview.style.opacity = "0";
-      document.body.appendChild(preview);
+      container.appendChild(preview);
       previewRef.current = preview;
       requestAnimationFrame(() => {
         if (previewRef.current) {
@@ -83,16 +89,18 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     }
   }, [snapDirection]);
 
-  // Fullscreen (top) snap: nearly full screen with margins.
+  // Fullscreen (top) snap: almost full container with margins.
   const enterFullscreen = () => {
+    const container = windowRef.current.parentNode;
+    const containerRect = container.getBoundingClientRect();
     windowRef.current.style.transition = "left 150ms ease, top 150ms ease, width 150ms ease, height 150ms ease";
     const sideMargin = 8;
     const topMargin = 32;
     const bottomMargin = 8;
     const newLeft = sideMargin;
     const newTop = topMargin;
-    const newWidth = window.innerWidth - sideMargin * 2;
-    const newHeight = window.innerHeight - topMargin - bottomMargin;
+    const newWidth = containerRect.width - sideMargin * 2;
+    const newHeight = containerRect.height - topMargin - bottomMargin;
     windowRef.current.style.left = `${newLeft}px`;
     windowRef.current.style.top = `${newTop}px`;
     windowRef.current.style.width = `${newWidth}px`;
@@ -107,14 +115,16 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
 
   // Left half snap.
   const enterLeftHalf = () => {
+    const container = windowRef.current.parentNode;
+    const containerRect = container.getBoundingClientRect();
     windowRef.current.style.transition = "left 150ms ease, top 150ms ease, width 150ms ease, height 150ms ease";
     const sideMargin = 8;
     const topMargin = 32;
     const bottomMargin = 8;
     const newLeft = sideMargin;
     const newTop = topMargin;
-    const newWidth = (window.innerWidth - sideMargin * 2) / 2;
-    const newHeight = window.innerHeight - topMargin - bottomMargin;
+    const newWidth = (containerRect.width - sideMargin * 2) / 2;
+    const newHeight = containerRect.height - topMargin - bottomMargin;
     windowRef.current.style.left = `${newLeft}px`;
     windowRef.current.style.top = `${newTop}px`;
     windowRef.current.style.width = `${newWidth}px`;
@@ -129,14 +139,16 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
 
   // Right half snap.
   const enterRightHalf = () => {
+    const container = windowRef.current.parentNode;
+    const containerRect = container.getBoundingClientRect();
     windowRef.current.style.transition = "left 150ms ease, top 150ms ease, width 150ms ease, height 150ms ease";
     const sideMargin = 8;
     const topMargin = 32;
     const bottomMargin = 8;
-    const newLeft = sideMargin + (window.innerWidth - sideMargin * 2) / 2;
+    const newLeft = sideMargin + (containerRect.width - sideMargin * 2) / 2;
     const newTop = topMargin;
-    const newWidth = (window.innerWidth - sideMargin * 2) / 2;
-    const newHeight = window.innerHeight - topMargin - bottomMargin;
+    const newWidth = (containerRect.width - sideMargin * 2) / 2;
+    const newHeight = containerRect.height - topMargin - bottomMargin;
     windowRef.current.style.left = `${newLeft}px`;
     windowRef.current.style.top = `${newTop}px`;
     windowRef.current.style.width = `${newWidth}px`;
@@ -160,7 +172,7 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     }
   };
 
-  // Define snapToFullscreen as an alias for snapToPosition.
+  // Alias for snapToPosition.
   const snapToFullscreen = snapToPosition;
 
   useEffect(() => {
@@ -171,24 +183,27 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
       const clientX = event.touches ? event.touches[0].clientX : event.clientX;
       const clientY = event.touches ? event.touches[0].clientY : event.clientY;
 
+      const container = windowRef.current.parentNode;
+      const containerRect = container.getBoundingClientRect();
+
       if (isDragging) {
-        // Check pointer position relative to screen edges.
+        // Check pointer position relative to the container's edges.
         const leftEdgeThreshold = 26;
         const rightEdgeThreshold = 26;
         const topEdgeThreshold = 26;
-        if (clientX < leftEdgeThreshold) {
+        if (clientX < containerRect.left + leftEdgeThreshold) {
           if (!snapTimerRef.current) {
             snapTimerRef.current = setTimeout(() => {
               setSnapDirection("left");
             }, 250);
           }
-        } else if (clientX > window.innerWidth - rightEdgeThreshold) {
+        } else if (clientX > containerRect.right - rightEdgeThreshold) {
           if (!snapTimerRef.current) {
             snapTimerRef.current = setTimeout(() => {
               setSnapDirection("right");
             }, 250);
           }
-        } else if (clientY < topEdgeThreshold) {
+        } else if (clientY < containerRect.top + topEdgeThreshold) {
           if (!snapTimerRef.current) {
             snapTimerRef.current = setTimeout(() => {
               setSnapDirection("top");
@@ -202,8 +217,12 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
           setSnapDirection(null);
         }
         // Update window position normally.
-        const newX = windowStartPos.current.x + (clientX - dragStartPos.current.x);
-        const newY = windowStartPos.current.y + (clientY - dragStartPos.current.y);
+        // Here we work with coordinates relative to the container.
+        const deltaX = clientX - dragStartPos.current.x;
+        const deltaY = clientY - dragStartPos.current.y;
+        const newX = windowStartPos.current.x + deltaX;
+        const newY = windowStartPos.current.y + deltaY;
+        // Clamp newY so it doesn't go above a minimum (e.g., 26px).
         const clampedY = Math.max(newY, 26);
         windowRef.current.style.left = `${newX}px`;
         windowRef.current.style.top = `${clampedY}px`;
@@ -226,7 +245,7 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
           if (newCalculatedHeight > 200) {
             newHeight = newCalculatedHeight;
             newY = windowStartPos.current.y + (clientY - dragStartPos.current.y);
-            newY = Math.max(newY, 26);
+            newY = Math.max(newY, containerRect.top + 26);
           } else {
             newHeight = 200;
           }
@@ -294,8 +313,14 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     const clientY = event.touches ? event.touches[0].clientY : event.clientY;
     setIsDragging(true);
     dragStartPos.current = { x: clientX, y: clientY };
+    // Capture the starting position relative to the parent container.
+    const container = windowRef.current.parentNode;
+    const containerRect = container.getBoundingClientRect();
     const rect = windowRef.current.getBoundingClientRect();
-    windowStartPos.current = { x: rect.left, y: rect.top };
+    windowStartPos.current = {
+      x: rect.left - containerRect.left,
+      y: rect.top - containerRect.top,
+    };
   };
 
   const handleResizeStart = (event, type) => {
@@ -305,9 +330,14 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     const clientY = event.touches ? event.touches[0].clientY : event.clientY;
     setResizeType(type);
     dragStartPos.current = { x: clientX, y: clientY };
+    const container = windowRef.current.parentNode;
+    const containerRect = container.getBoundingClientRect();
     const rect = windowRef.current.getBoundingClientRect();
     resizeStartSize.current = { width: rect.width, height: rect.height };
-    windowStartPos.current = { x: rect.left, y: rect.top };
+    windowStartPos.current = {
+      x: rect.left - containerRect.left,
+      y: rect.top - containerRect.top,
+    };
   };
 
   useEffect(() => {

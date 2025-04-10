@@ -1,5 +1,5 @@
 .draggable-window {
-  position: fixed; /* or absolute, whichever you want for your app */
+  position: absolute; /* Changed from fixed to absolute so the window is relative to its parent (the desktop div) */
   /* You can also set width/height in JSX or here. */
   border-radius: 12px;
   overflow: hidden;               /* ensures children are clipped to rounded corners */
@@ -7,8 +7,7 @@
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(12px);
-  z-index: 1000;  /* ensures this window is above most other elements in the page */
-
+  z-index: 1000;  /* ensures this window is above most other elements in the desktop */
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -19,21 +18,16 @@
    HEADER
 --------------------- */
 .window-header {
-  /* This is in normal flow at the top */
   position: relative; 
   height: 30px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 10px;
-
   background: linear-gradient(to bottom, #e0e0e0, #c0c0c0);
   color: #000;
   border-bottom: 1px solid rgba(0,0,0,0.1);
   cursor: grab;
-
-  /* Higher than the overlay, so it won't be covered: */
   z-index: 10;
 }
 
@@ -48,14 +42,13 @@
 }
 
 .header-title {
-  position: absolute; /* to center within header */
+  position: absolute;
   left: 50%;
   transform: translateX(-50%);
   font-size: 14px;
   font-weight: bold;
   color: #333;
   pointer-events: none;
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -78,7 +71,7 @@
   -webkit-appearance: none;
   appearance: none;
   position: relative;
-  top: -2px; /* Adjust this value as needed to move the button higher */
+  top: -2px;
 }
 
 .close-button:hover {
@@ -93,58 +86,44 @@
    CONTENT AREA
 --------------------- */
 .window-content {
-  /* Remaining space below the 30px header */
   position: relative;
   height: calc(100% - 30px);
-
-  /* Bring in old scaling/centering logic: */
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
-
-  z-index: 1; /* lower than the header, but higher than base content */
+  z-index: 1;
 }
 
 .content-inner {
   position: relative; 
   width: 100%;
   height: 100%;
-  /* base content at z=0, overlay at z=5 */
   z-index: 0;
 }
 
-/* The overlay is absolute inside content-inner,
-   so it only covers children (e.g., canvas).
-   We give it a z-index: 5 so it is above .content-inner (z=0)
-   but below the header (z=10) and resize handles. */
+/* The overlay covers children inside .content-inner */
 .loading-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-
-  /* Start fully opaque */
   opacity: 1;
-  transition: opacity 1s ease; /* or however long you prefer */
-
-  background-color: rgba(0,0,0,0.3); /* or your chosen background */
+  transition: opacity 1s ease;
+  background-color: rgba(0,0,0,0.3);
   display: flex;
   align-items: center;
   justify-content: center;
-
-  z-index: 10; /* So it sits over the content */
+  z-index: 10;
 }
 
-/* When .fade-out is applied, animate to opacity 0 */
 .loading-overlay.fade-out {
   opacity: 0;
 }
 
-/* Example if you want pointer-events none to allow clicking behind it */
-.loading-overlay.fade-out,
-.loading-overlay {
+.loading-overlay,
+.loading-overlay.fade-out {
   pointer-events: none;
 }
 
@@ -156,7 +135,6 @@
   width: 15px;
   height: 15px;
   background: transparent;
-  /* Put them on top of the overlay: */
   z-index: 10;
 }
 

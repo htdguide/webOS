@@ -60,13 +60,21 @@ export const startDragging = (
     const clientX = event.touches ? event.touches[0].clientX : event.clientX;
     const clientY = event.touches ? event.touches[0].clientY : event.clientY;
 
-    // Calculate max positions (respecting margins)
-    const maxX = window.innerWidth - RIGHT_MARGIN - GRID_SIZE;
-    const maxY = window.innerHeight - BOTTOM_MARGIN - GRID_SIZE;
+    // Get the container (the desktop div) and its dimensions.
+    const container = iconRef.current.parentNode;
+    const containerRect = container.getBoundingClientRect();
 
-    // Clamp new positions by left/top margins and the calculated max
-    const newX = Math.max(LEFT_MARGIN, Math.min(maxX, clientX - offsetX));
-    const newY = Math.max(TOP_MARGIN, Math.min(maxY, clientY - offsetY));
+    // Compute pointer position relative to the container.
+    const relativeX = clientX - containerRect.left;
+    const relativeY = clientY - containerRect.top;
+
+    // Calculate max positions (respecting margins) within the container.
+    const maxX = containerRect.width - RIGHT_MARGIN - GRID_SIZE;
+    const maxY = containerRect.height - BOTTOM_MARGIN - GRID_SIZE;
+
+    // Clamp new positions based on left/top margins and the calculated max.
+    const newX = Math.max(LEFT_MARGIN, Math.min(maxX, relativeX - offsetX));
+    const newY = Math.max(TOP_MARGIN, Math.min(maxY, relativeY - offsetY));
 
     // Move the icon freely (no snapping yet)
     iconRef.current.style.left = `${newX}px`;
@@ -79,33 +87,41 @@ export const startDragging = (
     window.removeEventListener('touchmove', handleMove);
     window.removeEventListener('touchend', handleEnd);
 
-    // Calculate the final snapped position
+    // Get the current icon rect and container rect to compute relative positions.
     const rect = iconRef.current.getBoundingClientRect();
+    const container = iconRef.current.parentNode;
+    const containerRect = container.getBoundingClientRect();
+    const relativeLeft = rect.left - containerRect.left;
+    const relativeTop = rect.top - containerRect.top;
     const snapSize = getSnapSize();
 
     const snappedX =
       LEFT_MARGIN +
-      Math.round((rect.left - LEFT_MARGIN) / snapSize) * snapSize;
+      Math.round((relativeLeft - LEFT_MARGIN) / snapSize) * snapSize;
     const snappedY =
       TOP_MARGIN +
-      Math.round((rect.top - TOP_MARGIN) / snapSize) * snapSize;
+      Math.round((relativeTop - TOP_MARGIN) / snapSize) * snapSize;
 
-    // Add a short transition so the icon "flies" to the snap
+    // Add a short transition so the icon "flies" to the snapped position.
     iconRef.current.style.transition = 'left 0.2s ease, top 0.2s ease';
-    iconRef.current.offsetWidth; // Force reflow
+    // Force reflow.
+    iconRef.current.offsetWidth;
 
-    // Set new positions
+    // Set new (snapped) positions.
     iconRef.current.style.left = `${snappedX}px`;
     iconRef.current.style.top = `${snappedY}px`;
 
     // If the icon is already at the snapped position,
     // the transition event may not fire so we finalize immediately.
-    if (Math.abs(rect.left - snappedX) < 1 && Math.abs(rect.top - snappedY) < 1) {
+    if (
+      Math.abs(relativeLeft - snappedX) < 1 &&
+      Math.abs(relativeTop - snappedY) < 1
+    ) {
       setPosition({ x: snappedX, y: snappedY });
       setIsDragging(false);
       iconRef.current.style.transition = 'none';
     } else {
-      // Once the transition finishes, finalize position in state
+      // Once the transition finishes, finalize position in state.
       const onTransitionEnd = () => {
         iconRef.current.removeEventListener('transitionend', onTransitionEnd);
         setPosition({ x: snappedX, y: snappedY });
@@ -116,7 +132,7 @@ export const startDragging = (
     }
   };
 
-  // Attach movement and end-of-drag listeners
+  // Attach movement and end-of-drag listeners.
   window.addEventListener('mousemove', handleMove);
   window.addEventListener('mouseup', handleEnd);
   window.addEventListener('touchmove', handleMove, { passive: false });

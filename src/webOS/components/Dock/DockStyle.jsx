@@ -5,17 +5,18 @@
 // ---------------------------
 export const getOuterContainerStyle = (DOCK_POSITION, DOCK_MARGIN, isDockVisible) => {
   const style = {
-    position: 'fixed',
+    position: 'absolute', // Changed from 'fixed' to 'absolute' to align with the desktop div
     zIndex: 9998,
     transition: 'transform 0.3s ease', // smooth sliding transition
   };
 
   if (DOCK_POSITION === 'bottom') {
     style.bottom = `${DOCK_MARGIN}px`;
+    // Center horizontally relative to the desktop container
     style.left = '50%';
     style.transform = isDockVisible
       ? 'translateX(-50%)'
-      : 'translateX(-50%) translateY(calc(150% + 10px))'; // extra 10px lower when hidden
+      : 'translateX(-50%) translateY(calc(150% + 10px))'; // slide further down when hidden
   } else if (DOCK_POSITION === 'left') {
     style.left = `${DOCK_MARGIN}px`;
     style.top = '50%';

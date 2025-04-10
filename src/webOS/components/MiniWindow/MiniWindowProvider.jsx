@@ -1,3 +1,4 @@
+// MiniWindowProvider.jsx
 import React, { createContext, useContext, useState } from 'react';
 import MiniWindow from './MiniWindow.jsx';
 
@@ -8,7 +9,8 @@ export const MiniWindowProvider = ({ children }) => {
   const [anchorPos, setAnchorPos] = useState({ x: 0, y: 0 });
   const [miniWindowVisible, setMiniWindowVisible] = useState(false);
 
-  // Call this from any component to open the mini window
+  // Call this from any component to open the mini window.
+  // The anchor should be provided relative to the desktop container.
   const openMiniWindow = (content, anchor = { x: 0, y: 0 }) => {
     setAnchorPos(anchor);
     setMiniWindowContent(() => content);
@@ -17,7 +19,7 @@ export const MiniWindowProvider = ({ children }) => {
 
   const closeMiniWindow = () => {
     setMiniWindowVisible(false);
-    // Wait for the fade-out transition to finish before unmounting
+    // Wait for the fade-out transition to finish before unmounting.
     setTimeout(() => {
       setMiniWindowContent(null);
     }, 300);

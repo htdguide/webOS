@@ -2,7 +2,7 @@
  * Container for the entire desktop icon
  *************************************************************/
  .desktop-icon {
-  position: absolute;
+  position: absolute;  /* Positioned absolutely relative to the desktop container */
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -37,7 +37,7 @@
 
 /* 
   The highlight behind the icon. 
-  It's 50×50, absolutely positioned. 
+  It's 50×50, absolutely positioned.
 */
 .icon-highlight {
   position: absolute;
@@ -58,7 +58,7 @@
 }
 
 /* 
-  The icon image, pinned to 45×45. 
+  The icon image, pinned to 45×45.
 */
 .icon-image {
   position: relative;
@@ -89,7 +89,7 @@
   background-color: transparent; 
 }
 
-/* If you want the label to also become highlighted when selected: */
+/* Highlight the label when the icon is selected */
 .desktop-icon.selected .icon-label {
   background-color: rgb(34, 91, 201);
   text-shadow: none; 

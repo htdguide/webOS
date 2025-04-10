@@ -1,31 +1,32 @@
-/* Desktop Container */
-.desktop {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    overflow: hidden;
-    background: transparent;
-    z-index: 0; /* Lower than the window */
-  }
-  
-  /* Desktop Icons */
-  .desktop-icon {
-    position: absolute;
-    width: 64px;
-    height: 80px;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    user-select: none;
-    z-index: 1; /* Lower than the window */
-    transition: box-shadow 0.2s, transform 0.2s;
-  }
-  
-  .desktop-icon.selected {
-    z-index: 1; /* Slightly higher when selected, but still below the window */
-  }
-  
+/* Desktop.css */
+
+/* Desktop content: fills the monitor (desktop-monitor) */
+.desktop-content {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  background: transparent;
+  z-index: 0; /* Behind windows etc. */
+}
+
+/* Desktop Icons */
+.desktop-icon {
+  position: absolute;
+  width: 64px;
+  height: 80px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  user-select: none;
+  z-index: 1;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.desktop-icon.selected {
+  z-index: 2;
+}

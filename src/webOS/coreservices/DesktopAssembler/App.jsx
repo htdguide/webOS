@@ -1,10 +1,11 @@
+// App.jsx
 import React, { useState, useContext } from 'react';
 import './App.css';
 import Desktop from '../../components/Desktop/Desktop.jsx';
 import { AppsContext, AppsProvider } from '../../contexts/AppsContext/AppsContext.jsx';
 import Dock from '../../components/Dock/Dock.jsx';
 
-// Move the logic that uses the context into a component that is rendered inside the provider
+// Component that uses the AppsContext and manages opened apps.
 function AppContent() {
   const { apps } = useContext(AppsContext);
   const [openApps, setOpenApps] = useState([]);

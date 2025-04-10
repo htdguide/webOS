@@ -1,3 +1,4 @@
+// MiniWindow.jsx
 import React, { useState, useRef, useLayoutEffect } from 'react';
 
 function MiniWindow({ anchorPos, onClose, children, className = '', visible = true }) {
@@ -6,17 +7,20 @@ function MiniWindow({ anchorPos, onClose, children, className = '', visible = tr
 
   useLayoutEffect(() => {
     if (anchorPos && miniWindowRef.current) {
+      // Get the mini window's parent container (assumed to be the desktop div)
+      const container = miniWindowRef.current.parentNode;
+      const containerRect = container.getBoundingClientRect();
       const rect = miniWindowRef.current.getBoundingClientRect();
       let top = anchorPos.y;
       let left = anchorPos.x;
 
-      // Adjust if the mini window overflows the right edge
-      if (left + rect.width > window.innerWidth) {
-        left = window.innerWidth - rect.width - 5; // 5px margin
+      // Adjust if the mini window overflows the right edge of the container
+      if (left + rect.width > containerRect.width) {
+        left = containerRect.width - rect.width - 5; // 5px margin
       }
-      // Adjust if the mini window overflows the bottom edge
-      if (top + rect.height > window.innerHeight) {
-        top = window.innerHeight - rect.height - 5; // 5px margin
+      // Adjust if the mini window overflows the bottom edge of the container
+      if (top + rect.height > containerRect.height) {
+        top = containerRect.height - rect.height - 5; // 5px margin
       }
       // Ensure the position is not too close to the top or left edge
       top = Math.max(10, top);

@@ -1,5 +1,5 @@
 .menu-bar {
-  position: fixed;
+  position: absolute; /* Changed from fixed to absolute for parent-based positioning */
   top: 0;
   left: 0;
   width: 100%;
@@ -10,7 +10,7 @@
   align-items: center;
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   padding: 0 10px;
-  z-index: 1100; /* Ensure the menubar is on top */
+  z-index: 1100; /* Ensure the menubar appears on top within the desktop container */
   transition: transform 0.3s ease-in-out;
 }
 

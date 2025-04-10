@@ -30,7 +30,7 @@ function DesktopIcon({
   const [lastTap, setLastTap] = useState(0);
 
   const iconRef = useRef(null);
-  
+
   // Get icon visibility from the new StateManager.
   const { state } = useStateManager();
   // Assume icon visibility is stored in a group named "desktop" as a string.
@@ -62,6 +62,8 @@ function DesktopIcon({
     );
   };
 
+  // The style ensures the icon is placed using absolute coordinates
+  // relative to its parent container (the desktop div).
   const iconStyle = {
     width: ICON_WIDTH,
     height: ICON_HEIGHT,
