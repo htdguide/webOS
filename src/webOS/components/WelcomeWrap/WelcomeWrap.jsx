@@ -23,11 +23,11 @@ const WelcomeWrap = () => {
   const [showWelcome, setShowWelcome] = useState(true);
   const [showLoading, setShowLoading] = useState(false);
   const [messageIndex, setMessageIndex] = useState(-1);
-  const [fadeHello, setFadeHello] = useState(false);
-  const [fadeLoading, setFadeLoading] = useState(false);
   const [fadeWelcome, setFadeWelcome] = useState(false);
+  const [fadeLoading, setFadeLoading] = useState(false);
+  const [fadeHello, setFadeHello] = useState(false);
 
-  // Hide dock/desktop on mount
+  // Mount: hide dock & desktop
   useEffect(() => {
     editStateValue("dock", "dockVisible", "false");
     editStateValue("desktop", "iconVisible", "false");
@@ -35,17 +35,17 @@ const WelcomeWrap = () => {
     refreshState();
   }, []);
 
-  // After totalDuration, start loading‐screen + fade out welcome
+  // After totalDuration, show loading and fade out welcome
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const t = setTimeout(() => {
       setShowLoading(true);
       setFadeWelcome(true);
       setTimeout(() => setShowWelcome(false), 1000);
     }, totalDuration * 1000);
-    return () => clearTimeout(timer);
+    return () => clearTimeout(t);
   }, [totalDuration]);
 
-  // Cycle through messages
+  // Cycle welcome messages
   useEffect(() => {
     if (!showWelcome) return;
     if (messageIndex === -1) {
@@ -54,14 +54,14 @@ const WelcomeWrap = () => {
     }
     if (messageIndex < messageCount - 1) {
       const t = setTimeout(
-        () => setMessageIndex((i) => i + 1),
+        () => setMessageIndex(i => i + 1),
         messageDuration * 1000
       );
       return () => clearTimeout(t);
     }
   }, [showWelcome, messageIndex, messageCount, messageDuration, initialDelay]);
 
-  // After SVG hello animation ends
+  // After SVG hello animation
   const handleHelloAnimationEnd = () => {
     setFadeHello(true);
     setTimeout(() => {
@@ -70,14 +70,17 @@ const WelcomeWrap = () => {
       editStateValue("desktop", "iconVisible", "true");
       editStateValue("desktop", "menubarVisible", "true");
       refreshState();
-      // fade out loading
+      // then fade out loading
       setFadeLoading(true);
       setTimeout(() => setShowLoading(false), 1000);
     }, 1000);
   };
 
+  // if either phase is active, block pointer-events; otherwise allow clicks through
+  const isBlocking = showWelcome || showLoading;
+
   return (
-    <div className="welcome-container">
+    <div className={`welcome-container ${isBlocking ? 'blocking' : 'non-blocking'}`}>
       {showWelcome && (
         <div className={`welcome-screen ${fadeWelcome ? 'fade-out' : ''}`}>
           {messageIndex >= 0 && (
