@@ -1,11 +1,14 @@
 // App.jsx
 import React, { useState, useContext, useEffect } from 'react';
-import './App.css';
+import './DesktopAssembler.css';
 import Desktop from '../../components/Desktop/Desktop.jsx';
 import { AppsContext, AppsProvider } from '../../contexts/AppsContext/AppsContext.jsx';
 import Dock from '../../components/Dock/Dock.jsx';
 // Import the notification hook from the NotificationProvider wrapper.
 import { useNotification } from '../../components/Notification/NotificationProvider.jsx';
+import MenuBar from '../../components/MenuBar/MenuBar.jsx';
+import Wallpaper from '../../components/Wallpaper/Wallpaper.jsx';
+import WelcomeWrap from '../../components/WelcomeWrap/WelcomeWrap.jsx';
 
 function AppContent() {
   const { apps } = useContext(AppsContext);
@@ -39,6 +42,9 @@ function AppContent() {
 
   return (
     <>
+      <WelcomeWrap />
+      <Wallpaper />
+      <MenuBar />
       <Dock />
       <div className="App">
         <Desktop onOpenApp={handleOpenApp} />
