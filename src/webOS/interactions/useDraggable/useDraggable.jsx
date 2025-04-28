@@ -35,55 +35,50 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
   // Mount / unmount callbacks
   useEffect(() => {
     if (onMount) onMount();
-    return () => {
-      if (onUnmount) onUnmount();
-    };
+    return () => { if (onUnmount) onUnmount(); };
   }, [onMount, onUnmount]);
 
-  // Snap-preview helpers
+  // --- Snap preview overlay ---
   const showSnapPreview = () => {
     if (!previewRef.current && snapDirection) {
-      const preview = document.createElement("div");
-      preview.style.position = "absolute";
-      preview.style.zIndex = "9999";
-      preview.style.pointerEvents = "none";
-      preview.style.backgroundColor = "rgba(255, 255, 255, 0.2)";
-      preview.style.border = "2px solid white";
-      preview.style.borderRadius = "12px";
-      const topMargin = 32;
-      const sideMargin = 8;
-      const bottomMargin = 8;
+      const preview = document.createElement('div');
+      preview.style.position = 'absolute';
+      preview.style.zIndex = '9999';
+      preview.style.pointerEvents = 'none';
+      preview.style.backgroundColor = 'rgba(255,255,255,0.2)';
+      preview.style.border = '2px solid white';
+      preview.style.borderRadius = '12px';
+      const topMargin = 32, sideMargin = 8, bottomMargin = 8;
       const container = windowRef.current.parentNode;
-      const containerRect = container.getBoundingClientRect();
-      if (snapDirection === "top") {
+      const rect = container.getBoundingClientRect();
+      if (snapDirection === 'top') {
         preview.style.left = `${sideMargin}px`;
         preview.style.top = `${topMargin}px`;
-        preview.style.width = `${containerRect.width - sideMargin * 2}px`;
-        preview.style.height = `${containerRect.height - topMargin - bottomMargin}px`;
-      } else if (snapDirection === "left") {
+        preview.style.width = `${rect.width - sideMargin*2}px`;
+        preview.style.height = `${rect.height - topMargin - bottomMargin}px`;
+      } else if (snapDirection === 'left') {
         preview.style.left = `${sideMargin}px`;
         preview.style.top = `${topMargin}px`;
-        preview.style.width = `${(containerRect.width - sideMargin * 2) / 2}px`;
-        preview.style.height = `${containerRect.height - topMargin - bottomMargin}px`;
-      } else if (snapDirection === "right") {
-        preview.style.left = `${sideMargin + (containerRect.width - sideMargin * 2) / 2}px`;
+        preview.style.width = `${(rect.width - sideMargin*2)/2}px`;
+        preview.style.height = `${rect.height - topMargin - bottomMargin}px`;
+      } else if (snapDirection === 'right') {
+        preview.style.left = `${sideMargin + (rect.width - sideMargin*2)/2}px`;
         preview.style.top = `${topMargin}px`;
-        preview.style.width = `${(containerRect.width - sideMargin * 2) / 2}px`;
-        preview.style.height = `${containerRect.height - topMargin - bottomMargin}px`;
+        preview.style.width = `${(rect.width - sideMargin*2)/2}px`;
+        preview.style.height = `${rect.height - topMargin - bottomMargin}px`;
       }
-      preview.style.transition = "opacity 175ms ease";
-      preview.style.opacity = "0";
+      preview.style.transition = 'opacity 175ms ease';
+      preview.style.opacity = '0';
       container.appendChild(preview);
       previewRef.current = preview;
       requestAnimationFrame(() => {
-        if (previewRef.current) previewRef.current.style.opacity = "1";
+        if (previewRef.current) previewRef.current.style.opacity = '1';
       });
     }
   };
-
   const hideSnapPreview = () => {
     if (previewRef.current) {
-      previewRef.current.style.opacity = "0";
+      previewRef.current.style.opacity = '0';
       setTimeout(() => {
         if (previewRef.current?.parentNode) {
           previewRef.current.parentNode.removeChild(previewRef.current);
@@ -92,134 +87,82 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
       }, 500);
     }
   };
-
   useEffect(() => {
     if (snapDirection) showSnapPreview();
     else hideSnapPreview();
   }, [snapDirection]);
 
-  // Snap actions
+  // --- Snap actions ---
   const enterFullscreen = () => {
     const container = windowRef.current.parentNode;
-    const containerRect = container.getBoundingClientRect();
-    windowRef.current.style.transition = "left 150ms ease, top 150ms ease, width 150ms ease, height 150ms ease";
-    const sideMargin = 8;
-    const topMargin = 32;
-    const bottomMargin = 8;
-    const newLeft = sideMargin;
-    const newTop = topMargin;
-    const newWidth = containerRect.width - sideMargin * 2;
-    const newHeight = containerRect.height - topMargin - bottomMargin;
-    windowRef.current.style.left = `${newLeft}px`;
-    windowRef.current.style.top = `${newTop}px`;
-    windowRef.current.style.width = `${newWidth}px`;
-    windowRef.current.style.height = `${newHeight}px`;
-    if (onResize) onResize(newWidth, newHeight);
-    setTimeout(() => {
-      windowRef.current.style.transition = "";
-    }, 150);
+    const rect = container.getBoundingClientRect();
+    windowRef.current.style.transition = 'left 150ms ease, top 150ms ease, width 150ms ease, height 150ms ease';
+    const side = 8, top = 32, bottom = 8;
+    windowRef.current.style.left = `${side}px`;
+    windowRef.current.style.top = `${top}px`;
+    windowRef.current.style.width = `${rect.width - side*2}px`;
+    windowRef.current.style.height = `${rect.height - top - bottom}px`;
+    if (onResize) onResize(rect.width - side*2, rect.height - top - bottom);
+    setTimeout(() => { windowRef.current.style.transition = ''; }, 150);
   };
-
   const enterLeftHalf = () => {
     const container = windowRef.current.parentNode;
-    const containerRect = container.getBoundingClientRect();
-    windowRef.current.style.transition = "left 150ms ease, top 150ms ease, width 150ms ease, height 150ms ease";
-    const sideMargin = 8;
-    const topMargin = 32;
-    const bottomMargin = 8;
-    const newLeft = sideMargin;
-    const newTop = topMargin;
-    const newWidth = (containerRect.width - sideMargin * 2) / 2;
-    const newHeight = containerRect.height - topMargin - bottomMargin;
-    windowRef.current.style.left = `${newLeft}px`;
-    windowRef.current.style.top = `${newTop}px`;
-    windowRef.current.style.width = `${newWidth}px`;
-    windowRef.current.style.height = `${newHeight}px`;
-    if (onResize) onResize(newWidth, newHeight);
-    setTimeout(() => {
-      windowRef.current.style.transition = "";
-    }, 150);
+    const rect = container.getBoundingClientRect();
+    windowRef.current.style.transition = 'left 150ms ease, top 150ms ease, width 150ms ease, height 150ms ease';
+    const side = 8, top = 32, bottom = 8;
+    windowRef.current.style.left = `${side}px`;
+    windowRef.current.style.top = `${top}px`;
+    windowRef.current.style.width = `${(rect.width - side*2)/2}px`;
+    windowRef.current.style.height = `${rect.height - top - bottom}px`;
+    if (onResize) onResize((rect.width - side*2)/2, rect.height - top - bottom);
+    setTimeout(() => { windowRef.current.style.transition = ''; }, 150);
   };
-
   const enterRightHalf = () => {
     const container = windowRef.current.parentNode;
-    const containerRect = container.getBoundingClientRect();
-    windowRef.current.style.transition = "left 150ms ease, top 150ms ease, width 150ms ease, height 150ms ease";
-    const sideMargin = 8;
-    const topMargin = 32;
-    const bottomMargin = 8;
-    const newLeft = sideMargin + (containerRect.width - sideMargin * 2) / 2;
-    const newTop = topMargin;
-    const newWidth = (containerRect.width - sideMargin * 2) / 2;
-    const newHeight = containerRect.height - topMargin - bottomMargin;
-    windowRef.current.style.left = `${newLeft}px`;
-    windowRef.current.style.top = `${newTop}px`;
-    windowRef.current.style.width = `${newWidth}px`;
-    windowRef.current.style.height = `${newHeight}px`;
-    if (onResize) onResize(newWidth, newHeight);
-    setTimeout(() => {
-      windowRef.current.style.transition = "";
-    }, 150);
+    const rect = container.getBoundingClientRect();
+    windowRef.current.style.transition = 'left 150ms ease, top 150ms ease, width 150ms ease, height 150ms ease';
+    const side = 8, top = 32, bottom = 8;
+    windowRef.current.style.left = `${side + (rect.width - side*2)/2}px`;
+    windowRef.current.style.top = `${top}px`;
+    windowRef.current.style.width = `${(rect.width - side*2)/2}px`;
+    windowRef.current.style.height = `${rect.height - top - bottom}px`;
+    if (onResize) onResize((rect.width - side*2)/2, rect.height - top - bottom);
+    setTimeout(() => { windowRef.current.style.transition = ''; }, 150);
   };
-
   const snapToPosition = () => {
-    if (snapDirection === "top") {
-      enterFullscreen();
-    } else if (snapDirection === "left") {
-      enterLeftHalf();
-    } else if (snapDirection === "right") {
-      enterRightHalf();
-    }
+    if (snapDirection === 'top') enterFullscreen();
+    else if (snapDirection === 'left') enterLeftHalf();
+    else if (snapDirection === 'right') enterRightHalf();
   };
 
-  // Move / Resize handler
+  // --- Move & Resize Handler ---
   useEffect(() => {
     const handleMove = (event) => {
       if (!isDragging && !resizeType) return;
       event.preventDefault();
-
       const clientX = event.touches ? event.touches[0].clientX : event.clientX;
       const clientY = event.touches ? event.touches[0].clientY : event.clientY;
 
       // Dragging
       if (isDragging) {
         const container = windowRef.current.parentNode;
-        const containerRect = container.getBoundingClientRect();
-        const leftEdgeThreshold = 26;
-        const rightEdgeThreshold = 26;
-        const topEdgeThreshold = 26;
-
-        if (clientX < containerRect.left + leftEdgeThreshold) {
-          if (!snapTimerRef.current) {
-            snapTimerRef.current = setTimeout(() => {
-              setSnapDirection("left");
-            }, 250);
-          }
-        } else if (clientX > containerRect.right - rightEdgeThreshold) {
-          if (!snapTimerRef.current) {
-            snapTimerRef.current = setTimeout(() => {
-              setSnapDirection("right");
-            }, 250);
-          }
-        } else if (clientY < containerRect.top + topEdgeThreshold) {
-          if (!snapTimerRef.current) {
-            snapTimerRef.current = setTimeout(() => {
-              setSnapDirection("top");
-            }, 250);
-          }
+        const rect = container.getBoundingClientRect();
+        const edge = 26;
+        if (clientX < rect.left + edge) {
+          if (!snapTimerRef.current) snapTimerRef.current = setTimeout(() => setSnapDirection('left'), 250);
+        } else if (clientX > rect.right - edge) {
+          if (!snapTimerRef.current) snapTimerRef.current = setTimeout(() => setSnapDirection('right'), 250);
+        } else if (clientY < rect.top + edge) {
+          if (!snapTimerRef.current) snapTimerRef.current = setTimeout(() => setSnapDirection('top'), 250);
         } else {
           clearTimeout(snapTimerRef.current);
           snapTimerRef.current = null;
           setSnapDirection(null);
         }
-
         const dx = clientX - dragStartPos.current.x;
         const dy = clientY - dragStartPos.current.y;
-        const newX = windowStartPos.current.x + dx;
-        const newY = Math.max(windowStartPos.current.y + dy, 26);
-
-        windowRef.current.style.left = `${newX}px`;
-        windowRef.current.style.top = `${newY}px`;
+        windowRef.current.style.left = `${windowStartPos.current.x + dx}px`;
+        windowRef.current.style.top = `${Math.max(windowStartPos.current.y + dy, 26)}px`;
       }
 
       // Resizing
@@ -239,42 +182,46 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
           const dy = clientY - dragStartPos.current.y;
           newW = Math.max(initW + dx, minWidth);
           newH = Math.max(initH + dy, minHeight);
+
         } else if (resizeType === 'bottom-left') {
           const dx = dragStartPos.current.x - clientX;
           const dy = clientY - dragStartPos.current.y;
           newW = Math.max(initW + dx, minWidth);
           newH = Math.max(initH + dy, minHeight);
-          // Anchor top-right
           newX = origRight - newW;
+
         } else if (resizeType === 'top-right') {
           const dx = clientX - dragStartPos.current.x;
           const dy = dragStartPos.current.y - clientY;
           newW = Math.max(initW + dx, minWidth);
           newH = Math.max(initH + dy, minHeight);
-          // Anchor bottom-left
+          newY = origBottom - newH;
+
+        } else if (resizeType === 'top-left') {
+          // **NEW** top-left: anchor bottom-right
+          const dx = dragStartPos.current.x - clientX;
+          const dy = dragStartPos.current.y - clientY;
+          newW = Math.max(initW + dx, minWidth);
+          newH = Math.max(initH + dy, minHeight);
+          newX = origRight - newW;
           newY = origBottom - newH;
         }
 
-        // Enforce max sizes
+        // enforce max bounds
         newW = Math.min(newW, maxWidth);
         newH = Math.min(newH, maxHeight);
 
-        // Apply styles
         windowRef.current.style.width = `${newW}px`;
         windowRef.current.style.height = `${newH}px`;
         windowRef.current.style.left = `${newX}px`;
         windowRef.current.style.top = `${Math.max(newY, 26)}px`;
 
-        if (onResize) {
-          onResize(newW, newH);
-        }
+        if (onResize) onResize(newW, newH);
       }
     };
 
     const handleEnd = () => {
-      if (isDragging && snapDirection) {
-        snapToPosition();
-      }
+      if (isDragging && snapDirection) snapToPosition();
       setIsDragging(false);
       setResizeType(null);
       clearTimeout(snapTimerRef.current);
@@ -286,7 +233,6 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     window.addEventListener('mouseup', handleEnd);
     window.addEventListener('touchmove', handleMove, { passive: false });
     window.addEventListener('touchend', handleEnd);
-
     return () => {
       window.removeEventListener('mousemove', handleMove);
       window.removeEventListener('mouseup', handleEnd);
@@ -295,7 +241,7 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     };
   }, [isDragging, resizeType, onResize, snapDirection]);
 
-  // Start dragging or resizing
+  // --- Start drag / resize ---
   const handleDragStart = (event) => {
     if (resizeType) return;
     if (event.target.closest('.close-button')) return;
@@ -305,11 +251,11 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     setIsDragging(true);
     dragStartPos.current = { x: clientX, y: clientY };
     const container = windowRef.current.parentNode;
-    const containerRect = container.getBoundingClientRect();
-    const rect = windowRef.current.getBoundingClientRect();
+    const crect = container.getBoundingClientRect();
+    const wrect = windowRef.current.getBoundingClientRect();
     windowStartPos.current = {
-      x: rect.left - containerRect.left,
-      y: rect.top - containerRect.top,
+      x: wrect.left - crect.left,
+      y: wrect.top - crect.top
     };
   };
 
@@ -321,50 +267,50 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     setResizeType(type);
     dragStartPos.current = { x: clientX, y: clientY };
     const container = windowRef.current.parentNode;
-    const containerRect = container.getBoundingClientRect();
-    const rect = windowRef.current.getBoundingClientRect();
-    resizeStartSize.current = { width: rect.width, height: rect.height };
+    const crect = container.getBoundingClientRect();
+    const wrect = windowRef.current.getBoundingClientRect();
+    resizeStartSize.current = { width: wrect.width, height: wrect.height };
     windowStartPos.current = {
-      x: rect.left - containerRect.left,
-      y: rect.top - containerRect.top,
+      x: wrect.left - crect.left,
+      y: wrect.top - crect.top
     };
   };
 
-  // Attach listeners to header and resizers
+  // --- Attach corner handlers ---
   useEffect(() => {
     const header = windowRef.current.querySelector('.window-header');
     const resizerBR = windowRef.current.querySelector('.resize-br');
     const resizerTR = windowRef.current.querySelector('.resize-tr');
     const resizerBL = windowRef.current.querySelector('.resize-bl');
+    const resizerTL = windowRef.current.querySelector('.resize-tl');
 
     header.addEventListener('mousedown', handleDragStart);
     header.addEventListener('touchstart', handleDragStart);
 
-    resizerBR.addEventListener('mousedown', (e) => handleResizeStart(e, 'bottom-right'));
-    resizerBR.addEventListener('touchstart', (e) => handleResizeStart(e, 'bottom-right'));
-
-    resizerTR.addEventListener('mousedown', (e) => handleResizeStart(e, 'top-right'));
-    resizerTR.addEventListener('touchstart', (e) => handleResizeStart(e, 'top-right'));
-
-    resizerBL.addEventListener('mousedown', (e) => handleResizeStart(e, 'bottom-left'));
-    resizerBL.addEventListener('touchstart', (e) => handleResizeStart(e, 'bottom-left'));
+    resizerBR.addEventListener('mousedown', e => handleResizeStart(e, 'bottom-right'));
+    resizerBR.addEventListener('touchstart', e => handleResizeStart(e, 'bottom-right'));
+    resizerTR.addEventListener('mousedown', e => handleResizeStart(e, 'top-right'));
+    resizerTR.addEventListener('touchstart', e => handleResizeStart(e, 'top-right'));
+    resizerBL.addEventListener('mousedown', e => handleResizeStart(e, 'bottom-left'));
+    resizerBL.addEventListener('touchstart', e => handleResizeStart(e, 'bottom-left'));
+    resizerTL.addEventListener('mousedown', e => handleResizeStart(e, 'top-left'));
+    resizerTL.addEventListener('touchstart', e => handleResizeStart(e, 'top-left'));
 
     return () => {
       header.removeEventListener('mousedown', handleDragStart);
       header.removeEventListener('touchstart', handleDragStart);
 
-      resizerBR.removeEventListener('mousedown', (e) => handleResizeStart(e, 'bottom-right'));
-      resizerBR.removeEventListener('touchstart', (e) => handleResizeStart(e, 'bottom-right'));
-
-      resizerTR.removeEventListener('mousedown', (e) => handleResizeStart(e, 'top-right'));
-      resizerTR.removeEventListener('touchstart', (e) => handleResizeStart(e, 'top-right'));
-
-      resizerBL.removeEventListener('mousedown', (e) => handleResizeStart(e, 'bottom-left'));
-      resizerBL.removeEventListener('touchstart', (e) => handleResizeStart(e, 'bottom-left'));
+      resizerBR.removeEventListener('mousedown', e => handleResizeStart(e, 'bottom-right'));
+      resizerBR.removeEventListener('touchstart', e => handleResizeStart(e, 'bottom-right'));
+      resizerTR.removeEventListener('mousedown', e => handleResizeStart(e, 'top-right'));
+      resizerTR.removeEventListener('touchstart', e => handleResizeStart(e, 'top-right'));
+      resizerBL.removeEventListener('mousedown', e => handleResizeStart(e, 'bottom-left'));
+      resizerBL.removeEventListener('touchstart', e => handleResizeStart(e, 'bottom-left'));
+      resizerTL.removeEventListener('mousedown', e => handleResizeStart(e, 'top-left'));
+      resizerTL.removeEventListener('touchstart', e => handleResizeStart(e, 'top-left'));
     };
   }, []);
 
-  // Return snap functions for external use
   return { enterFullscreen, snapToPosition };
 }
 

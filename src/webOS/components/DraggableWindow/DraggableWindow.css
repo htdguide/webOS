@@ -8,11 +8,12 @@
   backdrop-filter: blur(12px);
   z-index: 1000;
   user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
-/* --------------------
-   HEADER
---------------------- */
+/* Header */
 .window-header {
   position: relative;
   height: 30px;
@@ -26,7 +27,6 @@
   cursor: grab;
   z-index: 10;
 }
-
 .window-header:active {
   cursor: grabbing;
 }
@@ -34,7 +34,7 @@
 .header-left {
   display: flex;
   align-items: center;
-  gap: 8px; /* space between close+resize buttons */
+  gap: 8px;
 }
 
 .close-button,
@@ -48,13 +48,11 @@
   transition: background 0.2s ease-in-out;
   padding: 0;
   line-height: 0;
-  -webkit-appearance: none;
   appearance: none;
   position: relative;
   top: -2px;
 }
 
-/* Close = red */
 .close-button {
   background: #ff5f5f;
 }
@@ -62,7 +60,6 @@
   background: #bf4943;
 }
 
-/* Resize = green */
 .resize-button {
   background: #5fdd5f;
 }
@@ -94,9 +91,7 @@
   align-items: center;
 }
 
-/* --------------------
-   CONTENT AREA
---------------------- */
+/* Content */
 .window-content {
   position: relative;
   height: calc(100% - 30px);
@@ -128,19 +123,15 @@
   justify-content: center;
   z-index: 10;
 }
-
 .loading-overlay.fade-out {
   opacity: 0;
 }
-
 .loading-overlay,
 .loading-overlay.fade-out {
   pointer-events: none;
 }
 
-/* --------------------
-   RESIZE HANDLES
---------------------- */
+/* Resize Handles */
 .resize-handle {
   position: absolute;
   width: 15px;
@@ -165,6 +156,12 @@
   bottom: 0;
   left: 0;
   cursor: nesw-resize;
+}
+
+.resize-tl {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
 }
 
 .resize-handle:active {
