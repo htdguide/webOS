@@ -109,6 +109,7 @@
   z-index: 0;
 }
 
+/* Loading Overlay */
 .loading-overlay {
   position: absolute;
   top: 0;
@@ -131,13 +132,20 @@
   pointer-events: none;
 }
 
-/* Resize Handles */
+/* Base Resize Handle */
 .resize-handle {
   position: absolute;
+  background: transparent;
+}
+
+/* ——— Corner Resize Handles (above edges) ——— */
+.resize-br,
+.resize-tr,
+.resize-bl,
+.resize-tl {
   width: 15px;
   height: 15px;
-  background: transparent;
-  z-index: 10;
+  z-index: 20; /* bump above edge handles */
 }
 
 .resize-br {
@@ -165,10 +173,51 @@
 }
 
 .resize-handle:active {
+  /* expand active handle to full quadrant */
+  width: 100%;
+  height: 100%;
   top: 0;
   left: 0;
   bottom: auto;
   right: auto;
+}
+
+/* ——— Edge Resize Handles ——— */
+.resize-top,
+.resize-bottom,
+.resize-left,
+.resize-right {
+  z-index: 10; /* sit below corner handles */
+}
+
+.resize-top {
+  top: 0;
+  left: 0;
   width: 100%;
+  height: 5px;
+  cursor: ns-resize;
+}
+
+.resize-bottom {
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  cursor: ns-resize;
+}
+
+.resize-left {
+  top: 0;
+  left: 0;
+  width: 5px;
   height: 100%;
+  cursor: ew-resize;
+}
+
+.resize-right {
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 100%;
+  cursor: ew-resize;
 }

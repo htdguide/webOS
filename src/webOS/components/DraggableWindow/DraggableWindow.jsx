@@ -307,7 +307,7 @@ const DraggableWindow = forwardRef(
           )}
         </div>
 
-        {/* Resizers */}
+        {/* Corner Resizers */}
         <div
           className="resize-handle resize-br"
           onMouseDown={() => setIsUserResizing(true)}
@@ -325,6 +325,28 @@ const DraggableWindow = forwardRef(
         />
         <div
           className="resize-handle resize-tl"
+          onMouseDown={() => setIsUserResizing(true)}
+          onTouchStart={() => setIsUserResizing(true)}
+        />
+
+        {/* Edge Resizers */}
+        <div
+          className="resize-handle resize-top"
+          onMouseDown={() => setIsUserResizing(true)}
+          onTouchStart={() => setIsUserResizing(true)}
+        />
+        <div
+          className="resize-handle resize-bottom"
+          onMouseDown={() => setIsUserResizing(true)}
+          onTouchStart={() => setIsUserResizing(true)}
+        />
+        <div
+          className="resize-handle resize-left"
+          onMouseDown={() => setIsUserResizing(true)}
+          onTouchStart={() => setIsUserResizing(true)}
+        />
+        <div
+          className="resize-handle resize-right"
           onMouseDown={() => setIsUserResizing(true)}
           onTouchStart={() => setIsUserResizing(true)}
         />

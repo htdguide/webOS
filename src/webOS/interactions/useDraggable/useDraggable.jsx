@@ -12,7 +12,7 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
   const snapTimerRef = useRef(null);
   const previewRef = useRef(null);
 
-  // Parse and normalize min/max sizes from props
+  // Parse and normalize min/max sizes
   const {
     minWidth: propMinWidth,
     minHeight: propMinHeight,
@@ -177,34 +177,48 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
         let newX = windowStartPos.current.x;
         let newY = windowStartPos.current.y;
 
+        // Corners
         if (resizeType === 'bottom-right') {
           const dx = clientX - dragStartPos.current.x;
           const dy = clientY - dragStartPos.current.y;
           newW = Math.max(initW + dx, minWidth);
           newH = Math.max(initH + dy, minHeight);
-
         } else if (resizeType === 'bottom-left') {
           const dx = dragStartPos.current.x - clientX;
           const dy = clientY - dragStartPos.current.y;
           newW = Math.max(initW + dx, minWidth);
           newH = Math.max(initH + dy, minHeight);
           newX = origRight - newW;
-
         } else if (resizeType === 'top-right') {
           const dx = clientX - dragStartPos.current.x;
           const dy = dragStartPos.current.y - clientY;
           newW = Math.max(initW + dx, minWidth);
           newH = Math.max(initH + dy, minHeight);
           newY = origBottom - newH;
-
         } else if (resizeType === 'top-left') {
-          // **NEW** top-left: anchor bottom-right
           const dx = dragStartPos.current.x - clientX;
           const dy = dragStartPos.current.y - clientY;
           newW = Math.max(initW + dx, minWidth);
           newH = Math.max(initH + dy, minHeight);
           newX = origRight - newW;
           newY = origBottom - newH;
+        }
+
+        // Edges
+        else if (resizeType === 'top') {
+          const dy = dragStartPos.current.y - clientY;
+          newH = Math.max(initH + dy, minHeight);
+          newY = origBottom - newH;
+        } else if (resizeType === 'bottom') {
+          const dy = clientY - dragStartPos.current.y;
+          newH = Math.max(initH + dy, minHeight);
+        } else if (resizeType === 'left') {
+          const dx = dragStartPos.current.x - clientX;
+          newW = Math.max(initW + dx, minWidth);
+          newX = origRight - newW;
+        } else if (resizeType === 'right') {
+          const dx = clientX - dragStartPos.current.x;
+          newW = Math.max(initW + dx, minWidth);
         }
 
         // enforce max bounds
@@ -276,13 +290,17 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     };
   };
 
-  // --- Attach corner handlers ---
+  // --- Attach corner & edge handlers ---
   useEffect(() => {
     const header = windowRef.current.querySelector('.window-header');
     const resizerBR = windowRef.current.querySelector('.resize-br');
     const resizerTR = windowRef.current.querySelector('.resize-tr');
     const resizerBL = windowRef.current.querySelector('.resize-bl');
     const resizerTL = windowRef.current.querySelector('.resize-tl');
+    const resizerTop = windowRef.current.querySelector('.resize-top');
+    const resizerBottom = windowRef.current.querySelector('.resize-bottom');
+    const resizerLeft = windowRef.current.querySelector('.resize-left');
+    const resizerRight = windowRef.current.querySelector('.resize-right');
 
     header.addEventListener('mousedown', handleDragStart);
     header.addEventListener('touchstart', handleDragStart);
@@ -296,6 +314,15 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     resizerTL.addEventListener('mousedown', e => handleResizeStart(e, 'top-left'));
     resizerTL.addEventListener('touchstart', e => handleResizeStart(e, 'top-left'));
 
+    resizerTop.addEventListener('mousedown', e => handleResizeStart(e, 'top'));
+    resizerTop.addEventListener('touchstart', e => handleResizeStart(e, 'top'));
+    resizerBottom.addEventListener('mousedown', e => handleResizeStart(e, 'bottom'));
+    resizerBottom.addEventListener('touchstart', e => handleResizeStart(e, 'bottom'));
+    resizerLeft.addEventListener('mousedown', e => handleResizeStart(e, 'left'));
+    resizerLeft.addEventListener('touchstart', e => handleResizeStart(e, 'left'));
+    resizerRight.addEventListener('mousedown', e => handleResizeStart(e, 'right'));
+    resizerRight.addEventListener('touchstart', e => handleResizeStart(e, 'right'));
+
     return () => {
       header.removeEventListener('mousedown', handleDragStart);
       header.removeEventListener('touchstart', handleDragStart);
@@ -308,6 +335,15 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
       resizerBL.removeEventListener('touchstart', e => handleResizeStart(e, 'bottom-left'));
       resizerTL.removeEventListener('mousedown', e => handleResizeStart(e, 'top-left'));
       resizerTL.removeEventListener('touchstart', e => handleResizeStart(e, 'top-left'));
+
+      resizerTop.removeEventListener('mousedown', e => handleResizeStart(e, 'top'));
+      resizerTop.removeEventListener('touchstart', e => handleResizeStart(e, 'top'));
+      resizerBottom.removeEventListener('mousedown', e => handleResizeStart(e, 'bottom'));
+      resizerBottom.removeEventListener('touchstart', e => handleResizeStart(e, 'bottom'));
+      resizerLeft.removeEventListener('mousedown', e => handleResizeStart(e, 'left'));
+      resizerLeft.removeEventListener('touchstart', e => handleResizeStart(e, 'left'));
+      resizerRight.removeEventListener('mousedown', e => handleResizeStart(e, 'right'));
+      resizerRight.removeEventListener('touchstart', e => handleResizeStart(e, 'right'));
     };
   }, []);
 
