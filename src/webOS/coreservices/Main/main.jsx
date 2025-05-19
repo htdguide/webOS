@@ -4,13 +4,14 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import System from '../System/System.jsx';
 import SystemUI from '../SystemUI/SystemUI.jsx';
+import MissionControl from '../MissionControl/MissionControl.jsx';
 
 const Main = () => {
 
   return (
     <StrictMode>
       <System>
-        <SystemUI />
+        <MissionControl/>
       </System>
     </StrictMode>
   );

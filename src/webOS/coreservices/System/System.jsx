@@ -4,6 +4,7 @@ import { StateManagerProvider } from '../../stores/StateManager/StateManager.jsx
 import DeviceInfoProvider from '../../contexts/DeviceInfoProvider/DeviceInfoProvider.jsx';
 import { MusicServiceProvider } from '../../drivers/MusicService/MusicService.jsx';
 import DisplayController from '../../drivers/DisplayController/DisplayController.jsx';
+import { NotificationProvider } from '../../components/Notification/NotificationProvider.jsx';
 
 const System = ({ children }) => {
   return (
@@ -11,7 +12,9 @@ const System = ({ children }) => {
       <DeviceInfoProvider>
         <MusicServiceProvider>
           <DisplayController>
-            {children}
+            <NotificationProvider>
+              {children}
+            </NotificationProvider>
           </DisplayController>
         </MusicServiceProvider>
       </DeviceInfoProvider>

@@ -3,7 +3,6 @@ import React from 'react';
 import { FocusProvider } from '../../contexts/FocusControl/FocusControl.jsx';
 import { MiniWindowProvider } from '../../components/MiniWindow/MiniWindowProvider.jsx';
 import { DraggableWindowProvider } from '../../components/DraggableWindow/DraggableWindowProvider.jsx';
-import { NotificationProvider } from '../../components/Notification/NotificationProvider.jsx';
 import DesktopAssembler from '../DesktopAssembler/DesktopAssembler.jsx';
 
 const SystemUI = () => {
@@ -13,9 +12,7 @@ const SystemUI = () => {
         <FocusProvider>
           <MiniWindowProvider>
             <DraggableWindowProvider>
-              <NotificationProvider>
-                <DesktopAssembler />
-              </NotificationProvider>
+              <DesktopAssembler />
             </DraggableWindowProvider>
           </MiniWindowProvider>
         </FocusProvider>
