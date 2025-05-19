@@ -52,13 +52,23 @@
 }
 
 .menu-item {
-  padding: 0 15px;
+  padding: 0 8px;
+  margin-top: -2px;
   font-size: 13px; /* One step larger */
   text-decoration: none;
   line-height: 30px;
   cursor: pointer;
 }
 
+/* New: make sure the kiwiicon PNG is sized and centered */
+.menu-item-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Hover states */
 .menu-bar.light-mode .menu-item:hover {
   background: rgba(0, 0, 0, 0.1);
   color: #000;

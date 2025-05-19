@@ -5,6 +5,8 @@ import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvi
 import MiniApps from '../MiniApps/MiniApps';
 // Use the new StateManager hook instead of the old UIStateStorage.
 import { useStateManager } from '../../stores/StateManager/StateManager';
+// Import the PNG file
+import kiwiIcon from '../../media/icons/kiwiicon.png';
 
 function MenuBar({ darkMode = false }) {
   const deviceInfo = useDeviceInfo();
@@ -56,7 +58,9 @@ function MenuBar({ darkMode = false }) {
   return (
     <div className={`menu-bar ${isMenubarVisible ? 'visible' : 'hidden'} ${darkMode ? 'dark-mode' : 'light-mode'}`}>
       <div className="menu-left">
-        <a href="/" className="menu-item">Home</a>
+        <a href="/" className="menu-item">
+          <img src={kiwiIcon} alt="Home" className="menu-item-icon" />
+        </a>
       </div>
       <div className="menu-user-info">
         {/* You can include formatted time or additional UI elements here */}
