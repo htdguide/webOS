@@ -41,7 +41,7 @@ const initialAppsList = [
     name: 'Quake3',
     icon: quakeIcon,
     component: Quake3,
-    priority: 5,
+    priority: 6,
     indock: false,
   },
   {

@@ -1,33 +1,32 @@
 // Noterminal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import './Noterminal.css';
 import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowProvider';
 import { useStateManager } from '../../stores/StateManager/StateManager';
 import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvider';
 import FlowManager from './components/FlowManager';
 
-function Terminal({ onClose }) {
+function Noterminal({ onClose }) {
   const {
     openDraggableWindow,
     closeDraggableWindow,
-    updateDraggableWindow,
     hideLoading,
+    resizeDraggableWindow,
+    moveDraggableWindow,
   } = useDraggableWindow();
 
-  // Get the state from the StateManager.
+  // pull your terminal settings (with defaults)
   const { state } = useStateManager();
-  // Retrieve terminal settings from the state; provide fallback defaults if not present.
-  const terminalSettings = state.groups.terminalSettings || {
-    fontSize: '12px',
-    fontColor: '#000000',
-    fontFamily: 'monospace',
-    backgroundColor: '#FFFFFF',
-  };
+  const {
+    fontSize = '12px',
+    fontColor = '#000000',
+    fontFamily = 'monospace',
+    backgroundColor = '#FFFFFF',
+  } = state.groups.terminalSettings || {};
 
-  const { fontSize, fontColor, fontFamily, backgroundColor } = terminalSettings;
   const deviceInfo = useDeviceInfo();
 
-  // Default window parameters for desktop.
+  // base dimensions
   const defaultParams = {
     windowWidth: 600,
     windowHeight: 400,
@@ -35,8 +34,7 @@ function Terminal({ onClose }) {
     initialY: undefined,
   };
 
-  // For mobile devices, open terminal full width, top half of viewport,
-  // and positioned at the top left corner.
+  // full-width on mobile, top half
   const windowParams =
     deviceInfo.deviceType !== 'desktop'
       ? {
@@ -47,60 +45,67 @@ function Terminal({ onClose }) {
         }
       : defaultParams;
 
-  // When input is focused on mobile devices, reposition/rescale the terminal.
-  const handleInputFocus = () => {
-    if (deviceInfo.deviceType !== 'desktop' && updateDraggableWindow) {
-      updateDraggableWindow({
-        windowWidth: window.innerWidth,
-        windowHeight: Math.floor(window.innerHeight / 2),
-        x: 0,
-        y: 0,
-      });
-    }
-  };
+  const title = 'Noterminal';
 
+  // wrap your FlowManager so it can reposition on input focus
   const terminalContent = (
-    <FlowManager 
+    <FlowManager
       fontSize={fontSize}
       fontColor={fontColor}
       fontFamily={fontFamily}
       backgroundColor={backgroundColor}
-      onInputFocus={handleInputFocus}
+      onInputFocus={() => {
+        if (deviceInfo.deviceType !== 'desktop') {
+          resizeDraggableWindow(
+            title,
+            window.innerWidth,
+            Math.floor(window.innerHeight / 2)
+          );
+          moveDraggableWindow(title, 0, 0);
+        }
+      }}
     />
   );
 
   useEffect(() => {
     openDraggableWindow({
-      title: 'Noterminal',
+      title,
       windowWidth: windowParams.windowWidth,
       windowHeight: windowParams.windowHeight,
       minWindowWidth: 300,
       minWindowHeight: 200,
+      initialX: windowParams.initialX,
+      initialY: windowParams.initialY,
       content: terminalContent,
-      onClose,
+      onClose: () => {
+        onClose?.();
+        closeDraggableWindow(title);
+      },
       onMount: () => {
-        if (hideLoading) hideLoading();
+        // now correctly hide *this* window's loading overlay
+        hideLoading(title);
       },
       onUnmount: () => {
         console.log('Terminal draggable window unmounted.');
       },
-      initialX: windowParams.initialX,
-      initialY: windowParams.initialY,
     });
 
     return () => {
-      closeDraggableWindow();
+      // clean up in case the parent unmounts us
+      closeDraggableWindow(title);
     };
   }, [
     openDraggableWindow,
     closeDraggableWindow,
-    onClose,
-    terminalContent,
     hideLoading,
+    resizeDraggableWindow,
+    moveDraggableWindow,
+    terminalContent,
     windowParams,
+    onClose,
   ]);
 
   return null;
 }
 
-export default Terminal;
+export default Noterminal;

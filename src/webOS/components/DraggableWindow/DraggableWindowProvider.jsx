@@ -1,138 +1,103 @@
 // DraggableWindowProvider.jsx
-// This provider manages the state of a single draggable window and offers imperative methods
-// (like showing a loading overlay, moving, or resizing the window). The provider now supports
-// an optional iframeSrc property that, if set, tells the window to render an iframe in its content area.
-
 import React, { createContext, useContext, useState, useRef } from 'react';
 import DraggableWindow from './DraggableWindow.jsx';
 import { useFocus } from '../../contexts/FocusControl/FocusControl.jsx';
 
-// Create a context for the draggable window.
 const DraggableWindowContext = createContext();
 
-// Provider component that wraps your application and manages the draggable window.
 export const DraggableWindowProvider = ({ children }) => {
-  // State to store the current window's properties.
-  const [windowProps, setWindowProps] = useState(null);
-  const draggableWindowRef = useRef(null);
+  // an array of window-prop objects
+  const [windows, setWindows] = useState([]);
+  // refs keyed by window title
+  const windowRefs = useRef({});
 
-  // Get the current focused component from the FocusControl context.
   const { focusedComponent } = useFocus();
-  // Determine if the draggable window is currently focused.
-  const isWindowFocused = windowProps ? focusedComponent === windowProps.title : false;
 
-  // Function to open a draggable window with given properties.
-  // Now includes an optional iframeSrc property for rendering an iframe.
-  const openDraggableWindow = ({
-    title,
-    windowWidth,
-    windowHeight,
-    minWindowWidth,
-    minWindowHeight,
-    maxWindowWidth,
-    maxWindowHeight,
-    content,
-    onClose,
-    onMount,
-    onUnmount,
-    onResize, // optional callback for resize events
-    initialX, // initial horizontal position
-    initialY, // initial vertical position
-    iframeSrc, // new optional prop for the iframe URL
-  }) => {
-    setWindowProps({
-      title,
-      windowWidth,
-      windowHeight,
-      minWindowWidth,
-      minWindowHeight,
-      maxWindowWidth,
-      maxWindowHeight,
-      content,
-      onClose,
-      onMount,
-      onUnmount,
-      onResize,
-      initialX,
-      initialY,
-      iframeSrc, // pass along the iframe source URL
+  /**
+   * Opens a window unless one with the same title is already open.
+   * We do the dedupe check inside setWindows' functional updater,
+   * so even back-to-back calls in the same tick won’t add twice.
+   */
+  const openDraggableWindow = (props) => {
+    const { title } = props;
+
+    setWindows(prev => {
+      // if it’s already in the list, do nothing
+      if (prev.some(w => w.title === title)) return prev;
+
+      // ensure we have a ref for imperatives
+      if (!windowRefs.current[title]) {
+        windowRefs.current[title] = React.createRef();
+      }
+
+      return [...prev, props];
     });
-    // Note: The DraggableWindow component handles focus on mount.
   };
 
-  // Function to close the draggable window.
-  const closeDraggableWindow = () => {
-    setWindowProps(null);
+  const closeDraggableWindow = (title) => {
+    setWindows(prev => prev.filter(w => w.title !== title));
   };
 
-  // Imperative method to show the loading overlay.
-  const showLoading = () => {
-    if (draggableWindowRef.current && draggableWindowRef.current.showLoading) {
-      draggableWindowRef.current.showLoading();
-    }
+  // Imperative APIs—themselves keyed by title:
+  const showLoading = (title) => {
+    windowRefs.current[title]?.current?.showLoading();
+  };
+  const hideLoading = (title) => {
+    windowRefs.current[title]?.current?.hideLoading();
+  };
+  const resizeDraggableWindow = (title, newW, newH) => {
+    windowRefs.current[title]?.current?.resizeWindow(newW, newH);
+  };
+  const moveDraggableWindow = (title, newX, newY) => {
+    windowRefs.current[title]?.current?.moveWindow(newX, newY);
   };
 
-  // Imperative method to hide the loading overlay.
-  const hideLoading = () => {
-    if (draggableWindowRef.current && draggableWindowRef.current.hideLoading) {
-      draggableWindowRef.current.hideLoading();
-    }
-  };
-
-  // Imperative method to resize the draggable window.
-  const resizeDraggableWindow = (newWidth, newHeight) => {
-    if (draggableWindowRef.current && draggableWindowRef.current.resizeWindow) {
-      draggableWindowRef.current.resizeWindow(newWidth, newHeight);
-    }
-  };
-
-  // Imperative method to move the draggable window.
-  const moveDraggableWindow = (newX, newY) => {
-    if (draggableWindowRef.current && draggableWindowRef.current.moveWindow) {
-      draggableWindowRef.current.moveWindow(newX, newY);
-    }
-  };
+  const isWindowFocused = (title) => focusedComponent === title;
 
   return (
-    <DraggableWindowContext.Provider
-      value={{
-        openDraggableWindow,
-        closeDraggableWindow,
-        showLoading,
-        hideLoading,
-        resizeDraggableWindow,
-        moveDraggableWindow,
-        isWindowFocused,
-      }}
-    >
+    <DraggableWindowContext.Provider value={{
+      openDraggableWindow,
+      closeDraggableWindow,
+      showLoading,
+      hideLoading,
+      resizeDraggableWindow,
+      moveDraggableWindow,
+      isWindowFocused
+    }}>
       {children}
-      {windowProps && (
+
+      {/*
+         Render one <DraggableWindow> per entry in windows[].
+         We spread in all your props, override onClose to filter it out,
+         and pass your “content” as the child.
+      */}
+      {windows.map(w => (
         <DraggableWindow
-          ref={draggableWindowRef}
-          title={windowProps.title}
-          windowWidth={windowProps.windowWidth}
-          windowHeight={windowProps.windowHeight}
-          minWindowWidth={windowProps.minWindowWidth}
-          minWindowHeight={windowProps.minWindowHeight}
-          maxWindowWidth={windowProps.maxWindowWidth}
-          maxWindowHeight={windowProps.maxWindowHeight}
+          key={w.title}
+          ref={windowRefs.current[w.title]}
+          title={w.title}
+          windowWidth={w.windowWidth}
+          windowHeight={w.windowHeight}
+          minWindowWidth={w.minWindowWidth}
+          minWindowHeight={w.minWindowHeight}
+          maxWindowWidth={w.maxWindowWidth}
+          maxWindowHeight={w.maxWindowHeight}
           onClose={() => {
-            if (windowProps.onClose) windowProps.onClose();
-            closeDraggableWindow();
+            w.onClose?.();
+            closeDraggableWindow(w.title);
           }}
-          onMount={windowProps.onMount}
-          onUnmount={windowProps.onUnmount}
-          onResize={windowProps.onResize} // pass the onResize callback
-          initialX={windowProps.initialX}
-          initialY={windowProps.initialY}
-          iframeSrc={windowProps.iframeSrc} // pass iframeSrc so DraggableWindow knows to render an iframe
+          onMount={w.onMount}
+          onUnmount={w.onUnmount}
+          onResize={w.onResize}
+          initialX={w.initialX}
+          initialY={w.initialY}
+          iframeSrc={w.iframeSrc}
         >
-          {windowProps.content}
+          {w.content}
         </DraggableWindow>
-      )}
+      ))}
     </DraggableWindowContext.Provider>
   );
 };
 
-// Custom hook to access the DraggableWindowContext.
 export const useDraggableWindow = () => useContext(DraggableWindowContext);
