@@ -28,7 +28,7 @@ const MissionControl = () => {
   }, [desktops]);
 
   const deleteDesktop = useCallback((index) => {
-    if (desktops.length === 1) return; // always keep at least one
+    if (desktops.length === 1) return;
     setDesktops(prev => prev.filter((_, i) => i !== index));
     setActiveIndex(prev => {
       if (index < prev) return prev - 1;
@@ -42,7 +42,7 @@ const MissionControl = () => {
       value={{ createDesktop, switchDesktop, deleteDesktop, activeIndex, desktops }}
     >
       <div className="mission-control-container">
-        {/* Overlay toolbar */}
+        {/* Overlay buttons */}
         <div className="mc-overlay">
           <button onClick={createDesktop}>+ New</button>
           <button
@@ -61,7 +61,9 @@ const MissionControl = () => {
 
         <div
           className="desktops-wrapper"
-          style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+          style={{
+            transform: `translateX(calc(-${activeIndex} * (100vw + 60px)))`
+          }}
         >
           {desktops.map(desk => (
             <div className="desktop-panel" key={desk.id}>

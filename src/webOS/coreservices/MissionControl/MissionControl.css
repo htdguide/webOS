@@ -2,21 +2,22 @@
 
 .mission-control-container {
     position: relative;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     overflow: hidden;
+    background-color: #000; /* shows through the 60px gaps */
   }
   
   .desktops-wrapper {
     display: flex;
-    width: 100%;
+    gap: 60px;               /* black gutter between desktops */
     height: 100%;
     transition: transform 0.5s ease-in-out;
   }
   
   .desktop-panel {
     flex-shrink: 0;
-    width: 100%;
+    width: 100vw;            /* each desktop fills viewport */
     height: 100%;
   }
   
