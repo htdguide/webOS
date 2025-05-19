@@ -18,5 +18,8 @@
   "admin": {
     "dashboard": "active",
     "logs": "enabled"
+  },
+  "missionControl": {
+    "overlayVisible": "false"
   }
 }

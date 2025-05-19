@@ -52,3 +52,17 @@
     background: rgba(0, 0, 0, 0.8);
   }
   
+  /* Dock container stays fixed across desktops */
+  .mc-dock {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 150;
+    pointer-events: none; /* let Dock handle its own pointer events */
+  }
+  
+  /* If your Dock needs pointer-events, override: */
+  .mc-dock > * {
+    pointer-events: all;
+  }
+  
