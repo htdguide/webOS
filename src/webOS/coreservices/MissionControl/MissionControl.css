@@ -1,68 +1,134 @@
 /* MissionControl.css */
 
 .mission-control-container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    background-color: #000; /* shows through the 60px gaps */
-  }
-  
-  .desktops-wrapper {
-    display: flex;
-    gap: 60px;               /* black gutter between desktops */
-    height: 100%;
-    transition: transform 0.5s ease-in-out;
-  }
-  
-  .desktop-panel {
-    flex-shrink: 0;
-    width: 100vw;            /* each desktop fills viewport */
-    height: 100%;
-  }
-  
-  /* Overlay toolbar styling */
-  .mc-overlay {
-    position: absolute;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 8px;
-    z-index: 100;
-  }
-  
-  .mc-overlay button {
-    background: rgba(0, 0, 0, 0.6);
-    color: #fff;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  
-  .mc-overlay button:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-  
-  .mc-overlay button:not(:disabled):hover {
-    background: rgba(0, 0, 0, 0.8);
-  }
-  
-  /* Dock container stays fixed across desktops */
-  .mc-dock {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 150;
-    pointer-events: none; /* let Dock handle its own pointer events */
-  }
-  
-  /* If your Dock needs pointer-events, override: */
-  .mc-dock > * {
-    pointer-events: all;
-  }
-  
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #000;
+}
+
+/* blur background when overview is open */
+.mission-control-container.overview-open::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 150;
+}
+
+/* hide toolbar & dock in overview */
+.mission-control-container.overview-open .mc-overlay,
+.mission-control-container.overview-open .mc-dock {
+  display: none;
+}
+
+/* overview top bar */
+.mc-overview-bar {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-radius: 4px;
+}
+.overview-close-button {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* normal desktops slider */
+.desktops-wrapper {
+  display: flex;
+  gap: 60px;
+  height: 100%;
+  transition: transform 0.5s ease-in-out;
+}
+
+/* overview thumbnails layout */
+.mission-control-container.overview-open .desktops-wrapper {
+  position: absolute;
+  top: 80px; /* under the bar */
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 0 20px;
+  z-index: 200;
+  transition: none;
+}
+
+/* desktop panel defaults */
+.desktop-panel {
+  flex-shrink: 0;
+  width: 100vw;
+  height: 100%;
+}
+
+/* thumbnail-specific styling */
+.mission-control-container.overview-open .desktop-panel {
+  overflow: hidden;
+  background: #000;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* wrapper for live-scale */
+.desktop-scale-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+/* overlay toolbar */
+.mc-overlay {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 100;
+}
+.mc-overlay button {
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.mc-overlay button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.mc-overlay button:not(:disabled):hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* fixed Dock */
+.mc-dock {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  pointer-events: none;
+}
+.mc-dock > * {
+  pointer-events: all;
+}
