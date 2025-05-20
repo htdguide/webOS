@@ -1,5 +1,16 @@
 /* MissionControl.css */
 
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideInDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
 .mission-control-container {
   position: relative;
   width: 100vw;
@@ -13,9 +24,13 @@
   position: absolute;
   inset: 0;
   z-index: 100;
+  opacity: 0;
+}
+.mission-control-container.overview-open .mc-wallpaper {
+  animation: fadeIn 0.3s ease-out forwards;
 }
 
-/* catch-all layer for “click outside” */
+/* catch-anywhere overlay for exit */
 .mc-exit-overlay {
   position: absolute;
   inset: 0;
@@ -35,9 +50,8 @@
   z-index: 150;
 }
 
-/* hide original toolbar & dock in overview */
-.mission-control-container.overview-open .mc-overlay,
-.mission-control-container.overview-open .mc-dock {
+/* hide mission control toolbar in overview */
+.mission-control-container.overview-open .mc-overlay {
   display: none;
 }
 
@@ -50,20 +64,20 @@
   position: relative;
 }
 
-/* overview “conveyor”: dropped 30px, 30px gaps, centered group */
+/* overview “conveyor”: dropped 30px, 30px gaps, centered group, slide-in */
 .mission-control-container.overview-open .desktops-wrapper {
   position: absolute;
   top: 30px;
   left: 0;
   right: 0;
   display: flex;
-  align-items: center;      /* center thumbnails vertically */
-  justify-content: center;  /* center the whole group horizontally */
-  gap: 30px;                /* 30px between thumbnails */
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
   padding: 0 20px;
   z-index: 200;
   flex-wrap: nowrap;
-  transition: none;
+  animation: slideInDown 0.3s ease-out forwards;
 }
 
 /* full-size panels (non-overview) */
@@ -116,12 +130,12 @@
   background: rgba(0, 0, 0, 0.8);
 }
 
-/* dock container */
+/* dock container: always visible, on top */
 .mc-dock {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 150;
+  z-index: 250;
   pointer-events: none;
 }
 .mc-dock > * {
