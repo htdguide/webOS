@@ -1,4 +1,4 @@
-// MissionControl.jsx
+// src/components/MissionControl/MissionControl.jsx
 import React, {
   createContext,
   useState,
@@ -7,24 +7,26 @@ import React, {
 } from 'react';
 import SystemUI from '../SystemUI/SystemUI.jsx';
 import Dock from '../../components/Dock/Dock.jsx';
+import { WallpaperPlain } from '../../components/Wallpaper/Wallpaper.jsx';
 import { useStateManager } from '../../stores/StateManager/StateManager.jsx';
 import './MissionControl.css';
 
 export const MissionControlContext = createContext({
   createDesktop: () => {},
-  switchDesktop: (_index) => {},
-  deleteDesktop: (_index) => {},
+  switchDesktop: (_i) => {},
+  deleteDesktop: (_i) => {},
   activeIndex: 0,
   desktops: []
 });
 
 const MissionControl = () => {
-  // desktop state
+  // desktops + active
   const [desktops, setDesktops] = useState([{ id: Date.now() }]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [prevIndex, setPrevIndex] = useState(0);
   const [overviewOpen, setOverviewOpen] = useState(false);
 
-  // track viewport size so we can compute perfect scale
+  // track viewport for correct thumbnail ratio
   const [viewport, setViewport] = useState({
     width: window.innerWidth,
     height: window.innerHeight
@@ -36,11 +38,9 @@ const MissionControl = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // fixed thumbnail width in px
+  // thumbnail sizing
   const THUMB_W = 240;
-  // compute uniform scale factor so width→THUMB_W
   const scale = THUMB_W / viewport.width;
-  // scaled height
   const THUMB_H = viewport.height * scale;
 
   // global overlay toggle
@@ -48,11 +48,10 @@ const MissionControl = () => {
   const overlayVisible =
     state.groups.missionControl?.overlayVisible === 'true';
 
-  // CRUD & reorder
+  // actions
   const createDesktop = useCallback(() => {
-    const newDesk = { id: Date.now() };
-    setDesktops((p) => [...p, newDesk]);
-    setActiveIndex((p) => p + 1);
+    setDesktops((d) => [...d, { id: Date.now() }]);
+    setActiveIndex((i) => i + 1);
   }, []);
   const switchDesktop = useCallback(
     (i) => {
@@ -63,34 +62,43 @@ const MissionControl = () => {
   const deleteDesktop = useCallback(
     (i) => {
       if (desktops.length === 1) return;
-      setDesktops((p) => p.filter((_, idx) => idx !== i));
-      setActiveIndex((p) => {
-        if (i < p) return p - 1;
-        if (i === p) return Math.max(0, p - 1);
-        return p;
+      setDesktops((d) => d.filter((_, idx) => idx !== i));
+      setActiveIndex((cur) => {
+        if (i < cur) return cur - 1;
+        if (i === cur) return Math.max(0, cur - 1);
+        return cur;
       });
     },
     [desktops]
   );
   const reorderDesktops = useCallback((from, to) => {
-    setDesktops((p) => {
-      const arr = Array.from(p);
-      const [m] = arr.splice(from, 1);
-      arr.splice(to, 0, m);
+    setDesktops((d) => {
+      const arr = Array.from(d);
+      const [moved] = arr.splice(from, 1);
+      arr.splice(to, 0, moved);
       return arr;
     });
     setActiveIndex(to);
   }, []);
 
-  // disable scroll behind overlay
+  // open overview: remember previous
+  const openOverview = () => {
+    setPrevIndex(activeIndex);
+    setOverviewOpen(true);
+  };
+  // exit by clicking empty space
+  const exitOverview = () => {
+    setOverviewOpen(false);
+    setActiveIndex(prevIndex);
+  };
+
+  // lock scroll behind
   useEffect(() => {
     document.body.style.overflow = overviewOpen ? 'hidden' : '';
   }, [overviewOpen]);
 
-  // drag handlers
-  const onDragStart = (e, i) => {
-    e.dataTransfer.setData('text/plain', i);
-  };
+  // drag/drop
+  const onDragStart = (e, i) => e.dataTransfer.setData('text/plain', String(i));
   const onDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
@@ -138,26 +146,19 @@ const MissionControl = () => {
             >
               🗑 Delete
             </button>
-            <button onClick={() => setOverviewOpen(true)}>
-              Mission Control
-            </button>
+            <button onClick={openOverview}>Mission Control</button>
           </div>
         )}
 
-        {/* Mission Control top bar */}
+        {/* wallpaper behind overview, no FocusWrapper */}
+        {overviewOpen && <WallpaperPlain className="mc-wallpaper" />}
+
+        {/* click-anywhere overlay to exit */}
         {overviewOpen && (
-          <div className="mc-overview-bar">
-            Mission Control
-            <button
-              className="overview-close-button"
-              onClick={() => setOverviewOpen(false)}
-            >
-              ×
-            </button>
-          </div>
+          <div className="mc-exit-overlay" onClick={exitOverview} />
         )}
 
-        {/* desktops: normal slider or overview */}
+        {/* desktops: slider vs overview */}
         <div
           className="desktops-wrapper"
           style={
@@ -168,49 +169,42 @@ const MissionControl = () => {
                 }
           }
         >
-          {desktops.map((desk, i) => {
-            const isOV = overviewOpen;
-            return (
+          {desktops.map((desk, i) => (
+            <div
+              key={desk.id}
+              className="desktop-panel"
+              draggable={overviewOpen}
+              onDragStart={overviewOpen ? (e) => onDragStart(e, i) : undefined}
+              onDragOver={overviewOpen ? onDragOver : undefined}
+              onDrop={overviewOpen ? (e) => onDrop(e, i) : undefined}
+              onClick={
+                overviewOpen
+                  ? () => {
+                      switchDesktop(i);
+                      setOverviewOpen(false);
+                    }
+                  : undefined
+              }
+              style={overviewOpen ? { width: THUMB_W, height: THUMB_H } : undefined}
+            >
               <div
-                key={desk.id}
-                className="desktop-panel"
-                draggable={isOV}
-                onDragStart={isOV ? (e) => onDragStart(e, i) : undefined}
-                onDragOver={isOV ? onDragOver : undefined}
-                onDrop={isOV ? (e) => onDrop(e, i) : undefined}
-                onClick={
-                  isOV
-                    ? () => {
-                        switchDesktop(i);
-                        setOverviewOpen(false);
-                      }
-                    : undefined
-                }
+                className="desktop-scale-wrapper"
                 style={
-                  isOV
-                    ? { width: THUMB_W, height: THUMB_H }
-                    : undefined
+                  overviewOpen
+                    ? {
+                        width: viewport.width,
+                        height: viewport.height,
+                        transform: `scale(${scale})`,
+                        transformOrigin: 'top left',
+                        pointerEvents: 'none'
+                      }
+                    : {}
                 }
               >
-                <div
-                  className="desktop-scale-wrapper"
-                  style={
-                    isOV
-                      ? {
-                          width: viewport.width,
-                          height: viewport.height,
-                          transform: `scale(${scale})`,
-                          transformOrigin: 'top left',
-                          pointerEvents: 'none'
-                        }
-                      : {}
-                  }
-                >
-                  <SystemUI />
-                </div>
+                <SystemUI />
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
 
         {/* fixed Dock */}

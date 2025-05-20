@@ -8,7 +8,22 @@
   background-color: #000;
 }
 
-/* blur background when overview is open */
+/* Wallpaper when overview open */
+.mc-wallpaper {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+}
+
+/* catch-all layer for “click outside” */
+.mc-exit-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 140;
+  /* transparent but catches clicks */
+}
+
+/* blur everything behind overview */
 .mission-control-container.overview-open::before {
   content: "";
   position: absolute;
@@ -18,35 +33,15 @@
   z-index: 150;
 }
 
-/* hide toolbar & dock in overview */
+/* hide original toolbar & dock in overview */
 .mission-control-container.overview-open .mc-overlay,
 .mission-control-container.overview-open .mc-dock {
   display: none;
 }
 
-/* overview top bar */
+/* overview top bar (headless now, no close button) */
 .mc-overview-bar {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 200;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(20px);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  border-radius: 4px;
-}
-.overview-close-button {
-  margin-left: auto;
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 20px;
-  cursor: pointer;
+  /* no longer used */
 }
 
 /* normal desktops slider */
@@ -60,7 +55,7 @@
 /* overview thumbnails layout */
 .mission-control-container.overview-open .desktops-wrapper {
   position: absolute;
-  top: 80px; /* under the bar */
+  top: 80px;   /* under your wallpaper & blur */
   left: 0;
   right: 0;
   display: flex;
@@ -72,22 +67,22 @@
   transition: none;
 }
 
-/* desktop panel defaults */
+/* full-size panels */
 .desktop-panel {
   flex-shrink: 0;
   width: 100vw;
   height: 100%;
 }
 
-/* thumbnail-specific styling */
+/* thumbnail styling */
 .mission-control-container.overview-open .desktop-panel {
   overflow: hidden;
-  background: #000;
+  background: transparent; /* let wallpaper show */
   border-radius: 8px;
   cursor: pointer;
 }
 
-/* wrapper for live-scale */
+/* scale wrapper for live content */
 .desktop-scale-wrapper {
   width: 100%;
   height: 100%;
@@ -103,6 +98,7 @@
   gap: 8px;
   z-index: 100;
 }
+
 .mc-overlay button {
   background: rgba(0, 0, 0, 0.6);
   color: #fff;
@@ -121,7 +117,7 @@
   background: rgba(0, 0, 0, 0.8);
 }
 
-/* fixed Dock */
+/* dock container */
 .mc-dock {
   position: absolute;
   left: 50%;
