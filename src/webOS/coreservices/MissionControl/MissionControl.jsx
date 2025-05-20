@@ -3,7 +3,8 @@ import React, {
   createContext,
   useState,
   useCallback,
-  useEffect
+  useEffect,
+  useRef
 } from 'react';
 import SystemUI from '../SystemUI/SystemUI.jsx';
 import Dock from '../../components/Dock/Dock.jsx';
@@ -38,10 +39,25 @@ const MissionControl = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // thumbnail sizing
-  const THUMB_W = 240;
-  const scale = THUMB_W / viewport.width;
-  const THUMB_H = viewport.height * scale;
+  // thumbnail sizing: target 90px height to preserve ratio
+  const THUMB_H = 90;
+  const scale = THUMB_H / viewport.height;
+  const THUMB_W = viewport.width * scale;
+
+  // refs for scrolling
+  const wrapperRef = useRef(null);
+  const panelRefs = useRef([]);
+
+  // when overview opens or activeIndex changes, center that panel
+  useEffect(() => {
+    if (overviewOpen && panelRefs.current[activeIndex]) {
+      panelRefs.current[activeIndex].scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  }, [overviewOpen, activeIndex]);
 
   // global overlay toggle
   const { state } = useStateManager();
@@ -150,7 +166,7 @@ const MissionControl = () => {
           </div>
         )}
 
-        {/* wallpaper behind overview, no FocusWrapper */}
+        {/* wallpaper behind overview */}
         {overviewOpen && <WallpaperPlain className="mc-wallpaper" />}
 
         {/* click-anywhere overlay to exit */}
@@ -160,10 +176,11 @@ const MissionControl = () => {
 
         {/* desktops: slider vs overview */}
         <div
+          ref={wrapperRef}
           className="desktops-wrapper"
           style={
             overviewOpen
-              ? {}
+              ? { top: 30, height: THUMB_H, transform: 'none' }
               : {
                   transform: `translateX(calc(-${activeIndex} * (100vw + 60px)))`
                 }
@@ -171,6 +188,7 @@ const MissionControl = () => {
         >
           {desktops.map((desk, i) => (
             <div
+              ref={el => (panelRefs.current[i] = el)}
               key={desk.id}
               className="desktop-panel"
               draggable={overviewOpen}
@@ -185,7 +203,11 @@ const MissionControl = () => {
                     }
                   : undefined
               }
-              style={overviewOpen ? { width: THUMB_W, height: THUMB_H } : undefined}
+              style={
+                overviewOpen
+                  ? { width: THUMB_W, height: THUMB_H }
+                  : undefined
+              }
             >
               <div
                 className="desktop-scale-wrapper"

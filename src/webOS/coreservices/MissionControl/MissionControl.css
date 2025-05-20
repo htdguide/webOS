@@ -20,14 +20,16 @@
   position: absolute;
   inset: 0;
   z-index: 140;
-  /* transparent but catches clicks */
 }
 
-/* blur everything behind overview */
+/* blur only top 145px when overview open */
 .mission-control-container.overview-open::before {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 145px;
   backdrop-filter: blur(10px);
   background: rgba(0, 0, 0, 0.4);
   z-index: 150;
@@ -39,45 +41,42 @@
   display: none;
 }
 
-/* overview top bar (headless now, no close button) */
-.mc-overview-bar {
-  /* no longer used */
-}
-
 /* normal desktops slider */
 .desktops-wrapper {
   display: flex;
   gap: 60px;
   height: 100%;
   transition: transform 0.5s ease-in-out;
+  position: relative;
 }
 
-/* overview thumbnails layout */
+/* overview “conveyor”: dropped 30px, 30px gaps, centered group */
 .mission-control-container.overview-open .desktops-wrapper {
   position: absolute;
-  top: 80px;   /* under your wallpaper & blur */
+  top: 30px;
   left: 0;
   right: 0;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
+  align-items: center;      /* center thumbnails vertically */
+  justify-content: center;  /* center the whole group horizontally */
+  gap: 30px;                /* 30px between thumbnails */
   padding: 0 20px;
   z-index: 200;
+  flex-wrap: nowrap;
   transition: none;
 }
 
-/* full-size panels */
+/* full-size panels (non-overview) */
 .desktop-panel {
   flex-shrink: 0;
   width: 100vw;
   height: 100%;
 }
 
-/* thumbnail styling */
+/* thumbnail styling: sizing via inline styles */
 .mission-control-container.overview-open .desktop-panel {
   overflow: hidden;
-  background: transparent; /* let wallpaper show */
+  background: transparent;
   border-radius: 8px;
   cursor: pointer;
 }
