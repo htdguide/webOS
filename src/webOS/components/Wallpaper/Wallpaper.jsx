@@ -1,36 +1,41 @@
 // src/components/Wallpaper/Wallpaper.jsx
-import React, { useState } from 'react';
+import React, { useRef, useContext, useEffect, useState } from 'react';
 import './Wallpaper.css';
 import SequoiaSunriseImage from '../../media/wallpaper/SequoiaSunrise.jpg';
 import { FocusWrapper } from '../../contexts/FocusControl/FocusControl.jsx';
+import { VideoSyncContext } from './WallpaperSync.jsx';
 
-/**
- * The raw wallpaper markup — no FocusWrapper.
- * Accepts `className` to merge with `.wallpaper`.
- */
 function WallpaperContent({ className }) {
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const videoRef = useRef(null);
+  const { isVideoLoaded, currentTime } = useContext(VideoSyncContext);
+  const [hasSynced, setHasSynced] = useState(false);
+
+  // One-time sync on mount
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid || !isVideoLoaded || hasSynced) return;
+    vid.currentTime = currentTime;
+    vid.play().catch(() => {});
+    setHasSynced(true);
+  }, [isVideoLoaded]);
 
   return (
     <div className={`wallpaper${className ? ` ${className}` : ''}`}>
-      {/* Static image (fallback) */}
+      {/* fallback behind everything */}
       <img
         className="wallpaper-fallback"
         src={SequoiaSunriseImage}
         alt="Wallpaper Fallback"
       />
 
-      {/* Background video */}
       <video
+        ref={videoRef}
         className={isVideoLoaded ? 'wallpaper-video' : 'wallpaper-video hidden'}
-        autoPlay
         muted
         loop
         playsInline
-        onLoadedData={() => setIsVideoLoaded(true)}
-        onError={(e) => {
-          console.error('Video failed to load:', e);
-        }}
+        preload="auto"
+        poster={SequoiaSunriseImage}
       >
         <source
           src="/WebintoshHD/Wallpapers/SequoiaSunrise.mp4"
@@ -42,16 +47,10 @@ function WallpaperContent({ className }) {
   );
 }
 
-/**
- * Exported for when you want the wallpaper **without** FocusWrapper.
- */
 export function WallpaperPlain(props) {
   return <WallpaperContent {...props} />;
 }
 
-/**
- * Default export: wraps the above in FocusWrapper as before.
- */
 export default function Wallpaper(props) {
   return (
     <FocusWrapper name="Wallpaper">

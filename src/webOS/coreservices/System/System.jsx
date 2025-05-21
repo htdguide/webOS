@@ -5,19 +5,22 @@ import DeviceInfoProvider from '../../contexts/DeviceInfoProvider/DeviceInfoProv
 import { MusicServiceProvider } from '../../drivers/MusicService/MusicService.jsx';
 import DisplayController from '../../drivers/DisplayController/DisplayController.jsx';
 import { NotificationProvider } from '../../components/Notification/NotificationProvider.jsx';
+import { WallpaperSync } from '../../components/Wallpaper/WallpaperSync.jsx';
 
 const System = ({ children }) => {
   return (
     <StateManagerProvider>
-      <DeviceInfoProvider>
-        <MusicServiceProvider>
-          <DisplayController>
-            <NotificationProvider>
-              {children}
-            </NotificationProvider>
-          </DisplayController>
-        </MusicServiceProvider>
-      </DeviceInfoProvider>
+      <WallpaperSync>
+        <DeviceInfoProvider>
+          <MusicServiceProvider>
+            <DisplayController>
+              <NotificationProvider>
+                {children}
+              </NotificationProvider>
+            </DisplayController>
+          </MusicServiceProvider>
+        </DeviceInfoProvider>
+      </WallpaperSync>
     </StateManagerProvider>
   );
 };
