@@ -110,6 +110,10 @@
   justify-content: center;
   align-items: center;
   gap: 16px;
+
+  /* prepare for smooth shift */
+  transform: translateY(0);
+  transition: transform 0.3s ease-out;
 }
 .mc-bar-name {
   color: #fff;
@@ -122,6 +126,11 @@
 .mc-bar-name:hover,
 .mc-bar-name.active {
   opacity: 1;
+}
+
+/* during the second animation, nudge names down by 5px */
+.mission-control-container.overview-open.bar-expanded .mc-bar-names {
+  transform: translateY(5px);
 }
 
 /* hide toolbar under overview */
