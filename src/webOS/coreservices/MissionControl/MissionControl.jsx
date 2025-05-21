@@ -40,18 +40,15 @@ const MissionControl = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // thumbnail sizing: 90px high
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
   const THUMB_W = viewport.width * scale;
-
-  // center index for “fly-out” math
   const centerIndex = (desktops.length - 1) / 2;
 
-  // refs for scroll-into-view
   const wrapperRef = useRef(null);
   const panelRefs = useRef([]);
 
+  // scroll active thumbnail into view when opening
   useEffect(() => {
     if (overviewOpen && panelRefs.current[activeIndex]) {
       panelRefs.current[activeIndex].scrollIntoView({
@@ -62,7 +59,7 @@ const MissionControl = () => {
     }
   }, [overviewOpen, activeIndex]);
 
-  // global overlay toggle
+  // overlay toggle from global state
   const { state } = useStateManager();
   const overlayVisible =
     state.groups.missionControl?.overlayVisible === 'true';
@@ -106,10 +103,11 @@ const MissionControl = () => {
     setBarExpanded(false);
     setOverviewOpen(true);
   };
-  const exitOverview = () => {
+  // if restore===true, revert to prevIndex; else keep whatever activeIndex was last set to
+  const exitOverview = (restore = true) => {
     setOverviewOpen(false);
     setBarExpanded(false);
-    setActiveIndex(prevIndex);
+    if (restore) setActiveIndex(prevIndex);
   };
 
   // lock scroll behind
@@ -117,7 +115,7 @@ const MissionControl = () => {
     document.body.style.overflow = overviewOpen ? 'hidden' : '';
   }, [overviewOpen]);
 
-  // drag/drop (unchanged)
+  // drag/drop
   const onDragStart = (e, i) => e.dataTransfer.setData('text/plain', String(i));
   const onDragOver = (e) => {
     e.preventDefault();
@@ -182,10 +180,14 @@ const MissionControl = () => {
               {desktops.map((_, i) => (
                 <span
                   key={i}
-                  className={i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'}
+                  className={
+                    i === activeIndex
+                      ? 'mc-bar-name active'
+                      : 'mc-bar-name'
+                  }
                   onClick={() => {
                     switchDesktop(i);
-                    exitOverview();
+                    exitOverview(false);  // keep the newly selected desktop
                   }}
                 >
                   Desktop {i + 1}
@@ -196,7 +198,10 @@ const MissionControl = () => {
         )}
 
         {overviewOpen && (
-          <div className="mc-exit-overlay" onClick={exitOverview} />
+          <div
+            className="mc-exit-overlay"
+            onClick={() => exitOverview(true)}  // cancel and go back
+          />
         )}
 
         <div
@@ -219,14 +224,10 @@ const MissionControl = () => {
               onDragStart={overviewOpen ? (e) => onDragStart(e, i) : undefined}
               onDragOver={overviewOpen ? onDragOver : undefined}
               onDrop={overviewOpen ? (e) => onDrop(e, i) : undefined}
-              onClick={
-                overviewOpen
-                  ? () => {
-                      switchDesktop(i);
-                      exitOverview();
-                    }
-                  : undefined
-              }
+              onClick={overviewOpen ? () => {
+                switchDesktop(i);
+                exitOverview(false); // keep the newly selected desktop
+              } : undefined}
               style={
                 overviewOpen
                   ? {
