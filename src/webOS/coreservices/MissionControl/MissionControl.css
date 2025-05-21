@@ -1,23 +1,33 @@
-/* MissionControl.css */
+/* src/components/MissionControl/MissionControl.css */
 
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-
-/* bar slides down exactly its own height (145px) */
-@keyframes slideBarDown {
+/* first-stage slide: bar peeks 40px */
+@keyframes slideBarShort {
   from { transform: translateY(-145px); opacity: 0; }
-  to   { transform: translateY(0);       opacity: 1; }
+  to   { transform: translateY(-105px); opacity: 1; }
+}
+/* second-stage slide: bar to full 145px */
+@keyframes slideBarFull {
+  from { transform: translateY(-105px); }
+  to   { transform: translateY(0);    }
+}
+/* per-panel “fly out” from center */
+@keyframes slideFromCenter {
+  from {
+    transform: translate(var(--tx), var(--ty));
+    opacity: 0;
+  }
+  to {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
 }
 
-/* panel strip slides down exactly 120px (to go from off-screen to top:30px) */
-@keyframes slidePanelDown {
-  from { transform: translateY(-120px); opacity: 0; }
-  to   { transform: translateY(0);      opacity: 1; }
-}
-
+/* container */
 .mission-control-container {
   position: relative;
   width: 100vw;
@@ -26,7 +36,7 @@
   background-color: #000;
 }
 
-/* Wallpaper when overview open */
+/* wallpaper */
 .mc-wallpaper {
   position: absolute;
   inset: 0;
@@ -37,83 +47,7 @@
   animation: fadeIn 0.3s ease-out forwards;
 }
 
-/* catch-anywhere overlay for exit */
-.mc-exit-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 140;
-}
-
-/* blur only top 145px when overview open */
-.mission-control-container.overview-open::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 145px;
-  backdrop-filter: blur(10px);
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 150;
-
-  /* synchronized slide-in */
-  animation: slideBarDown 0.3s ease-out forwards;
-}
-
-/* hide mission control toolbar in overview */
-.mission-control-container.overview-open .mc-overlay {
-  display: none;
-}
-
-/* normal desktops slider */
-.desktops-wrapper {
-  display: flex;
-  gap: 60px;
-  height: 100%;
-  transition: transform 0.5s ease-in-out;
-  position: relative;
-}
-
-/* overview “conveyor”: dropped 30px, 30px gaps, centered group */
-.mission-control-container.overview-open .desktops-wrapper {
-  position: absolute;
-  top: 30px;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 30px;
-  padding: 0 20px;
-  z-index: 200;
-  flex-wrap: nowrap;
-
-  /* synchronized slide-in (matches bar timing) */
-  animation: slidePanelDown 0.3s ease-out forwards;
-}
-
-/* full-size panels (non-overview) */
-.desktop-panel {
-  flex-shrink: 0;
-  width: 100vw;
-  height: 100%;
-}
-
-/* thumbnail styling: sizing via inline styles */
-.mission-control-container.overview-open .desktop-panel {
-  overflow: hidden;
-  background: transparent;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-/* scale wrapper for live content */
-.desktop-scale-wrapper {
-  width: 100%;
-  height: 100%;
-}
-
-/* overlay toolbar */
+/* standard overlay toolbar */
 .mc-overlay {
   position: absolute;
   top: 10px;
@@ -123,9 +57,8 @@
   gap: 8px;
   z-index: 100;
 }
-
 .mc-overlay button {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0,0,0,0.6);
   color: #fff;
   border: none;
   padding: 6px 12px;
@@ -139,10 +72,124 @@
   cursor: default;
 }
 .mc-overlay button:not(:disabled):hover {
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0,0,0,0.8);
 }
 
-/* dock container: always visible, on top */
+/* exit overlay */
+.mc-exit-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 140;
+}
+
+/* top blur-bar */
+.mc-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 145px;
+  backdrop-filter: blur(10px);
+  background: rgba(0,0,0,0.4);
+  z-index: 150;
+
+  /* start hidden, then peek */
+  transform: translateY(-145px);
+  animation: slideBarShort 0.3s ease-out forwards;
+  transition: none;
+}
+/* once hovered once, expand fully */
+.mission-control-container.overview-open.bar-expanded .mc-bar {
+  animation: slideBarFull 0.3s ease-out forwards;
+}
+
+/* names strip at bottom 40px */
+.mc-bar-names {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+.mc-bar-name {
+  color: #fff;
+  font-size: 14px;
+  padding: 4px 8px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.mc-bar-name:hover,
+.mc-bar-name.active {
+  opacity: 1;
+}
+
+/* hide toolbar under overview */
+.mission-control-container.overview-open .mc-overlay {
+  display: none;
+}
+
+/* desktops-wrapper default (normal slider) */
+.desktops-wrapper {
+  display: flex;
+  gap: 60px;
+  height: 100%;
+  transition: transform 0.5s ease-in-out;
+  position: relative;
+}
+/* override for overview mode: positioned strip hidden until barExpanded */
+.mission-control-container.overview-open .desktops-wrapper {
+  position: absolute;
+  top: 30px; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  padding: 0 20px;
+  z-index: 200;
+  flex-wrap: nowrap;
+
+  transform: translateY(-120px);
+  opacity: 0;
+  transition: none;
+}
+/* reveal panels once expanded */
+.mission-control-container.overview-open.bar-expanded .desktops-wrapper {
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+/* desktop-panel default (full-screen) */
+.desktop-panel {
+  flex-shrink: 0;
+  width: 100vw;
+  height: 100%;
+}
+
+/* overview-only per-panel setup */
+.mission-control-container.overview-open .desktop-panel {
+  overflow: hidden;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+
+  /* starting offset for fly-out */
+  transform: translate(var(--tx), var(--ty));
+  opacity: 0;
+}
+/* overview-only fly-out */
+.mission-control-container.overview-open.bar-expanded .desktop-panel {
+  animation: slideFromCenter 0.3s ease-out forwards;
+}
+
+/* scale wrapper inside each panel */
+.desktop-scale-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+/* dock always on top */
 .mc-dock {
   position: absolute;
   left: 50%;

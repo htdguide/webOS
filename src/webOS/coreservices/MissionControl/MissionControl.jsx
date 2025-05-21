@@ -26,6 +26,7 @@ const MissionControl = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [prevIndex, setPrevIndex] = useState(0);
   const [overviewOpen, setOverviewOpen] = useState(false);
+  const [barExpanded, setBarExpanded] = useState(false);
 
   // track viewport for correct thumbnail ratio
   const [viewport, setViewport] = useState({
@@ -39,16 +40,18 @@ const MissionControl = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // thumbnail sizing: target 90px height to preserve ratio
+  // thumbnail sizing: 90px high
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
   const THUMB_W = viewport.width * scale;
 
-  // refs for scrolling
+  // center index for “fly-out” math
+  const centerIndex = (desktops.length - 1) / 2;
+
+  // refs for scroll-into-view
   const wrapperRef = useRef(null);
   const panelRefs = useRef([]);
 
-  // when overview opens or activeIndex changes, center that panel
   useEffect(() => {
     if (overviewOpen && panelRefs.current[activeIndex]) {
       panelRefs.current[activeIndex].scrollIntoView({
@@ -97,14 +100,15 @@ const MissionControl = () => {
     setActiveIndex(to);
   }, []);
 
-  // open overview: remember previous
+  // open / close overview
   const openOverview = () => {
     setPrevIndex(activeIndex);
+    setBarExpanded(false);
     setOverviewOpen(true);
   };
-  // exit by clicking empty space
   const exitOverview = () => {
     setOverviewOpen(false);
+    setBarExpanded(false);
     setActiveIndex(prevIndex);
   };
 
@@ -113,7 +117,7 @@ const MissionControl = () => {
     document.body.style.overflow = overviewOpen ? 'hidden' : '';
   }, [overviewOpen]);
 
-  // drag/drop
+  // drag/drop (unchanged)
   const onDragStart = (e, i) => e.dataTransfer.setData('text/plain', String(i));
   const onDragOver = (e) => {
     e.preventDefault();
@@ -136,11 +140,12 @@ const MissionControl = () => {
       }}
     >
       <div
-        className={`mission-control-container ${
-          overviewOpen ? 'overview-open' : ''
-        }`}
+        className={
+          `mission-control-container` +
+          (overviewOpen ? ' overview-open' : '') +
+          (barExpanded ? ' bar-expanded' : '')
+        }
       >
-        {/* standard toolbar */}
         {overlayVisible && (
           <div className="mc-overlay">
             <button onClick={createDesktop}>+ New</button>
@@ -166,15 +171,34 @@ const MissionControl = () => {
           </div>
         )}
 
-        {/* wallpaper behind overview */}
         {overviewOpen && <WallpaperPlain className="mc-wallpaper" />}
 
-        {/* click-anywhere overlay to exit */}
+        {overviewOpen && (
+          <div
+            className="mc-bar"
+            onMouseEnter={() => setBarExpanded(true)}
+          >
+            <div className="mc-bar-names">
+              {desktops.map((_, i) => (
+                <span
+                  key={i}
+                  className={i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'}
+                  onClick={() => {
+                    switchDesktop(i);
+                    exitOverview();
+                  }}
+                >
+                  Desktop {i + 1}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {overviewOpen && (
           <div className="mc-exit-overlay" onClick={exitOverview} />
         )}
 
-        {/* desktops: slider vs overview */}
         <div
           ref={wrapperRef}
           className="desktops-wrapper"
@@ -199,13 +223,18 @@ const MissionControl = () => {
                 overviewOpen
                   ? () => {
                       switchDesktop(i);
-                      setOverviewOpen(false);
+                      exitOverview();
                     }
                   : undefined
               }
               style={
                 overviewOpen
-                  ? { width: THUMB_W, height: THUMB_H }
+                  ? {
+                      width: `${THUMB_W}px`,
+                      height: `${THUMB_H}px`,
+                      '--tx': `${-(i - centerIndex) * (THUMB_W + 30)}px`,
+                      '--ty': `-120px`
+                    }
                   : undefined
               }
             >
@@ -229,7 +258,6 @@ const MissionControl = () => {
           ))}
         </div>
 
-        {/* fixed Dock */}
         <div className="mc-dock">
           <Dock />
         </div>
