@@ -1,5 +1,10 @@
 // src/components/Wallpaper/Wallpaper.jsx
-import React, { useRef, useContext, useEffect, useState } from 'react';
+import React, {
+  useRef,
+  useContext,
+  useLayoutEffect,
+  useState,
+} from 'react';
 import './Wallpaper.css';
 import SequoiaSunriseImage from '../../media/wallpaper/SequoiaSunrise.jpg';
 import { FocusWrapper } from '../../contexts/FocusControl/FocusControl.jsx';
@@ -10,14 +15,22 @@ function WallpaperContent({ className }) {
   const { isVideoLoaded, currentTime } = useContext(VideoSyncContext);
   const [hasSynced, setHasSynced] = useState(false);
 
-  // One-time sync on mount
-  useEffect(() => {
+  // One-time, synchronous sync before paint
+  useLayoutEffect(() => {
     const vid = videoRef.current;
     if (!vid || !isVideoLoaded || hasSynced) return;
-    vid.currentTime = currentTime;
+
+    // fastSeek jumps immediately to the nearest keyframe if supported
+    if (typeof vid.fastSeek === 'function') {
+      vid.fastSeek(currentTime);
+    } else {
+      vid.currentTime = currentTime;
+    }
+
+    // start playback as soon as we've seeked
     vid.play().catch(() => {});
     setHasSynced(true);
-  }, [isVideoLoaded]);
+  }, [isVideoLoaded, currentTime]);
 
   return (
     <div className={`wallpaper${className ? ` ${className}` : ''}`}>
@@ -30,7 +43,9 @@ function WallpaperContent({ className }) {
 
       <video
         ref={videoRef}
-        className={isVideoLoaded ? 'wallpaper-video' : 'wallpaper-video hidden'}
+        className={
+          isVideoLoaded ? 'wallpaper-video' : 'wallpaper-video hidden'
+        }
         muted
         loop
         playsInline
