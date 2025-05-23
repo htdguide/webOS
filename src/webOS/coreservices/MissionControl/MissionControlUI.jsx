@@ -41,6 +41,21 @@ import React, {
       }
     }, [addState, state.groups.missionControl]);
   
+    // On mount or reload: if missionControl.opened is true but overview not active, revert UI
+    useEffect(() => {
+      if (
+        state.groups.missionControl.opened === 'true' &&
+        !overviewOpen
+      ) {
+        // Restore desktop elements
+        editStateValue('desktop', 'iconVisible', 'true');
+        editStateValue('desktop', 'menubarVisible', 'true');
+        // Clear the opened flag
+        editStateValue('missionControl', 'opened', 'false');
+      }
+      // Only run this when overviewOpen or opened flag changes
+    }, [overviewOpen, state.groups.missionControl.opened, editStateValue]);
+  
     const [animateTransitions, setAnimateTransitions] = useState(true);
   
     // handle window resize
