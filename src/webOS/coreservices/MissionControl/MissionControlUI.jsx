@@ -35,6 +35,9 @@ import React, {
       height: window.innerHeight
     });
   
+    // Animate toggle
+    const [animateTransitions, setAnimateTransitions] = useState(true);
+  
     // handle window resize
     useEffect(() => {
       const onResize = () =>
@@ -101,6 +104,19 @@ import React, {
       [reorderDesktops]
     );
   
+    // Build the inline style for the desktops wrapper
+    const wrapperStyle = overviewOpen
+      ? {
+          top: 30,
+          height: THUMB_H,
+          transform: 'none',
+          transition: 'none'
+        }
+      : {
+          transform: `translateX(calc(-${activeIndex} * (100vw + 60px)))`,
+          ...(animateTransitions ? {} : { transition: 'none' })
+        };
+  
     return (
       <div
         className={
@@ -110,7 +126,10 @@ import React, {
         }
       >
         {overlayVisible && (
-          <div className="mc-overlay">
+          <div
+            className="mc-overlay"
+            style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+          >
             <button onClick={createDesktop}>+ New</button>
             <button
               onClick={() => switchDesktop(activeIndex - 1)}
@@ -131,6 +150,19 @@ import React, {
               🗑 Delete
             </button>
             <button onClick={openOverview}>Mission Control</button>
+  
+            {/* Animate transitions button matching overlay styling */}
+            <button
+              onClick={() => setAnimateTransitions(prev => !prev)}
+            >
+              <input
+                type="checkbox"
+                checked={animateTransitions}
+                readOnly
+                style={{ marginRight: '4px', pointerEvents: 'none' }}
+              />
+              Animate transitions
+            </button>
           </div>
         )}
   
@@ -167,13 +199,7 @@ import React, {
         <div
           ref={wrapperRef}
           className="desktops-wrapper"
-          style={
-            overviewOpen
-              ? { top: 30, height: THUMB_H, transform: 'none' }
-              : {
-                  transform: `translateX(calc(-${activeIndex} * (100vw + 60px)))`
-                }
-          }
+          style={wrapperStyle}
         >
           {desktops.map((desk, i) => (
             <div
