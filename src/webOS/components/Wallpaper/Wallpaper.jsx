@@ -1,63 +1,58 @@
 // src/components/Wallpaper/Wallpaper.jsx
-import React, {
-  useRef,
-  useContext,
-  useLayoutEffect,
-  useState,
-} from 'react';
+import React, { useRef, useContext, useLayoutEffect, useState } from 'react';
 import './Wallpaper.css';
 import SequoiaSunriseImage from '../../media/wallpaper/SequoiaSunrise.jpg';
 import { FocusWrapper } from '../../contexts/FocusControl/FocusControl.jsx';
-import { VideoSyncContext } from './WallpaperSync.jsx';
+import { VideoSyncContext } from './WallpaperSrc.jsx';
 
 function WallpaperContent({ className }) {
   const videoRef = useRef(null);
-  const { isVideoLoaded, currentTime } = useContext(VideoSyncContext);
+  const { mediaStream } = useContext(VideoSyncContext);
   const [hasSynced, setHasSynced] = useState(false);
+  const [isLocalLoaded, setIsLocalLoaded] = useState(false);
 
-  // One-time, synchronous sync before paint
   useLayoutEffect(() => {
     const vid = videoRef.current;
-    if (!vid || !isVideoLoaded || hasSynced) return;
+    if (!vid || !mediaStream || hasSynced) return;
 
-    // fastSeek jumps immediately to the nearest keyframe if supported
-    if (typeof vid.fastSeek === 'function') {
-      vid.fastSeek(currentTime);
+    // “Broadcast” stream onto this <video>
+    vid.srcObject = mediaStream;
+
+    const handleLoaded = () => {
+      setIsLocalLoaded(true);
+      vid.play().catch(() => {});
+    };
+
+    // If metadata’s already available (because our master has loaded),
+    // do the “loaded” branch immediately before paint
+    if (vid.readyState >= 1) {
+      handleLoaded();
     } else {
-      vid.currentTime = currentTime;
+      vid.addEventListener('loadedmetadata', handleLoaded, { once: true });
     }
 
-    // start playback as soon as we've seeked
-    vid.play().catch(() => {});
     setHasSynced(true);
-  }, [isVideoLoaded, currentTime]);
+  }, [mediaStream, hasSynced]);
 
   return (
     <div className={`wallpaper${className ? ` ${className}` : ''}`}>
-      {/* fallback behind everything */}
+      {/* always-behind fallback */}
       <img
         className="wallpaper-fallback"
         src={SequoiaSunriseImage}
         alt="Wallpaper Fallback"
       />
 
+      {/* hidden until we know we’ve got a frame */}
       <video
         ref={videoRef}
-        className={
-          isVideoLoaded ? 'wallpaper-video' : 'wallpaper-video hidden'
-        }
+        className={isLocalLoaded ? 'wallpaper-video' : 'wallpaper-video hidden'}
         muted
         loop
         playsInline
         preload="auto"
         poster={SequoiaSunriseImage}
-      >
-        <source
-          src="/WebintoshHD/Wallpapers/SequoiaSunrise.mp4"
-          type="video/mp4"
-        />
-        Your browser does not support the video tag.
-      </video>
+      />
     </div>
   );
 }

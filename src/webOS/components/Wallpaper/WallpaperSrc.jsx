@@ -1,18 +1,17 @@
-// src/components/WallpaperSync.jsx
+// src/components/Wallpaper/WallpaperSrc.jsx
 import React, { createContext, useState, useEffect, useRef } from 'react';
 
-/**
- * Provides isVideoLoaded + currentTime from a single hidden master video.
- */
 export const VideoSyncContext = createContext({
   isVideoLoaded: false,
   currentTime: 0,
+  mediaStream: null,
 });
 
-export function WallpaperSync({ children }) {
+export function WallpaperSrc({ children }) {
   const videoRef = useRef(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [mediaStream, setMediaStream] = useState(null);
 
   useEffect(() => {
     const vid = videoRef.current;
@@ -21,7 +20,12 @@ export function WallpaperSync({ children }) {
     const onLoaded = () => {
       setIsVideoLoaded(true);
       vid.play().catch(() => {});
+      if (!mediaStream && typeof vid.captureStream === 'function') {
+        const stream = vid.captureStream();
+        setMediaStream(stream);
+      }
     };
+
     const onTimeUpdate = () => {
       setCurrentTime(vid.currentTime);
     };
@@ -33,17 +37,13 @@ export function WallpaperSync({ children }) {
       vid.removeEventListener('loadeddata', onLoaded);
       vid.removeEventListener('timeupdate', onTimeUpdate);
     };
-  }, []);
+  }, [mediaStream]);
 
   return (
-    <VideoSyncContext.Provider value={{ isVideoLoaded, currentTime }}>
+    <VideoSyncContext.Provider value={{ isVideoLoaded, currentTime, mediaStream }}>
       {children}
 
-      {/* 
-        Hidden master video:
-        • preload="auto" so browser fetches it ASAP  
-        • CSS makes it invisible but still loading
-      */}
+      {/* Hidden master video, drives the stream */}
       <video
         ref={videoRef}
         src="/WebintoshHD/Wallpapers/SequoiaSunrise.mp4"

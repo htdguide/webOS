@@ -5,12 +5,12 @@ import DeviceInfoProvider from '../../contexts/DeviceInfoProvider/DeviceInfoProv
 import { MusicServiceProvider } from '../../drivers/MusicService/MusicService.jsx';
 import DisplayController from '../../drivers/DisplayController/DisplayController.jsx';
 import { NotificationProvider } from '../../components/Notification/NotificationProvider.jsx';
-import { WallpaperSync } from '../../components/Wallpaper/WallpaperSync.jsx';
+import { WallpaperSrc } from '../../components/Wallpaper/WallpaperSrc.jsx';
 
 const System = ({ children }) => {
   return (
     <StateManagerProvider>
-      <WallpaperSync>
+      <WallpaperSrc>
         <DeviceInfoProvider>
           <MusicServiceProvider>
             <DisplayController>
@@ -20,7 +20,7 @@ const System = ({ children }) => {
             </DisplayController>
           </MusicServiceProvider>
         </DeviceInfoProvider>
-      </WallpaperSync>
+      </WallpaperSrc>
     </StateManagerProvider>
   );
 };
