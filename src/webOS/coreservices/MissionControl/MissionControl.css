@@ -97,7 +97,7 @@
   top: 0; left: 0; right: 0;
   height: 145px;
   backdrop-filter: blur(10px);
-  background: rgba(0,0,0,0.4);
+  background: rgba(230, 230, 230, 0.7);
   z-index: 150;
 
   transform: translateY(-145px);
@@ -123,7 +123,7 @@
   transition: transform 0.3s ease-out;
 }
 .mc-bar-name {
-  color: #fff;
+  color: rgb(33, 35, 36);
   margin-top: 2px;
   font-size: 12px;
   padding: 4px 8px;
