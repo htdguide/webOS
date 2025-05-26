@@ -170,6 +170,7 @@ const MissionControlUI = () => {
       };
 
   return (
+    
     <div
       className={
         `mission-control-container` +
@@ -178,6 +179,7 @@ const MissionControlUI = () => {
         (barExpanded ? ' bar-expanded' : '')
       }
     >
+       <Dock />
       {overlayVisible && (
         <div className="mc-overlay" style={{ display: 'flex', gap: 8 }}>
           <button onClick={createDesktop}>+ New</button>
@@ -278,10 +280,6 @@ const MissionControlUI = () => {
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="mc-dock">
-        <Dock />
       </div>
     </div>
   );
