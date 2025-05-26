@@ -39,26 +39,29 @@ const MissionControlUI = () => {
     height: window.innerHeight
   });
 
-  // Ensure tracking state exists
+  // 1) Ensure missionControl.opened exists
   useEffect(() => {
     if (!state.groups.missionControl.hasOwnProperty('opened')) {
       addState('missionControl', 'opened', 'false');
     }
   }, [addState, state.groups.missionControl]);
 
-  // On mount or reload: if missionControl.opened is true but overview not active, revert UI
+  // 2) On initial mount: if we were left “opened”, reset icon & menubar
+  const initialMount = useRef(true);
   useEffect(() => {
-    if (
-      state.groups.missionControl.opened === 'true' &&
-      !overviewOpen
-    ) {
+    if (!initialMount.current) return;
+    initialMount.current = false;
+
+    if (state.groups.missionControl.opened === 'true') {
       editStateValue('desktop', 'iconVisible', 'true');
       editStateValue('desktop', 'menubarVisible', 'true');
       editStateValue('missionControl', 'opened', 'false');
     }
-  }, [overviewOpen, state.groups.missionControl.opened, editStateValue]);
+    // Intentionally only on first render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // handle window resize
+  // 3) Track window size
   useEffect(() => {
     const onResize = () =>
       setViewport({ width: window.innerWidth, height: window.innerHeight });
@@ -66,12 +69,12 @@ const MissionControlUI = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // lock background scroll when in overview
+  // 4) Lock background scroll while fading/open
   useEffect(() => {
     document.body.style.overflow = (overviewOpen || isFading) ? 'hidden' : '';
   }, [overviewOpen, isFading]);
 
-  // After fade finishes, actually enter “overview” and trigger slide
+  // 5) After fade finishes, actually enter “overview”
   useEffect(() => {
     if (isFading) {
       const timer = setTimeout(() => {
@@ -90,7 +93,7 @@ const MissionControlUI = () => {
   const wrapperRef = useRef(null);
   const panelRefs = useRef([]);
 
-  // scroll active thumbnail into view on open
+  // 6) Scroll active thumbnail into view
   useEffect(() => {
     if (overviewOpen && panelRefs.current[activeIndex]) {
       panelRefs.current[activeIndex].scrollIntoView({
@@ -101,12 +104,11 @@ const MissionControlUI = () => {
     }
   }, [overviewOpen, activeIndex]);
 
-  // Open overview: first kick off fade
+  // 7) Open overview: hide icons & menubar, flag opened, start fade
   const openOverview = useCallback(() => {
     setPrevIndex(activeIndex);
     setBarExpanded(false);
 
-    editStateValue('welcomeWrap', 'welcomeEnabled', 'false');
     editStateValue('desktop', 'iconVisible', 'false');
     editStateValue('desktop', 'menubarVisible', 'false');
     editStateValue('missionControl', 'opened', 'true');
@@ -114,7 +116,7 @@ const MissionControlUI = () => {
     setIsFading(true);
   }, [activeIndex, editStateValue]);
 
-  // Exit overview: cancel slide, restore UI
+  // 8) Exit overview: restore icons & menubar, clear opened, optionally switch back
   const exitOverview = useCallback(
     (restore = true) => {
       setOverviewOpen(false);
@@ -126,12 +128,19 @@ const MissionControlUI = () => {
         editStateValue('desktop', 'menubarVisible', 'true');
         editStateValue('missionControl', 'opened', 'false');
       }
-      if (restore) setPrevIndex(prevIndex);
+      if (restore) {
+        switchDesktop(prevIndex);
+      }
     },
-    [prevIndex, editStateValue, state.groups.missionControl]
+    [
+      prevIndex,
+      editStateValue,
+      state.groups.missionControl.opened,
+      switchDesktop
+    ]
   );
 
-  // drag & drop handlers
+  // Drag & drop for reorder
   const onDragStart = useCallback((e, i) => {
     e.dataTransfer.setData('text/plain', String(i));
   }, []);
@@ -148,7 +157,7 @@ const MissionControlUI = () => {
     [reorderDesktops]
   );
 
-  // Decide wrapper style: before overviewOpen → stay in place; after → slide up into thumb bar
+  // Panel wrapper style
   const wrapperStyle = overviewOpen
     ? {
         top: 30,
@@ -157,8 +166,7 @@ const MissionControlUI = () => {
         transition: `top ${SLIDE_DURATION}ms ease, height ${SLIDE_DURATION}ms ease, transform ${SLIDE_DURATION}ms ease`
       }
     : {
-        transform: `translateX(calc(-${activeIndex} * (100vw + 60px)))`,
-        ...(overviewOpen || isFading ? {} : {}) // unchanged
+        transform: `translateX(calc(-${activeIndex} * (100vw + 60px)))`
       };
 
   return (
@@ -195,41 +203,35 @@ const MissionControlUI = () => {
         </div>
       )}
 
-      {/* render wallpaper during fade & in overview */}
       {(isFading || overviewOpen) && (
         <WallpaperPlain className="mc-wallpaper" />
       )}
 
       {overviewOpen && (
-        <div className="mc-bar" onMouseEnter={() => setBarExpanded(true)}>
-          <div className="mc-bar-names">
-            {desktops.map((_, i) => (
-              <span
-                key={i}
-                className={
-                  i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'
-                }
-                onClick={() => {
-                  switchDesktop(i);
-                  exitOverview(false);
-                }}
-              >
-                Desktop {i + 1}
-              </span>
-            ))}
+        <>
+          <div className="mc-bar" onMouseEnter={() => setBarExpanded(true)}>
+            <div className="mc-bar-names">
+              {desktops.map((_, i) => (
+                <span
+                  key={i}
+                  className={
+                    i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'
+                  }
+                  onClick={() => {
+                    switchDesktop(i);
+                    exitOverview(false);
+                  }}
+                >
+                  Desktop {i + 1}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+          <div className="mc-exit-overlay" onClick={() => exitOverview(true)} />
+        </>
       )}
 
-      {overviewOpen && (
-        <div className="mc-exit-overlay" onClick={() => exitOverview(true)} />
-      )}
-
-      <div
-        ref={wrapperRef}
-        className="desktops-wrapper"
-        style={wrapperStyle}
-      >
+      <div ref={wrapperRef} className="desktops-wrapper" style={wrapperStyle}>
         {desktops.map((desk, i) => (
           <div
             ref={el => (panelRefs.current[i] = el)}
@@ -252,9 +254,7 @@ const MissionControlUI = () => {
                 ? {
                     width: `${THUMB_W}px`,
                     height: `${THUMB_H}px`,
-                    '--tx': `${
-                      -(i - centerIndex) * (THUMB_W + 30)
-                    }px`,
+                    '--tx': `${-(i - centerIndex) * (THUMB_W + 30)}px`,
                     '--ty': `-120px`
                   }
                 : undefined
