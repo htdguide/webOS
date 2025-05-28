@@ -1,5 +1,6 @@
 // src/components/MissionControl/MissionControl.jsx
 import React, { createContext, useState, useCallback } from 'react';
+import SystemUI from '../SystemUI/SystemUI.jsx';
 import MissionControlUI from './MissionControlUI.jsx';
 
 export const MissionControlContext = createContext({
@@ -8,16 +9,21 @@ export const MissionControlContext = createContext({
   deleteDesktop: (_i) => {},
   reorderDesktops: (_from, _to) => {},
   activeIndex: 0,
-  desktops: []
+  desktops: [] // now each entry is { id: number, ui: ReactNode }
 });
 
 const MissionControl = () => {
-  const [desktops, setDesktops] = useState([{ id: Date.now() }]);
+  // each desktop is { id, ui }
+  const [desktops, setDesktops] = useState(() => {
+    const id = Date.now();
+    return [{ id, ui: <SystemUI key={id} /> }];
+  });
   const [activeIndex, setActiveIndex] = useState(0);
 
   const createDesktop = useCallback(() => {
-    setDesktops(d => [...d, { id: Date.now() }]);
-    setActiveIndex(i => i + 1);
+    const id = Date.now();
+    setDesktops(d => [...d, { id, ui: <SystemUI key={id} /> }]);
+    setActiveIndex(d => d + 1);
   }, []);
 
   const switchDesktop = useCallback(
@@ -26,7 +32,7 @@ const MissionControl = () => {
         setActiveIndex(i);
       }
     },
-    [desktops]
+    [desktops.length]
   );
 
   const deleteDesktop = useCallback(
@@ -39,7 +45,7 @@ const MissionControl = () => {
         return cur;
       });
     },
-    [desktops]
+    [desktops.length]
   );
 
   const reorderDesktops = useCallback((from, to) => {
@@ -63,6 +69,7 @@ const MissionControl = () => {
         desktops
       }}
     >
+      {/* This component only provides context; UI is in MissionControlUI */}
       <MissionControlUI />
     </MissionControlContext.Provider>
   );

@@ -6,8 +6,8 @@ import React, {
   useEffect,
   useRef
 } from 'react';
+import { createPortal } from 'react-dom';
 import { MissionControlContext } from './MissionControl.jsx';
-import SystemUI from '../SystemUI/SystemUI.jsx';
 import Dock from '../../components/Dock/Dock.jsx';
 import { WallpaperPlain } from '../../components/Wallpaper/Wallpaper.jsx';
 import { useStateManager } from '../../stores/StateManager/StateManager.jsx';
@@ -30,6 +30,13 @@ const MissionControlUI = () => {
   const overlayVisible =
     state.groups.missionControl?.overlayVisible === 'true';
 
+  // track when each portal can mount
+  const [portalReady, setPortalReady] = useState([]);
+  useEffect(() => {
+    // reset on any desktops array change
+    setPortalReady(desktops.map(() => false));
+  }, [desktops]);
+
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [isFading, setIsFading] = useState(false);
   const [barExpanded, setBarExpanded] = useState(false);
@@ -39,6 +46,9 @@ const MissionControlUI = () => {
     height: window.innerHeight
   });
   const [disableSlideTransition, setDisableSlideTransition] = useState(false);
+
+  const panelRefs = useRef([]);
+  const scaleRefs = useRef([]);
 
   // 1) Ensure missionControl.opened exists
   useEffect(() => {
@@ -52,7 +62,6 @@ const MissionControlUI = () => {
   useEffect(() => {
     if (!initialMount.current) return;
     initialMount.current = false;
-
     if (state.groups.missionControl.opened === 'true') {
       editStateValue('desktop', 'iconVisible', 'true');
       editStateValue('desktop', 'menubarVisible', 'true');
@@ -86,13 +95,6 @@ const MissionControlUI = () => {
   }, [isFading]);
 
   // 6) Scroll active thumbnail into view
-  const THUMB_H = 90;
-  const scale = THUMB_H / viewport.height;
-  const THUMB_W = viewport.width * scale;
-  const centerIndex = (desktops.length - 1) / 2;
-
-  const wrapperRef = useRef(null);
-  const panelRefs = useRef([]);
   useEffect(() => {
     if (overviewOpen && panelRefs.current[activeIndex]) {
       panelRefs.current[activeIndex].scrollIntoView({
@@ -103,28 +105,24 @@ const MissionControlUI = () => {
     }
   }, [overviewOpen, activeIndex]);
 
-  // 7) Open overview: hide icons & menubar, flag opened, start fade
+  // 7) Open overview
   const openOverview = useCallback(() => {
     setPrevIndex(activeIndex);
     setBarExpanded(false);
-
     editStateValue('desktop', 'iconVisible', 'false');
     editStateValue('desktop', 'menubarVisible', 'false');
     editStateValue('missionControl', 'opened', 'true');
-
     setIsFading(true);
   }, [activeIndex, editStateValue]);
 
-  // New: instant switch method
+  // instant switch desktop
   const instantSwitchDesktop = useCallback(
-    (index) => {
-      // temporarily disable sliding animation
+    index => {
       setDisableSlideTransition(true);
       switchDesktop(index);
     },
     [switchDesktop]
   );
-  // after one render tick, re-enable animations
   useEffect(() => {
     if (disableSlideTransition) {
       const t = setTimeout(() => setDisableSlideTransition(false), 0);
@@ -132,21 +130,18 @@ const MissionControlUI = () => {
     }
   }, [disableSlideTransition]);
 
-  // 8) Exit overview: restore icons & menubar, clear opened, optionally instant-switch back
+  // 8) Exit overview
   const exitOverview = useCallback(
     (restore = true) => {
       setOverviewOpen(false);
       setIsFading(false);
       setBarExpanded(false);
-
       if (state.groups.missionControl.opened === 'true') {
         editStateValue('desktop', 'iconVisible', 'true');
         editStateValue('desktop', 'menubarVisible', 'true');
         editStateValue('missionControl', 'opened', 'false');
       }
-      if (restore) {
-        instantSwitchDesktop(prevIndex);
-      }
+      if (restore) instantSwitchDesktop(prevIndex);
     },
     [
       prevIndex,
@@ -156,7 +151,7 @@ const MissionControlUI = () => {
     ]
   );
 
-  // Drag & drop for reorder (unchanged)
+  // drag & drop
   const onDragStart = useCallback((e, i) => {
     e.dataTransfer.setData('text/plain', String(i));
   }, []);
@@ -173,7 +168,11 @@ const MissionControlUI = () => {
     [reorderDesktops]
   );
 
-  // Panel wrapper style: disable transition if requested
+  // layout math
+  const THUMB_H = 90;
+  const scale = THUMB_H / viewport.height;
+  const THUMB_W = viewport.width * scale;
+  const centerIndex = (desktops.length - 1) / 2;
   const wrapperStyle = overviewOpen
     ? {
         top: 30,
@@ -196,6 +195,7 @@ const MissionControlUI = () => {
       }
     >
       <Dock />
+
       {overlayVisible && (
         <div className="mc-overlay" style={{ display: 'flex', gap: 8 }}>
           <button onClick={createDesktop}>+ New</button>
@@ -231,7 +231,7 @@ const MissionControlUI = () => {
             <div className="mc-bar-names">
               {desktops.map((_, i) => (
                 <span
-                  key={i}
+                  key={desktops[i].id}
                   className={
                     i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'
                   }
@@ -249,11 +249,7 @@ const MissionControlUI = () => {
         </>
       )}
 
-      <div
-        ref={wrapperRef}
-        className="desktops-wrapper"
-        style={wrapperStyle}
-      >
+      <div className="desktops-wrapper" style={wrapperStyle}>
         {desktops.map((desk, i) => (
           <div
             ref={el => (panelRefs.current[i] = el)}
@@ -283,6 +279,16 @@ const MissionControlUI = () => {
             }
           >
             <div
+              ref={el => {
+                scaleRefs.current[i] = el;
+                if (el && portalReady[i] === false) {
+                  setPortalReady(pr => {
+                    const next = [...pr];
+                    next[i] = true;
+                    return next;
+                  });
+                }
+              }}
               className="desktop-scale-wrapper"
               style={
                 overviewOpen
@@ -296,7 +302,9 @@ const MissionControlUI = () => {
                   : {}
               }
             >
-              <SystemUI />
+              {portalReady[i] &&
+                scaleRefs.current[i] &&
+                createPortal(desk.ui, scaleRefs.current[i])}
             </div>
           </div>
         ))}
