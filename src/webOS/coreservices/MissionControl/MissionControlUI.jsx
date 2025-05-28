@@ -38,6 +38,7 @@ const MissionControlUI = () => {
     width: window.innerWidth,
     height: window.innerHeight
   });
+  const [disableSlideTransition, setDisableSlideTransition] = useState(false);
 
   // 1) Ensure missionControl.opened exists
   useEffect(() => {
@@ -57,7 +58,6 @@ const MissionControlUI = () => {
       editStateValue('desktop', 'menubarVisible', 'true');
       editStateValue('missionControl', 'opened', 'false');
     }
-    // Intentionally only on first render
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -85,6 +85,7 @@ const MissionControlUI = () => {
     }
   }, [isFading]);
 
+  // 6) Scroll active thumbnail into view
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
   const THUMB_W = viewport.width * scale;
@@ -92,8 +93,6 @@ const MissionControlUI = () => {
 
   const wrapperRef = useRef(null);
   const panelRefs = useRef([]);
-
-  // 6) Scroll active thumbnail into view
   useEffect(() => {
     if (overviewOpen && panelRefs.current[activeIndex]) {
       panelRefs.current[activeIndex].scrollIntoView({
@@ -116,7 +115,24 @@ const MissionControlUI = () => {
     setIsFading(true);
   }, [activeIndex, editStateValue]);
 
-  // 8) Exit overview: restore icons & menubar, clear opened, optionally switch back
+  // New: instant switch method
+  const instantSwitchDesktop = useCallback(
+    (index) => {
+      // temporarily disable sliding animation
+      setDisableSlideTransition(true);
+      switchDesktop(index);
+    },
+    [switchDesktop]
+  );
+  // after one render tick, re-enable animations
+  useEffect(() => {
+    if (disableSlideTransition) {
+      const t = setTimeout(() => setDisableSlideTransition(false), 0);
+      return () => clearTimeout(t);
+    }
+  }, [disableSlideTransition]);
+
+  // 8) Exit overview: restore icons & menubar, clear opened, optionally instant-switch back
   const exitOverview = useCallback(
     (restore = true) => {
       setOverviewOpen(false);
@@ -129,18 +145,18 @@ const MissionControlUI = () => {
         editStateValue('missionControl', 'opened', 'false');
       }
       if (restore) {
-        switchDesktop(prevIndex);
+        instantSwitchDesktop(prevIndex);
       }
     },
     [
       prevIndex,
       editStateValue,
       state.groups.missionControl.opened,
-      switchDesktop
+      instantSwitchDesktop
     ]
   );
 
-  // Drag & drop for reorder
+  // Drag & drop for reorder (unchanged)
   const onDragStart = useCallback((e, i) => {
     e.dataTransfer.setData('text/plain', String(i));
   }, []);
@@ -157,7 +173,7 @@ const MissionControlUI = () => {
     [reorderDesktops]
   );
 
-  // Panel wrapper style
+  // Panel wrapper style: disable transition if requested
   const wrapperStyle = overviewOpen
     ? {
         top: 30,
@@ -166,11 +182,11 @@ const MissionControlUI = () => {
         transition: `top ${SLIDE_DURATION}ms ease, height ${SLIDE_DURATION}ms ease, transform ${SLIDE_DURATION}ms ease`
       }
     : {
-        transform: `translateX(calc(-${activeIndex} * (100vw + 60px)))`
+        transform: `translateX(calc(-${activeIndex} * (100vw + 60px)))`,
+        transition: disableSlideTransition ? 'none' : undefined
       };
 
   return (
-    
     <div
       className={
         `mission-control-container` +
@@ -179,7 +195,7 @@ const MissionControlUI = () => {
         (barExpanded ? ' bar-expanded' : '')
       }
     >
-       <Dock />
+      <Dock />
       {overlayVisible && (
         <div className="mc-overlay" style={{ display: 'flex', gap: 8 }}>
           <button onClick={createDesktop}>+ New</button>
@@ -220,7 +236,7 @@ const MissionControlUI = () => {
                     i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'
                   }
                   onClick={() => {
-                    switchDesktop(i);
+                    instantSwitchDesktop(i);
                     exitOverview(false);
                   }}
                 >
@@ -233,7 +249,11 @@ const MissionControlUI = () => {
         </>
       )}
 
-      <div ref={wrapperRef} className="desktops-wrapper" style={wrapperStyle}>
+      <div
+        ref={wrapperRef}
+        className="desktops-wrapper"
+        style={wrapperStyle}
+      >
         {desktops.map((desk, i) => (
           <div
             ref={el => (panelRefs.current[i] = el)}
@@ -246,7 +266,7 @@ const MissionControlUI = () => {
             onClick={
               overviewOpen
                 ? () => {
-                    switchDesktop(i);
+                    instantSwitchDesktop(i);
                     exitOverview(false);
                   }
                 : undefined
