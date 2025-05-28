@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import useDraggable from '../../interactions/useDraggable/useDraggable.jsx';
 import LoadingScreen from '../LoadingScreen/LoadingScreen.jsx';
-import { useFocus } from '../../contexts/FocusControl/FocusControl.jsx';
 import './DraggableWindow.css';
 
 const DraggableWindow = forwardRef(
@@ -27,19 +26,21 @@ const DraggableWindow = forwardRef(
       initialX,
       initialY,
       iframeSrc,
-      children
+      children,
+      // NEW: lifted from provider
+      isFocused,
+      updateFocus
     },
     ref
   ) => {
     const windowRef = useRef(null);
     const iframeRef = useRef(null);
-    const { focusedComponent, updateFocus } = useFocus();
-    const isFocused = focusedComponent === title;
 
-    // initial focus
+    // initial focus on mount (only runs once)
     useEffect(() => {
       updateFocus(title);
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // loading states
     const [isLoading, setIsLoading] = useState(true);
@@ -87,7 +88,7 @@ const DraggableWindow = forwardRef(
       return () => window.removeEventListener('pointerup', pu);
     }, []);
 
-    // update if external props change
+    // respond to external width/height props
     useEffect(() => {
       setCurrentWidth(windowWidth);
       setCurrentHeight(windowHeight);
@@ -115,7 +116,7 @@ const DraggableWindow = forwardRef(
       return () => { onUnmount?.(); };
     }, [onMount, onUnmount]);
 
-    // clamp top
+    // clamp top at 26px
     const clampedY = Math.max(currentY, 26);
 
     // expose imperative API
@@ -146,7 +147,7 @@ const DraggableWindow = forwardRef(
       isFocused
     }), [isFocused]);
 
-    // transition style
+    // programmatic vs user transition control
     const transitionStyle =
       !isUserDragging &&
       !isUserResizing &&
@@ -170,7 +171,7 @@ const DraggableWindow = forwardRef(
       }
     }, [isFocused, iframeSrc]);
 
-    // click inside iframe focuses canvas
+    // clicking inside iframe focuses canvas
     useEffect(() => {
       if (iframeSrc && isIframeLoaded && iframeRef.current) {
         let doc;
@@ -251,7 +252,7 @@ const DraggableWindow = forwardRef(
             <button
               className="close-button"
               onClick={e => { e.stopPropagation(); onClose?.(); }}
-              onTouchStart={e => { e.stopPropagation(); }}
+              onTouchStart={e => e.stopPropagation()}
             />
             <button
               className="resize-button"
@@ -307,49 +308,15 @@ const DraggableWindow = forwardRef(
           )}
         </div>
 
-        {/* Corner Resizers */}
-        <div
-          className="resize-handle resize-br"
-          onMouseDown={() => setIsUserResizing(true)}
-          onTouchStart={() => setIsUserResizing(true)}
-        />
-        <div
-          className="resize-handle resize-tr"
-          onMouseDown={() => setIsUserResizing(true)}
-          onTouchStart={() => setIsUserResizing(true)}
-        />
-        <div
-          className="resize-handle resize-bl"
-          onMouseDown={() => setIsUserResizing(true)}
-          onTouchStart={() => setIsUserResizing(true)}
-        />
-        <div
-          className="resize-handle resize-tl"
-          onMouseDown={() => setIsUserResizing(true)}
-          onTouchStart={() => setIsUserResizing(true)}
-        />
-
-        {/* Edge Resizers */}
-        <div
-          className="resize-handle resize-top"
-          onMouseDown={() => setIsUserResizing(true)}
-          onTouchStart={() => setIsUserResizing(true)}
-        />
-        <div
-          className="resize-handle resize-bottom"
-          onMouseDown={() => setIsUserResizing(true)}
-          onTouchStart={() => setIsUserResizing(true)}
-        />
-        <div
-          className="resize-handle resize-left"
-          onMouseDown={() => setIsUserResizing(true)}
-          onTouchStart={() => setIsUserResizing(true)}
-        />
-        <div
-          className="resize-handle resize-right"
-          onMouseDown={() => setIsUserResizing(true)}
-          onTouchStart={() => setIsUserResizing(true)}
-        />
+        {/* Corner & Edge Resizers */}
+        {['br','tr','bl','tl','top','bottom','left','right'].map(pos => (
+          <div
+            key={pos}
+            className={`resize-handle resize-${pos}`}
+            onMouseDown={() => setIsUserResizing(true)}
+            onTouchStart={() => setIsUserResizing(true)}
+          />
+        ))}
       </div>
     );
   }
