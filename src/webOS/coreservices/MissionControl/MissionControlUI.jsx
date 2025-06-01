@@ -4,6 +4,7 @@ import React, {
   useState,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -30,12 +31,68 @@ const MissionControlUI = () => {
   const overlayVisible =
     state.groups.missionControl?.overlayVisible === 'true';
 
-  // track when each portal can mount
-  const [portalReady, setPortalReady] = useState([]);
+  // track when each portal can mount (initially all false)
+  const [portalReady, setPortalReady] = useState(() =>
+    desktops.map(() => false)
+  );
+
+  // Refs to keep track of previous values without triggering re-renders
+  const prevDesktopsRef = useRef(desktops);
+  const prevPortalReadyRef = useRef(portalReady);
+
+  // Whenever `desktops` changes (add/remove/reorder), compute a new portalReady array
   useEffect(() => {
-    // reset on any desktops array change
-    setPortalReady(desktops.map(() => false));
+    const prevDesktops = prevDesktopsRef.current;
+    const prevReady = prevPortalReadyRef.current;
+    const prevLen = prevDesktops.length;
+    const currLen = desktops.length;
+
+    let newReady;
+
+    if (currLen > prevLen) {
+      // One or more desktops added: keep existing flags, append `false` for each new desktop
+      const diffCount = currLen - prevLen;
+      newReady = [...prevReady, ...Array(diffCount).fill(false)];
+    } else if (currLen < prevLen) {
+      // One or more desktops removed: rebuild `newReady` by matching IDs
+      const idToReady = {};
+      prevDesktops.forEach((d, idx) => {
+        idToReady[d.id] = prevReady[idx];
+      });
+      newReady = desktops.map(d => idToReady[d.id] || false);
+    } else {
+      // Same length → probably reordered: reorder flags by matching IDs
+      const idToReady = {};
+      prevDesktops.forEach((d, idx) => {
+        idToReady[d.id] = prevReady[idx];
+      });
+      newReady = desktops.map(d => idToReady[d.id] || false);
+    }
+
+    // Update state and refs once
+    setPortalReady(newReady);
+    prevDesktopsRef.current = desktops;
+    prevPortalReadyRef.current = newReady;
   }, [desktops]);
+
+  // After each render, check for any newly mounted portal containers and mark them ready
+  const scaleRefs = useRef([]);
+  useLayoutEffect(() => {
+    let changed = false;
+    const latestReady = prevPortalReadyRef.current.slice();
+
+    desktops.forEach((_, i) => {
+      if (!latestReady[i] && scaleRefs.current[i]) {
+        latestReady[i] = true;
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      setPortalReady(latestReady);
+      prevPortalReadyRef.current = latestReady;
+    }
+  });
 
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [isFading, setIsFading] = useState(false);
@@ -48,7 +105,6 @@ const MissionControlUI = () => {
   const [disableSlideTransition, setDisableSlideTransition] = useState(false);
 
   const panelRefs = useRef([]);
-  const scaleRefs = useRef([]);
 
   // 1) Ensure missionControl.opened exists
   useEffect(() => {
@@ -168,7 +224,7 @@ const MissionControlUI = () => {
     [reorderDesktops]
   );
 
-  // layout math
+  // layout calculations
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
   const THUMB_W = viewport.width * scale;
@@ -281,13 +337,6 @@ const MissionControlUI = () => {
             <div
               ref={el => {
                 scaleRefs.current[i] = el;
-                if (el && portalReady[i] === false) {
-                  setPortalReady(pr => {
-                    const next = [...pr];
-                    next[i] = true;
-                    return next;
-                  });
-                }
               }}
               className="desktop-scale-wrapper"
               style={
