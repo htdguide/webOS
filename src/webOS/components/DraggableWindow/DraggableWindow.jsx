@@ -245,8 +245,15 @@ const DraggableWindow = forwardRef(
         {/* Header */}
         <div
           className="window-header"
-          onMouseDown={() => setIsUserDragging(true)}
-          onTouchStart={() => setIsUserDragging(true)}
+          onMouseDown={(e) => {
+            updateFocus(title);
+            setIsUserDragging(true);
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            updateFocus(title);
+            setIsUserDragging(true);
+          }}
         >
           <div className="header-left">
             <button
@@ -313,8 +320,15 @@ const DraggableWindow = forwardRef(
           <div
             key={pos}
             className={`resize-handle resize-${pos}`}
-            onMouseDown={() => setIsUserResizing(true)}
-            onTouchStart={() => setIsUserResizing(true)}
+            onMouseDown={(e) => {
+              updateFocus(title);
+              setIsUserResizing(true);
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              updateFocus(title);
+              setIsUserResizing(true);
+            }}
           />
         ))}
       </div>
