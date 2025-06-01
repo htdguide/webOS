@@ -1,4 +1,4 @@
-// Noterminal.jsx
+// src/initialapps/Noterminal/Noterminal.jsx
 import React, { useEffect } from 'react';
 import './Noterminal.css';
 import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowProvider';
@@ -6,7 +6,7 @@ import { useStateManager } from '../../stores/StateManager/StateManager';
 import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvider';
 import FlowManager from './components/FlowManager';
 
-function Noterminal({ onClose }) {
+function Noterminal({ onClose, windowTitle }) {
   const {
     openDraggableWindow,
     closeDraggableWindow,
@@ -15,7 +15,7 @@ function Noterminal({ onClose }) {
     moveDraggableWindow,
   } = useDraggableWindow();
 
-  // pull your terminal settings (with defaults)
+  // Pull terminal settings (with defaults) from your global state manager
   const { state } = useStateManager();
   const {
     fontSize = '12px',
@@ -26,7 +26,7 @@ function Noterminal({ onClose }) {
 
   const deviceInfo = useDeviceInfo();
 
-  // base dimensions
+  // Base dimensions for desktop vs. mobile
   const defaultParams = {
     windowWidth: 600,
     windowHeight: 400,
@@ -34,7 +34,6 @@ function Noterminal({ onClose }) {
     initialY: undefined,
   };
 
-  // full-width on mobile, top half
   const windowParams =
     deviceInfo.deviceType !== 'desktop'
       ? {
@@ -45,9 +44,10 @@ function Noterminal({ onClose }) {
         }
       : defaultParams;
 
+  // Use the unique windowTitle passed from TaskManager, or fallback to "Noterminal"
   const title = 'Noterminal';
 
-  // wrap your FlowManager so it can reposition on input focus
+  // Wrap FlowManager so it can resize/move on input focus (especially mobile)
   const terminalContent = (
     <FlowManager
       fontSize={fontSize}
@@ -68,6 +68,7 @@ function Noterminal({ onClose }) {
   );
 
   useEffect(() => {
+    // Open a draggable window identified by this unique title
     openDraggableWindow({
       title,
       windowWidth: windowParams.windowWidth,
@@ -78,20 +79,22 @@ function Noterminal({ onClose }) {
       initialY: windowParams.initialY,
       content: terminalContent,
       onClose: () => {
+        // First call the parent-provided onClose to let TaskManager remove this task
         onClose?.();
+        // Then close the draggable window using the same unique title
         closeDraggableWindow(title);
       },
       onMount: () => {
-        // now correctly hide *this* window's loading overlay
+        // Remove the loading overlay for this specific window title
         hideLoading(title);
       },
       onUnmount: () => {
-        console.log('Terminal draggable window unmounted.');
+        console.log(`Terminal window "${title}" unmounted.`);
       },
     });
 
     return () => {
-      // clean up in case the parent unmounts us
+      // In case the component unmounts unexpectedly, ensure we clean up
       closeDraggableWindow(title);
     };
   }, [
@@ -103,8 +106,11 @@ function Noterminal({ onClose }) {
     terminalContent,
     windowParams,
     onClose,
+    title,
   ]);
 
+  // This component itself renders nothing in the normal React tree,
+  // because all actual UI is rendered via the draggable window portal.
   return null;
 }
 
