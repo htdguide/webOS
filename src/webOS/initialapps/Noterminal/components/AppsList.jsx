@@ -3,7 +3,7 @@
 
 import StateEditor from "../apps/StateEditor/StateEditor";
 import TerminalSettingsEditor from "../apps/TerminalSettingsEditor/TerminalSettingsEditor";
-import LoggerTerminal from "../apps/Logger/Logger";
+import LoggerTerminal from "../apps/Logger/LoggerTerminal";
 
 export const apps = [
   {
