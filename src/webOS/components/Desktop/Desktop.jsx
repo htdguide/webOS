@@ -1,12 +1,17 @@
-// Desktop.jsx
-import React, { useState, useContext } from 'react';
-import { AppsContext } from '../../contexts/AppsContext/AppsContext.jsx';
-import DesktopIcon from '../DesktopIcon/DesktopIcon.jsx';
-import { GRID_GAP, TOP_MARGIN, LEFT_MARGIN } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
-import { GRID_SIZE } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
-import './Desktop.css';
-import { FocusWrapper } from '../../contexts/FocusControl/FocusControl.jsx';
-import { useStateManager } from "../../stores/StateManager/StateManager.jsx";
+// src/components/Desktop/Desktop.jsx
+
+import React, { useState, useContext } from "react";
+import { AppsContext } from "../../contexts/AppsContext/AppsContext.jsx";
+import DesktopIcon from "../DesktopIcon/DesktopIcon.jsx";
+import {
+  GRID_GAP,
+  TOP_MARGIN,
+  LEFT_MARGIN,
+} from "../../configs/DesktopIconConfig/DesktopIconConfig.jsx";
+import { GRID_SIZE } from "../../configs/DesktopIconConfig/DesktopIconConfig.jsx";
+import "./Desktop.css";
+import { FocusWrapper } from "../../contexts/FocusControl/FocusControl.jsx";
+import { useLogger } from "../Logger/Logger.jsx";
 
 /**
  * Helper to convert a priority number into an (x,y) position on the desktop.
@@ -22,66 +27,53 @@ function getPositionFromPriority(priority) {
 
 function Desktop({ onOpenApp }) {
   const { apps } = useContext(AppsContext);
+
+  // Create a logger bound to this component name. Internally, it will read
+  // state.groups.developer.logsenabled and only print if "true".
+  const log = useLogger("Desktop");
+
   const [selectedIcon, setSelectedIcon] = useState(null);
 
-  // Access state manager to read the "logsenabled" flag under "developer" group
-  const { state } = useStateManager();
-  const logsEnabled =
-    state &&
-    state.groups &&
-    state.groups.developer &&
-    state.groups.developer.logsenabled === 'true';
-
   const handleWallpaperClick = () => {
-    if (logsEnabled) {
-      console.log('[Desktop] Wallpaper clicked: deselecting any selected icon');
-    }
+    log("Wallpaper clicked: deselecting any selected icon");
     setSelectedIcon(null);
   };
 
   const handleIconClick = (iconId) => {
-    if (logsEnabled) {
-      console.log(`[Desktop] Icon clicked: ${iconId}`);
-    }
+    log(`Icon clicked: ${iconId}`);
     setSelectedIcon(iconId);
   };
 
   const handleIconDoubleClick = (iconId) => {
-    if (logsEnabled) {
-      console.log(`[Desktop] Icon double-clicked: ${iconId} (opening app)`);
-    }
+    log(`Icon double-clicked: ${iconId} (opening app)`);
     onOpenApp(iconId);
   };
 
-  if (logsEnabled) {
-    console.log(`[Desktop] Rendering ${apps.filter(icon => !icon.indock).length} desktop icons`);
-  }
+  // Log how many desktop icons are being rendered
+  const desktopApps = apps.filter((iconConfig) => !iconConfig.indock);
+  log(`Rendering ${desktopApps.length} desktop icons`);
 
   return (
     <FocusWrapper name="Desktop">
       {/* The desktop content fills its parent monitor */}
       <div className="desktop-content" onClick={handleWallpaperClick}>
-        {apps
-          .filter((iconConfig) => !iconConfig.indock)
-          .map((iconConfig) => {
-            const position = getPositionFromPriority(iconConfig.priority);
-            if (logsEnabled) {
-              console.log(
-                `[Desktop] Position for icon ${iconConfig.id}: x=${position.x}, y=${position.y}`
-              );
-            }
-            return (
-              <DesktopIcon
-                key={iconConfig.id}
-                name={iconConfig.name}
-                icon={iconConfig.icon}
-                isSelected={selectedIcon === iconConfig.id}
-                onClick={() => handleIconClick(iconConfig.id)}
-                onDoubleClick={() => handleIconDoubleClick(iconConfig.id)}
-                position={position}
-              />
-            );
-          })}
+        {desktopApps.map((iconConfig) => {
+          const position = getPositionFromPriority(iconConfig.priority);
+          log(
+            `Position for icon ${iconConfig.id}: x=${position.x}, y=${position.y}`
+          );
+          return (
+            <DesktopIcon
+              key={iconConfig.id}
+              name={iconConfig.name}
+              icon={iconConfig.icon}
+              isSelected={selectedIcon === iconConfig.id}
+              onClick={() => handleIconClick(iconConfig.id)}
+              onDoubleClick={() => handleIconDoubleClick(iconConfig.id)}
+              position={position}
+            />
+          );
+        })}
       </div>
     </FocusWrapper>
   );
