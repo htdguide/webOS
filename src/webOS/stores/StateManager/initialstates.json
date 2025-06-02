@@ -15,11 +15,10 @@
     "fontFamily": "monospace",
     "backgroundColor": "#FFFFFF"
   },
-  "admin": {
-    "dashboard": "active",
-    "logs": "enabled"
-  },
   "missionControl": {
     "overlayVisible": "false"
+  },
+  "developer": {
+    "logsenabled": "false"
   }
 }
