@@ -1,5 +1,6 @@
-// Dock.jsx
-import React, { useContext, useState, useRef } from 'react';
+// src/components/Dock/Dock.jsx
+
+import React, { useContext, useState, useRef, useEffect } from 'react';
 import { AppsContext } from '../../contexts/AppsContext/AppsContext';
 import DOCK_CONFIG from '../../configs/DockConfig/DockConfig';
 import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvider';
@@ -16,11 +17,19 @@ import {
   getTooltipArrowStyle,
   getOpenIndicatorStyle,
 } from './DockStyle';
+import { useLogger } from '../Logger/Logger.jsx';
 
 const Dock = () => {
+  // Initialize logger for this component
+  const { log, enabled } = useLogger('Dock');
+
   // Get device info (including orientation) from DeviceInfoProvider.
   const deviceInfo = useDeviceInfo();
   const isPortrait = deviceInfo.orientation === 'portrait';
+
+  if (enabled) {
+    log('render', `Device orientation: ${deviceInfo.orientation}`);
+  }
 
   // Get dock visibility from the state manager.
   const { state } = useStateManager();
@@ -28,15 +37,22 @@ const Dock = () => {
   const isDockVisible =
     state.groups.dock &&
     state.groups.dock.dockVisible &&
-    state.groups.dock.dockVisible === "true";
+    state.groups.dock.dockVisible === 'true';
+
+  if (enabled) {
+    log('config', `Dock visibility: ${isDockVisible}`);
+  }
 
   // Determine configuration overrides based on device orientation and dock position.
   let config = { ...DOCK_CONFIG };
   if (isPortrait && config.vertical) {
+    if (enabled) log('config', 'Applying portrait vertical overrides');
     config = { ...config, ...config.vertical };
   } else if (config.DOCK_POSITION === 'left' && config.left) {
+    if (enabled) log('config', 'Applying left-position overrides');
     config = { ...config, ...config.left };
   } else if (config.DOCK_POSITION === 'right' && config.right) {
+    if (enabled) log('config', 'Applying right-position overrides');
     config = { ...config, ...config.right };
   }
 
@@ -58,23 +74,39 @@ const Dock = () => {
     ICONS_PER_PAGE,
   } = config;
 
+  if (enabled) {
+    log(
+      'config',
+      `Dock config: POSITION=${DOCK_POSITION}, ICON_SIZE=${ICON_SIZE}, ICON_MARGIN=${ICON_MARGIN}`
+    );
+  }
+
   // Determine dock layout orientation: horizontal if bottom, vertical if left/right.
   const isVerticalDock = DOCK_POSITION === 'left' || DOCK_POSITION === 'right';
 
   const { apps, openedApps, setOpenedApps } = useContext(AppsContext);
   // Include apps that are normally in the dock and those open but not in the dock.
-  const baseDockApps = apps.filter(app => app.indock);
-  const extraOpenApps = apps.filter(app => !app.indock && openedApps.includes(app.id));
-  const dockApps = [
-    ...baseDockApps.sort((a, b) => a.priority - b.priority),
-    ...extraOpenApps,
-  ];
+  const baseDockApps = apps.filter((app) => app.indock);
+  const extraOpenApps = apps.filter(
+    (app) => !app.indock && openedApps.includes(app.id)
+  );
+  const dockApps = [...baseDockApps.sort((a, b) => a.priority - b.priority), ...extraOpenApps];
+
+  if (enabled) {
+    log('render', `Total dock apps (base + extra): ${dockApps.length}`);
+  }
 
   // Pagination settings.
-  const iconsPerPage = isPortrait ? (ICONS_PER_PAGE || 4) : dockApps.length;
+  const iconsPerPage = isPortrait ? ICONS_PER_PAGE || 4 : dockApps.length;
   const paginationEnabled = isPortrait && dockApps.length > iconsPerPage;
   const totalPages = paginationEnabled ? Math.ceil(dockApps.length / iconsPerPage) : 1;
   const [currentPage, setCurrentPage] = useState(0);
+
+  useEffect(() => {
+    if (enabled && paginationEnabled) {
+      log('layout', `Pagination enabled: pages=${totalPages}, currentPage=${currentPage}`);
+    }
+  }, [currentPage, paginationEnabled, totalPages, enabled]);
 
   // Determine which apps to render based on current page.
   const appsToRender = paginationEnabled
@@ -96,7 +128,11 @@ const Dock = () => {
   const [touchStartX, setTouchStartX] = useState(null);
 
   const handleTouchStart = (e) => {
-    setTouchStartX(e.touches[0].clientX);
+    const startX = e.touches[0].clientX;
+    if (enabled) {
+      log('userInteraction', `Touch start at x=${startX}`);
+    }
+    setTouchStartX(startX);
   };
 
   const handleTouchEnd = (e) => {
@@ -104,12 +140,20 @@ const Dock = () => {
     const touchEndX = e.changedTouches[0].clientX;
     const deltaX = touchEndX - touchStartX;
     const swipeThreshold = 50; // threshold in pixels
+
     if (deltaX < -swipeThreshold && currentPage < totalPages - 1) {
+      if (enabled) {
+        log('userInteraction', `Swipe left detected: changing to page ${currentPage + 1}`);
+      }
       setCurrentPage(currentPage + 1);
     } else if (deltaX > swipeThreshold && currentPage > 0) {
+      if (enabled) {
+        log('userInteraction', `Swipe right detected: changing to page ${currentPage - 1}`);
+      }
       setCurrentPage(currentPage - 1);
     }
     setTouchStartX(null);
+
     if (paginationEnabled) {
       const newScales = [...scales];
       const startIndex = currentPage * iconsPerPage;
@@ -117,6 +161,9 @@ const Dock = () => {
         newScales[startIndex + i] = 1;
       }
       setScales(newScales);
+      if (enabled) {
+        log('layout', `Reset scales after pagination to 1 for indices ${startIndex}–${startIndex + appsToRender.length - 1}`);
+      }
     }
   };
 
@@ -128,11 +175,26 @@ const Dock = () => {
     setShouldTransition(true);
     initialTransitionTimeoutRef.current = setTimeout(() => {
       setShouldTransition(false);
+      if (enabled) {
+        log('layout', 'Initial transition complete, disabling transition');
+      }
     }, 300);
+    if (enabled) {
+      log('userInteraction', 'Mouse entered dock area');
+    }
   };
 
   const handleMouseMove = (e) => {
     if (!iconsContainerRef.current) return;
+    const containerRect = iconsContainerRef.current.getBoundingClientRect();
+    const mousePos = isVerticalDock
+      ? e.clientY - containerRect.top
+      : e.clientX - containerRect.left;
+
+    if (enabled) {
+      log('userInteraction', `Mouse move at ${isVerticalDock ? 'y' : 'x'}=${mousePos}`);
+    }
+
     if (!ENABLE_MAGNIFICATION) {
       if (paginationEnabled) {
         const newScales = [...scales];
@@ -141,16 +203,17 @@ const Dock = () => {
           newScales[startIndex + i] = 1;
         }
         setScales(newScales);
+        if (enabled) {
+          log('layout', 'Magnification disabled: resetting scales to 1 for current page');
+        }
       } else {
         setScales(dockApps.map(() => 1));
+        if (enabled) {
+          log('layout', 'Magnification disabled: resetting all scales to 1');
+        }
       }
       return;
     }
-
-    const containerRect = iconsContainerRef.current.getBoundingClientRect();
-    const mousePos = isVerticalDock
-      ? e.clientY - containerRect.top
-      : e.clientX - containerRect.left;
 
     if (paginationEnabled) {
       const newScales = [...scales];
@@ -158,19 +221,31 @@ const Dock = () => {
       for (let i = 0; i < appsToRender.length; i++) {
         const baseCenter = ICON_MARGIN + ICON_SIZE / 2 + i * (ICON_SIZE + 2 * ICON_MARGIN);
         const distance = Math.abs(mousePos - baseCenter);
-        const scale = distance > DOCK_SPREAD ? 1 : 1 + (MAX_SCALE - 1) * (1 - distance / DOCK_SPREAD);
+        const scale =
+          distance > DOCK_SPREAD
+            ? 1
+            : 1 + (MAX_SCALE - 1) * (1 - distance / DOCK_SPREAD);
         newScales[startIndex + i] = scale;
       }
       setScales(newScales);
+      if (enabled) {
+        log('layout', `Updated scales for paginationEnabled at page ${currentPage}: [${newScales.slice(startIndex, startIndex + appsToRender.length).join(', ')}]`);
+      }
     } else {
       const newScales = [];
       dockApps.forEach((_, index) => {
         const baseCenter = ICON_MARGIN + ICON_SIZE / 2 + index * (ICON_SIZE + 2 * ICON_MARGIN);
         const distance = Math.abs(mousePos - baseCenter);
-        const scale = distance > DOCK_SPREAD ? 1 : 1 + (MAX_SCALE - 1) * (1 - distance / DOCK_SPREAD);
+        const scale =
+          distance > DOCK_SPREAD
+            ? 1
+            : 1 + (MAX_SCALE - 1) * (1 - distance / DOCK_SPREAD);
         newScales.push(scale);
       });
       setScales(newScales);
+      if (enabled) {
+        log('layout', `Updated scales for all dock apps: [${newScales.join(', ')}]`);
+      }
     }
   };
 
@@ -182,12 +257,21 @@ const Dock = () => {
         newScales[startIndex + i] = 1;
       }
       setScales(newScales);
+      if (enabled) {
+        log('layout', `Mouse left dock (pagination): reset scales for current page ${currentPage}`);
+      }
     } else {
       setScales(dockApps.map(() => 1));
+      if (enabled) {
+        log('layout', 'Mouse left dock: reset all scales to 1');
+      }
     }
     setShouldTransition(true);
     if (initialTransitionTimeoutRef.current) {
       clearTimeout(initialTransitionTimeoutRef.current);
+    }
+    if (enabled) {
+      log('userInteraction', 'Mouse left dock area');
     }
   };
 
@@ -221,11 +305,20 @@ const Dock = () => {
         ? centers[centers.length - 1] + ICON_SIZE / 2 + lastDynamicMargin
         : 0;
 
+    if (enabled) {
+      log('layout', `Computed icon positions: centers=[${centers.join(', ')}], containerDimension=${containerDimension}`);
+    }
+
     return { centers, containerDimension };
   };
 
   const computeBackgroundBounds = () => {
-    if (appsToRender.length === 0) return { start: 0, size: 0 };
+    if (appsToRender.length === 0) {
+      if (enabled) {
+        log('layout', 'No apps to render: background bounds start=0, size=0');
+      }
+      return { start: 0, size: 0 };
+    }
 
     const { centers } = computeIconPositions();
     let minPos = Infinity;
@@ -241,7 +334,14 @@ const Dock = () => {
       if (effectiveEnd > maxPos) maxPos = effectiveEnd;
     });
 
-    return { start: minPos, size: maxPos - minPos };
+    const start = minPos;
+    const size = maxPos - minPos;
+
+    if (enabled) {
+      log('layout', `Computed background bounds: start=${start}, size=${size}`);
+    }
+
+    return { start, size };
   };
 
   const { start: bgStart, size: bgSize } = computeBackgroundBounds();
@@ -250,16 +350,27 @@ const Dock = () => {
   // Open or focus an app.
   const openApp = (app) => {
     setActiveApp(app.id);
+    if (enabled) {
+      log('userInteraction', `Opening/focusing app: ${app.id}`);
+    }
     if (app.link) {
       window.open(app.link, '_blank', 'noopener,noreferrer');
+      if (enabled) {
+        log('behavior', `Opened external link for app: ${app.id}`);
+      }
     } else {
-      setOpenedApps(prevOpenedApps => {
+      setOpenedApps((prevOpenedApps) => {
         if (!prevOpenedApps.includes(app.id)) {
+          if (enabled) {
+            log('behavior', `Adding app to openedApps: ${app.id}`);
+          }
           return [...prevOpenedApps, app.id];
+        }
+        if (enabled) {
+          log('behavior', `App already open, focusing: ${app.id}`);
         }
         return prevOpenedApps;
       });
-      console.log(`Launching or focusing app: ${app.id}`);
     }
   };
 
@@ -297,8 +408,18 @@ const Dock = () => {
                 DOCK_POSITION,
               })}
               onClick={() => openApp(app)}
-              onMouseEnter={() => setHoveredApp(app.id)}
-              onMouseLeave={() => setHoveredApp(null)}
+              onMouseEnter={() => {
+                setHoveredApp(app.id);
+                if (enabled) {
+                  log('userInteraction', `Mouse entered icon container for app: ${app.id}`);
+                }
+              }}
+              onMouseLeave={() => {
+                setHoveredApp(null);
+                if (enabled) {
+                  log('userInteraction', `Mouse left icon container for app: ${app.id}`);
+                }
+              }}
             >
               {!isPortrait && (
                 <div style={getTooltipWrapperStyle(DOCK_POSITION, APP_NAME_TOOLTIP_OFFSET)}>
@@ -325,7 +446,12 @@ const Dock = () => {
             {Array.from({ length: totalPages }).map((_, idx) => (
               <div
                 key={idx}
-                onClick={() => setCurrentPage(idx)}
+                onClick={() => {
+                  setCurrentPage(idx);
+                  if (enabled) {
+                    log('userInteraction', `Pagination dot clicked: switching to page ${idx}`);
+                  }
+                }}
                 style={{
                   width: '8px',
                   height: '8px',
