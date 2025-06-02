@@ -28,30 +28,38 @@ function getPositionFromPriority(priority) {
 function Desktop({ onOpenApp }) {
   const { apps } = useContext(AppsContext);
 
-  // Create a logger bound to this component name. Internally, it will read
-  // state.groups.developer.logsenabled and only print if "true".
-  const log = useLogger("Desktop");
+  // Create a logger bound to this component name. 
+  // Internally, it will:
+  //   1) Read `developer.logsenabled` from StateManager.
+  //   2) If logs are enabled ("true"), let us know via `enabled`, and print formatted logs with group names.
+  // `log` signature: log(groupName: string, message: string)
+  const { log, enabled } = useLogger("Desktop");
 
   const [selectedIcon, setSelectedIcon] = useState(null);
 
   const handleWallpaperClick = () => {
-    log("Wallpaper clicked: deselecting any selected icon");
+    // Group: "userInteraction"
+    if (enabled) log("userInteraction", "Wallpaper clicked: deselecting any selected icon");
     setSelectedIcon(null);
   };
 
   const handleIconClick = (iconId) => {
-    log(`Icon clicked: ${iconId}`);
+    // Group: "userInteraction"
+    if (enabled) log("userInteraction", `Icon clicked: ${iconId}`);
     setSelectedIcon(iconId);
   };
 
   const handleIconDoubleClick = (iconId) => {
-    log(`Icon double-clicked: ${iconId} (opening app)`);
+    // Group: "userInteraction"
+    if (enabled) log("userInteraction", `Icon double-clicked: ${iconId} (opening app)`);
     onOpenApp(iconId);
   };
 
-  // Log how many desktop icons are being rendered
+  // Filter out apps that are “in dock” to get desktop icons
   const desktopApps = apps.filter((iconConfig) => !iconConfig.indock);
-  log(`Rendering ${desktopApps.length} desktop icons`);
+
+  // Group: "render"
+  if (enabled) log("render", `Rendering ${desktopApps.length} desktop icons`);
 
   return (
     <FocusWrapper name="Desktop">
@@ -59,9 +67,10 @@ function Desktop({ onOpenApp }) {
       <div className="desktop-content" onClick={handleWallpaperClick}>
         {desktopApps.map((iconConfig) => {
           const position = getPositionFromPriority(iconConfig.priority);
-          log(
-            `Position for icon ${iconConfig.id}: x=${position.x}, y=${position.y}`
-          );
+
+          // Group: "layout"
+          if (enabled) log("layout", `Position for icon ${iconConfig.id}: x=${position.x}, y=${position.y}`);
+
           return (
             <DesktopIcon
               key={iconConfig.id}
