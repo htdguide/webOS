@@ -4,13 +4,13 @@ import { useStateManager } from "../../stores/StateManager/StateManager";
 import { useRef } from "react";
 
 /**
- * We’ll assign a unique numeric instance ID to each hook invocation.
- * This ensures that multiple instances of the same componentName
- * get distinct identifiers in the logger.
- */
-let nextInstanceId = 1;
-
-/**
+ * We’ll assign a unique numeric instance index to each hook invocation,
+ * but only append the index to the componentId if more than one instance
+ * of the same componentName has been created.
+ *
+ * componentNameCounts:
+ *   Maps componentName → next available instance index (starts at 1).
+ *
  * registeredComponents:
  *   Maps componentId → Set of groupNames that have been logged.
  *
@@ -20,13 +20,18 @@ let nextInstanceId = 1;
  * mutedGroups:
  *   Maps componentId → Set of groupNames that are muted under that component.
  */
+const componentNameCounts = {};
 const registeredComponents = {};
 const mutedComponents = new Set();
 const mutedGroups = {};
 
 /**
  * useLogger(componentName: string):
- *   - Generates a unique componentId = `${componentName}-${instanceId}`.
+ *   - Determines an instanceIndex for this hook invocation:
+ *       • If this is the first time "componentName" is used, instanceIndex = 1.
+ *       • Otherwise, instanceIndex is incremented.
+ *   - If instanceIndex === 1, componentId = componentName.
+ *     Else componentId = `${componentName}-${instanceIndex}`.
  *   - Reads `developer.logsenabled` from StateManager to decide if logging is globally enabled.
  *   - Returns:
  *       { log, enabled, componentId }
@@ -49,12 +54,24 @@ export const useLogger = (componentName) => {
     state.groups.developer &&
     state.groups.developer.logsenabled === "true";
 
-  // Persist an instanceId across renders
+  // Persist an instanceIndex across renders for this component instance
   const instanceRef = useRef(null);
   if (instanceRef.current === null) {
-    instanceRef.current = nextInstanceId++;
+    // If it's the first time we see this componentName, start at 1
+    if (!componentNameCounts[componentName]) {
+      componentNameCounts[componentName] = 1;
+    } else {
+      componentNameCounts[componentName] += 1;
+    }
+    instanceRef.current = componentNameCounts[componentName];
   }
-  const componentId = `${componentName}-${instanceRef.current}`;
+  const instanceIndex = instanceRef.current;
+
+  // Determine componentId: no suffix if only one instance (index === 1)
+  const componentId =
+    instanceIndex === 1
+      ? componentName
+      : `${componentName}-${instanceIndex}`;
 
   // Initialize registration/muted sets for this componentId
   if (!registeredComponents[componentId]) {

@@ -1,3 +1,5 @@
+// src/components/DraggableWindow/DraggableWindow.jsx
+
 import React, {
   useRef,
   useState,
@@ -8,6 +10,7 @@ import React, {
 import useDraggable from '../../interactions/useDraggable/useDraggable.jsx';
 import LoadingScreen from '../LoadingScreen/LoadingScreen.jsx';
 import './DraggableWindow.css';
+import { useLogger } from "../Logger/Logger.jsx";
 
 const DraggableWindow = forwardRef(
   (
@@ -33,12 +36,20 @@ const DraggableWindow = forwardRef(
     },
     ref
   ) => {
+    // Create a logger bound to this component name.
+    // `log` signature: log(groupName: string, message: string)
+    const { log, enabled } = useLogger("DraggableWindow");
+
     const windowRef = useRef(null);
     const iframeRef = useRef(null);
 
     // initial focus on mount (only runs once)
     useEffect(() => {
+      if (enabled) log("lifecycle", "DraggableWindow mounted: setting initial focus");
       updateFocus(title);
+      return () => {
+        if (enabled) log("lifecycle", "DraggableWindow unmounted");
+      };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -67,9 +78,11 @@ const DraggableWindow = forwardRef(
     const [isProgrammaticResize, setIsProgrammaticResize] = useState(false);
     const [isProgrammaticMove, setIsProgrammaticMove] = useState(false);
 
-    // stop dragging/resizing on up
+    // stop dragging/resizing on mouse/touch up
     useEffect(() => {
       const up = () => {
+        if (isUserDragging && enabled) log("userInteraction", "User stopped dragging");
+        if (isUserResizing && enabled) log("userInteraction", "User stopped resizing");
         setIsUserDragging(false);
         setIsUserResizing(false);
       };
@@ -79,20 +92,24 @@ const DraggableWindow = forwardRef(
         window.removeEventListener('mouseup', up);
         window.removeEventListener('touchend', up);
       };
-    }, []);
+    }, [isUserDragging, isUserResizing, enabled]);
 
     // extra pointerup for safety
     useEffect(() => {
-      const pu = () => setIsUserDragging(false);
+      const pu = () => {
+        if (isUserDragging && enabled) log("userInteraction", "Pointer up: stopping drag");
+        setIsUserDragging(false);
+      };
       window.addEventListener('pointerup', pu);
       return () => window.removeEventListener('pointerup', pu);
-    }, []);
+    }, [isUserDragging, enabled]);
 
     // respond to external width/height props
     useEffect(() => {
+      if (enabled) log("resize", `External size props changed: width=${windowWidth}, height=${windowHeight}`);
       setCurrentWidth(windowWidth);
       setCurrentHeight(windowHeight);
-    }, [windowWidth, windowHeight]);
+    }, [windowWidth, windowHeight, enabled]);
 
     // setup draggable/resizable
     const { enterFullscreen } = useDraggable(
@@ -105,16 +122,23 @@ const DraggableWindow = forwardRef(
         maxWidth: maxWindowWidth,
         maxHeight: maxWindowHeight,
       },
-      onMount,
-      onUnmount,
-      onResize
+      (newWidth, newHeight) => {
+        // onResize callback from useDraggable
+        if (enabled) log("resize", `User resized via Draggable: newWidth=${newWidth}, newHeight=${newHeight}`);
+        onResize?.(newWidth, newHeight);
+      },
+      onUnmount
     );
 
-    // fallback mount/unmount
+    // fallback mount/unmount for draggable hook
     useEffect(() => {
+      if (enabled) log("lifecycle", "Calling onMount callback (draggable-init)");
       onMount?.();
-      return () => { onUnmount?.(); };
-    }, [onMount, onUnmount]);
+      return () => { 
+        if (enabled) log("lifecycle", "Calling onUnmount callback (draggable-cleanup)");
+        onUnmount?.(); 
+      };
+    }, [onMount, onUnmount, enabled]);
 
     // clamp top at 26px
     const clampedY = Math.max(currentY, 26);
@@ -122,30 +146,41 @@ const DraggableWindow = forwardRef(
     // expose imperative API
     useImperativeHandle(ref, () => ({
       showLoading: () => {
+        if (enabled) log("render", "showLoading: starting fade-in");
         setIsFadingOut(false);
         setIsLoading(true);
       },
       hideLoading: () => {
+        if (enabled) log("render", "hideLoading: starting fade-out");
         setIsFadingOut(true);
         setTimeout(() => {
           setIsLoading(false);
           setIsFadingOut(false);
+          if (enabled) log("render", "hideLoading: completed fade-out");
         }, 1000);
       },
       resizeWindow: (w, h) => {
+        if (enabled) log("programmatic", `resizeWindow called: newWidth=${w}, newHeight=${h}`);
         setIsProgrammaticResize(true);
         setCurrentWidth(w);
         setCurrentHeight(h);
-        setTimeout(() => setIsProgrammaticResize(false), 350);
+        setTimeout(() => {
+          setIsProgrammaticResize(false);
+          if (enabled) log("programmatic", "Programmatic resize completed");
+        }, 350);
       },
       moveWindow: (x, y) => {
+        if (enabled) log("programmatic", `moveWindow called: newX=${x}, newY=${Math.max(y, 26)}`);
         setIsProgrammaticMove(true);
         setCurrentX(x);
         setCurrentY(Math.max(y, 26));
-        setTimeout(() => setIsProgrammaticMove(false), 350);
+        setTimeout(() => {
+          setIsProgrammaticMove(false);
+          if (enabled) log("programmatic", "Programmatic move completed");
+        }, 350);
       },
       isFocused
-    }), [isFocused]);
+    }), [isFocused, enabled]);
 
     // programmatic vs user transition control
     const transitionStyle =
@@ -157,19 +192,30 @@ const DraggableWindow = forwardRef(
 
     // restore focus into iframe or canvas
     useEffect(() => {
-      if (isFocused && iframeSrc && iframeRef.current) {
-        setTimeout(() => {
-          try {
-            const win = iframeRef.current.contentWindow;
-            const canvas = win?.document.getElementById('canvas');
-            if (canvas) canvas.focus();
-            else win?.focus();
-          } catch {
-            iframeRef.current.focus();
-          }
-        }, 0);
+      if (isFocused) {
+        if (iframeSrc && iframeRef.current) {
+          if (enabled) log("focus", "Window is focused with iframe: attempting to focus iframe content");
+          setTimeout(() => {
+            try {
+              const win = iframeRef.current.contentWindow;
+              const canvas = win?.document.getElementById('canvas');
+              if (canvas) {
+                if (enabled) log("focus", "Focusing canvas inside iframe");
+                canvas.focus();
+              } else {
+                if (enabled) log("focus", "Focusing iframe window");
+                win?.focus();
+              }
+            } catch {
+              if (enabled) log("focus", "Error focusing iframe; focusing iframe element directly");
+              iframeRef.current.focus();
+            }
+          }, 0);
+        } else {
+          if (enabled) log("focus", "Window is focused without iframe: no extra focus actions");
+        }
       }
-    }, [isFocused, iframeSrc]);
+    }, [isFocused, iframeSrc, enabled]);
 
     // clicking inside iframe focuses canvas
     useEffect(() => {
@@ -182,19 +228,36 @@ const DraggableWindow = forwardRef(
         }
         const onClick = () => {
           if (!isUserDragging) {
+            if (enabled) log("focus", "Click inside iframe: focusing content");
             try {
               const c = doc.getElementById('canvas');
-              if (c) c.focus();
-              else iframeRef.current.contentWindow.focus();
+              if (c) {
+                if (enabled) log("focus", "Focusing canvas inside iframe (click handler)");
+                c.focus();
+              } else {
+                if (enabled) log("focus", "Focusing iframe window (click handler)");
+                iframeRef.current.contentWindow.focus();
+              }
             } catch {
+              if (enabled) log("focus", "Error focusing iframe (click handler); focusing iframe element");
               iframeRef.current.focus();
             }
           }
         };
         doc.addEventListener('click', onClick);
-        return () => doc.removeEventListener('click', onClick);
+        return () => {
+          doc.removeEventListener('click', onClick);
+        };
       }
-    }, [iframeSrc, isIframeLoaded, isUserDragging]);
+    }, [iframeSrc, isIframeLoaded, isUserDragging, enabled]);
+
+    // Log a render event for debugging layout and size
+    if (enabled) {
+      log(
+        "render",
+        `Rendering DraggableWindow: position=(${currentX},${clampedY}), size=(${currentWidth}x${currentHeight}), isFocused=${isFocused}`
+      );
+    }
 
     return (
       <div
@@ -228,28 +291,43 @@ const DraggableWindow = forwardRef(
             : undefined,
         }}
         onClick={() => {
+          if (enabled) log("userInteraction", `Window clicked: updating focus to "${title}"`);
           updateFocus(title);
           if (!isUserDragging && iframeSrc && iframeRef.current) {
             try {
               const c = iframeRef.current.contentWindow.document.getElementById('canvas');
-              if (c) c.focus();
-              else iframeRef.current.contentWindow.focus();
+              if (c) {
+                if (enabled) log("focus", "Click on window: focusing canvas inside iframe");
+                c.focus();
+              } else {
+                if (enabled) log("focus", "Click on window: focusing iframe window");
+                iframeRef.current.contentWindow.focus();
+              }
             } catch {
+              if (enabled) log("focus", "Click on window: error focusing iframe; focusing iframe element");
               iframeRef.current.focus();
             }
           }
         }}
-        onTouchStart={() => updateFocus(title)}
-        onKeyDown={() => updateFocus(title)}
+        onTouchStart={() => {
+          if (enabled) log("userInteraction", `Touch start on window: updating focus to "${title}"`);
+          updateFocus(title);
+        }}
+        onKeyDown={() => {
+          if (enabled) log("userInteraction", `Key down on window: updating focus to "${title}"`);
+          updateFocus(title);
+        }}
       >
         {/* Header */}
         <div
           className="window-header"
           onMouseDown={(e) => {
+            if (enabled) log("userInteraction", "Header mouse down: starting drag");
             updateFocus(title);
             setIsUserDragging(true);
           }}
           onTouchStart={(e) => {
+            if (enabled) log("userInteraction", "Header touch start: starting drag");
             e.preventDefault();
             updateFocus(title);
             setIsUserDragging(true);
@@ -258,13 +336,29 @@ const DraggableWindow = forwardRef(
           <div className="header-left">
             <button
               className="close-button"
-              onClick={e => { e.stopPropagation(); onClose?.(); }}
-              onTouchStart={e => e.stopPropagation()}
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                if (enabled) log("userInteraction", "Close button clicked: invoking onClose");
+                onClose?.(); 
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                if (enabled) log("userInteraction", "Close button touched: invoking onClose");
+                onClose?.();
+              }}
             />
             <button
               className="resize-button"
-              onClick={e => { e.stopPropagation(); enterFullscreen(); }}
-              onTouchStart={e => { e.stopPropagation(); enterFullscreen(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (enabled) log("userInteraction", "Resize button clicked: entering fullscreen");
+                enterFullscreen();
+              }}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                if (enabled) log("userInteraction", "Resize button touched: entering fullscreen");
+                enterFullscreen();
+              }}
             />
           </div>
           <div className="header-title">{title}</div>
@@ -286,19 +380,28 @@ const DraggableWindow = forwardRef(
                 pointerEvents: isUserDragging ? 'none' : 'auto'
               }}
               onLoad={() => {
+                if (enabled) log("render", "Iframe load started: beginning fade-out of loading overlay");
                 setIsFadingOut(true);
                 setTimeout(() => {
                   setIsLoading(false);
                   setIsFadingOut(false);
+                  if (enabled) log("render", "Iframe load completed: hiding loading overlay");
                 }, 1000);
                 setIsIframeLoaded(true);
               }}
               onMouseDown={() => {
+                if (enabled) log("focus", "Mouse down inside iframe: attempting to focus content");
                 try {
                   const c = iframeRef.current.contentWindow.document.getElementById('canvas');
-                  if (c) c.focus();
-                  else iframeRef.current.contentWindow.focus();
+                  if (c) {
+                    if (enabled) log("focus", "Focusing canvas inside iframe (mousedown)");
+                    c.focus();
+                  } else {
+                    if (enabled) log("focus", "Focusing iframe window (mousedown)");
+                    iframeRef.current.contentWindow.focus();
+                  }
                 } catch {
+                  if (enabled) log("focus", "Error focusing iframe on mousedown; focusing iframe element");
                   iframeRef.current.focus();
                 }
               }}
@@ -321,10 +424,12 @@ const DraggableWindow = forwardRef(
             key={pos}
             className={`resize-handle resize-${pos}`}
             onMouseDown={(e) => {
+              if (enabled) log("userInteraction", `Resize handle "${pos}" mouse down: starting resize`);
               updateFocus(title);
               setIsUserResizing(true);
             }}
             onTouchStart={(e) => {
+              if (enabled) log("userInteraction", `Resize handle "${pos}" touch start: starting resize`);
               e.preventDefault();
               updateFocus(title);
               setIsUserResizing(true);
