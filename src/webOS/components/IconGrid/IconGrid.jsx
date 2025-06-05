@@ -1,4 +1,4 @@
-// src/components/Desktop/Desktop.jsx
+// src/components/IconGrid/IconGrid.jsx
 
 import React, { useState, useContext } from "react";
 import { AppsContext } from "../../contexts/AppsContext/AppsContext.jsx";
@@ -9,7 +9,7 @@ import {
   LEFT_MARGIN,
 } from "../../configs/DesktopIconConfig/DesktopIconConfig.jsx";
 import { GRID_SIZE } from "../../configs/DesktopIconConfig/DesktopIconConfig.jsx";
-import "./Desktop.css";
+import "./IconGrid.css";
 import { FocusWrapper } from "../../contexts/FocusControl/FocusControl.jsx";
 import { useLogger } from "../Logger/Logger.jsx";
 
@@ -25,15 +25,15 @@ function getPositionFromPriority(priority) {
   return { x, y };
 }
 
-function Desktop({ onOpenApp }) {
+function IconGrid({ onOpenApp }) {
   const { apps } = useContext(AppsContext);
 
-  // Create a logger bound to this component name. 
+  // Create a logger bound to this component name.
   // Internally, it will:
   //   1) Read `developer.logsenabled` from StateManager.
   //   2) If logs are enabled ("true"), let us know via `enabled`, and print formatted logs with group names.
   // `log` signature: log(groupName: string, message: string)
-  const { log, enabled } = useLogger("Desktop");
+  const { log, enabled } = useLogger("IconGrid");
 
   const [selectedIcon, setSelectedIcon] = useState(null);
 
@@ -62,7 +62,7 @@ function Desktop({ onOpenApp }) {
   if (enabled) log("render", `Rendering ${desktopApps.length} desktop icons`);
 
   return (
-    <FocusWrapper name="Desktop">
+    <FocusWrapper name="IconGrid">
       {/* The desktop content fills its parent monitor */}
       <div className="desktop-content" onClick={handleWallpaperClick}>
         {desktopApps.map((iconConfig) => {
@@ -88,4 +88,4 @@ function Desktop({ onOpenApp }) {
   );
 }
 
-export default Desktop;
+export default IconGrid;
