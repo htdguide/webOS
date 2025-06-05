@@ -1,7 +1,7 @@
 // src/components/MissionControl/MissionControl.jsx
 import React, { createContext, useState, useCallback } from 'react';
 import SystemUI from '../SystemUI/SystemUI.jsx';
-import MissionControlUI from './MissionControlUI.jsx';
+import MissionControlUI from './components/MissionControlUI/MissionControlUI.jsx';
 
 export const MissionControlContext = createContext({
   createDesktop: () => {},

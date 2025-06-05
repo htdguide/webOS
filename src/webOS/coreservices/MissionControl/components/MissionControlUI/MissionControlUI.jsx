@@ -8,11 +8,12 @@ import React, {
   useRef
 } from 'react';
 import { createPortal } from 'react-dom';
-import { MissionControlContext } from './MissionControl.jsx';
-import Dock from '../../components/Dock/Dock.jsx';
-import { WallpaperPlain } from '../../components/Wallpaper/Wallpaper.jsx';
-import { useStateManager } from '../../stores/StateManager/StateManager.jsx';
-import './MissionControl.css';
+import { MissionControlContext } from '../../MissionControl.jsx';
+import Dock from '../../../../components/Dock/Dock.jsx';
+import { WallpaperPlain } from '../../../../components/Wallpaper/Wallpaper.jsx';
+import { useStateManager } from '../../../../stores/StateManager/StateManager.jsx';
+import MissionBar from '../MissionBar/MissionBar.jsx';
+import './MissionControlUI.css';
 
 const FADE_DURATION = 300;   // match CSS fade timing (ms)
 const SLIDE_DURATION = 300;  // match wrapper transition (ms)
@@ -48,7 +49,6 @@ const MissionControlUI = () => {
     const currLen = desktops.length;
 
     let newReady;
-
     if (currLen > prevLen) {
       // One or more desktops added: keep existing flags, append `false` for each new desktop
       const diffCount = currLen - prevLen;
@@ -207,7 +207,7 @@ const MissionControlUI = () => {
     ]
   );
 
-  // drag & drop
+  // drag & drop handlers (unchanged)
   const onDragStart = useCallback((e, i) => {
     e.dataTransfer.setData('text/plain', String(i));
   }, []);
@@ -224,7 +224,7 @@ const MissionControlUI = () => {
     [reorderDesktops]
   );
 
-  // layout calculations
+  // layout calculations for the desktop panels (unchanged)
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
   const THUMB_W = viewport.width * scale;
@@ -263,7 +263,7 @@ const MissionControlUI = () => {
           </button>
           <button
             onClick={() => switchDesktop(activeIndex + 1)}
-            disabled={activeIndex === desktops.length - 1}
+            disabled={desktops.length === 1}
           >
             Next ›
           </button>
@@ -282,27 +282,13 @@ const MissionControlUI = () => {
       )}
 
       {overviewOpen && (
-        <>
-          <div className="mc-bar" onMouseEnter={() => setBarExpanded(true)}>
-            <div className="mc-bar-names">
-              {desktops.map((_, i) => (
-                <span
-                  key={desktops[i].id}
-                  className={
-                    i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'
-                  }
-                  onClick={() => {
-                    instantSwitchDesktop(i);
-                    exitOverview(false);
-                  }}
-                >
-                  Desktop {i + 1}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="mc-exit-overlay" onClick={() => exitOverview(true)} />
-        </>
+        <MissionBar
+          desktops={desktops}
+          activeIndex={activeIndex}
+          instantSwitchDesktop={instantSwitchDesktop}
+          exitOverview={exitOverview}
+          setBarExpanded={setBarExpanded}
+        />
       )}
 
       <div className="desktops-wrapper" style={wrapperStyle}>

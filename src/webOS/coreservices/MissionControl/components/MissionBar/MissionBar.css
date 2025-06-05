@@ -1,0 +1,78 @@
+/* src/components/MissionControl/MissionBar.css */
+
+/* Animations used by the bar */
+@keyframes slideBarShort {
+    from { transform: translateY(-145px); opacity: 0; }
+    to   { transform: translateY(-105px); opacity: 1; }
+  }
+  
+  @keyframes slideBarFull {
+    from { transform: translateY(-105px); }
+    to   { transform: translateY(0);    }
+  }
+  
+  /* The top bar (hidden initially; slides into place once `.overview-open` is active) */
+  .mc-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 145px;
+    backdrop-filter: blur(10px);
+    background: rgba(230, 230, 230, 0.7);
+    z-index: 150;
+  
+    /* start hidden above screen */
+    transform: translateY(-145px);
+    animation: slideBarShort 0.3s ease-out forwards;
+    transition: none;
+  }
+  
+  /* When the container also has `.overview-open.bar-expanded`, animate the bar fully down */
+  .mission-control-container.overview-open.bar-expanded .mc-bar {
+    animation: slideBarFull 0.3s ease-out forwards;
+  }
+  
+  /* The row of desktop‐name buttons at the bottom of the bar */
+  .mc-bar-names {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+  
+    transform: translateY(0);
+    transition: transform 0.3s ease-out;
+  }
+  
+  .mc-bar-name {
+    color: rgb(33, 35, 36);
+    margin-top: 2px;
+    font-size: 12px;
+    padding: 4px 8px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  
+  .mc-bar-name:hover,
+  .mc-bar-name.active {
+    opacity: 1;
+  }
+  
+  /* Once fully expanded (hovered), nudge the names downward slightly */
+  .mission-control-container.overview-open.bar-expanded .mc-bar-names {
+    transform: translateY(5px);
+  }
+  
+  /* The full‐screen transparent overlay behind the bar that catches “click to exit” */
+  .mc-exit-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 140;
+  }
+  
