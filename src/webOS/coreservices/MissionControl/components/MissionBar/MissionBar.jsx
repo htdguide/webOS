@@ -16,16 +16,16 @@ const MissionBar = ({
         onMouseEnter={() => setBarExpanded(true)}
       >
         <div className="mc-bar-names">
-          {desktops.map((_, i) => (
+          {desktops.map((desk, i) => (
             <span
-              key={desktops[i].id}
+              key={desk.id}
               className={i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'}
               onClick={() => {
                 instantSwitchDesktop(i);
                 exitOverview(false);
               }}
             >
-              Desktop {i + 1}
+              {desk.name || `Desktop ${i + 1}`}
             </span>
           ))}
         </div>

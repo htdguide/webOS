@@ -8,21 +8,25 @@ export const MissionControlContext = createContext({
   switchDesktop: (_i) => {},
   deleteDesktop: (_i) => {},
   reorderDesktops: (_from, _to) => {},
+  renameDesktop: (_i, _name) => {},
   activeIndex: 0,
-  desktops: [] // now each entry is { id: number, ui: ReactNode }
+  desktops: [] // each entry is { id: number, ui: ReactNode, name: string }
 });
 
 const MissionControl = () => {
-  // each desktop is { id, ui }
+  // each desktop is { id, ui, name }
   const [desktops, setDesktops] = useState(() => {
     const id = Date.now();
-    return [{ id, ui: <SystemUI key={id} /> }];
+    return [{ id, ui: <SystemUI key={id} />, name: 'Desktop 1' }];
   });
   const [activeIndex, setActiveIndex] = useState(0);
 
   const createDesktop = useCallback(() => {
-    const id = Date.now();
-    setDesktops(d => [...d, { id, ui: <SystemUI key={id} /> }]);
+    setDesktops(d => {
+      const newId = Date.now();
+      const defaultName = `Desktop ${d.length + 1}`;
+      return [...d, { id: newId, ui: <SystemUI key={newId} />, name: defaultName }];
+    });
     setActiveIndex(d => d + 1);
   }, []);
 
@@ -58,6 +62,16 @@ const MissionControl = () => {
     setActiveIndex(to);
   }, []);
 
+  const renameDesktop = useCallback((i, newName) => {
+    setDesktops(d =>
+      d.map((desk, idx) =>
+        idx === i
+          ? { ...desk, name: newName }
+          : desk
+      )
+    );
+  }, []);
+
   return (
     <MissionControlContext.Provider
       value={{
@@ -65,6 +79,7 @@ const MissionControl = () => {
         switchDesktop,
         deleteDesktop,
         reorderDesktops,
+        renameDesktop,
         activeIndex,
         desktops
       }}
