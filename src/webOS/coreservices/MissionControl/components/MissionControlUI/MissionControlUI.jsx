@@ -7,7 +7,6 @@ import React, {
   useLayoutEffect,
   useRef
 } from 'react';
-import { createPortal } from 'react-dom';
 import { MissionControlContext } from '../../MissionControl.jsx';
 import Dock from '../../../../components/Dock/Dock.jsx';
 import { WallpaperPlain } from '../../../../components/Wallpaper/Wallpaper.jsx';
@@ -104,8 +103,6 @@ const MissionControlUI = () => {
   });
   const [disableSlideTransition, setDisableSlideTransition] = useState(false);
 
-  const panelRefs = useRef([]);
-
   // 1) Ensure missionControl.opened exists
   useEffect(() => {
     if (!state.groups.missionControl.hasOwnProperty('opened')) {
@@ -149,17 +146,6 @@ const MissionControlUI = () => {
       return () => clearTimeout(timer);
     }
   }, [isFading]);
-
-  // 6) Scroll active thumbnail into view
-  useEffect(() => {
-    if (overviewOpen && panelRefs.current[activeIndex]) {
-      panelRefs.current[activeIndex].scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center'
-      });
-    }
-  }, [overviewOpen, activeIndex]);
 
   // 7) Open overview
   const openOverview = useCallback(() => {
@@ -207,7 +193,7 @@ const MissionControlUI = () => {
     ]
   );
 
-  // drag & drop handlers (unchanged)
+  // drag & drop handlers
   const onDragStart = useCallback((e, i) => {
     e.dataTransfer.setData('text/plain', String(i));
   }, []);
@@ -224,7 +210,7 @@ const MissionControlUI = () => {
     [reorderDesktops]
   );
 
-  // layout calculations for the desktop panels (unchanged)
+  // layout calculations for the desktop panels
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
   const THUMB_W = viewport.width * scale;
@@ -281,69 +267,22 @@ const MissionControlUI = () => {
         <WallpaperPlain className="mc-wallpaper" />
       )}
 
-      {overviewOpen && (
-        <MissionBar
-          desktops={desktops}
-          activeIndex={activeIndex}
-          instantSwitchDesktop={instantSwitchDesktop}
-          exitOverview={exitOverview}
-          setBarExpanded={setBarExpanded}
-        />
-      )}
-
-      <div className="desktops-wrapper" style={wrapperStyle}>
-        {desktops.map((desk, i) => (
-          <div
-            ref={el => (panelRefs.current[i] = el)}
-            key={desk.id}
-            className="desktop-panel"
-            draggable={overviewOpen}
-            onDragStart={overviewOpen ? e => onDragStart(e, i) : undefined}
-            onDragOver={overviewOpen ? onDragOver : undefined}
-            onDrop={overviewOpen ? e => onDrop(e, i) : undefined}
-            onClick={
-              overviewOpen
-                ? () => {
-                    instantSwitchDesktop(i);
-                    exitOverview(false);
-                  }
-                : undefined
-            }
-            style={
-              overviewOpen
-                ? {
-                    width: `${THUMB_W}px`,
-                    height: `${THUMB_H}px`,
-                    '--tx': `${-(i - centerIndex) * (THUMB_W + 30)}px`,
-                    '--ty': `-120px`
-                  }
-                : undefined
-            }
-          >
-            <div
-              ref={el => {
-                scaleRefs.current[i] = el;
-              }}
-              className="desktop-scale-wrapper"
-              style={
-                overviewOpen
-                  ? {
-                      width: viewport.width,
-                      height: viewport.height,
-                      transform: `scale(${scale})`,
-                      transformOrigin: 'top left',
-                      pointerEvents: 'none'
-                    }
-                  : {}
-              }
-            >
-              {portalReady[i] &&
-                scaleRefs.current[i] &&
-                createPortal(desk.ui, scaleRefs.current[i])}
-            </div>
-          </div>
-        ))}
-      </div>
+      {/* Always render MissionBar, which now includes the desktops-wrapper */}
+      <MissionBar
+        desktops={desktops}
+        activeIndex={activeIndex}
+        instantSwitchDesktop={instantSwitchDesktop}
+        exitOverview={exitOverview}
+        setBarExpanded={setBarExpanded}
+        portalReady={portalReady}
+        scaleRefs={scaleRefs}
+        wrapperStyle={wrapperStyle}
+        overviewOpen={overviewOpen}
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        viewport={viewport}
+      />
     </div>
   );
 };

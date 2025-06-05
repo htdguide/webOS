@@ -1,78 +1,153 @@
 /* src/components/MissionControl/MissionBar.css */
 
-/* Animations used by the bar */
+/* ---------- Animations used by the bar ---------- */
 @keyframes slideBarShort {
-    from { transform: translateY(-145px); opacity: 0; }
-    to   { transform: translateY(-105px); opacity: 1; }
+  from { transform: translateY(-145px); opacity: 0; }
+  to   { transform: translateY(-105px); opacity: 1; }
+}
+
+@keyframes slideBarFull {
+  from { transform: translateY(-105px); }
+  to   { transform: translateY(0); }
+}
+
+/* Panels flying in from center when overview-expanded (for .desktop-panel) */
+@keyframes slideFromCenter {
+  from {
+    transform: translate(var(--tx), var(--ty));
+    opacity: 0;
   }
-  
-  @keyframes slideBarFull {
-    from { transform: translateY(-105px); }
-    to   { transform: translateY(0);    }
-  }
-  
-  /* The top bar (hidden initially; slides into place once `.overview-open` is active) */
-  .mc-bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 145px;
-    backdrop-filter: blur(10px);
-    background: rgba(230, 230, 230, 0.7);
-    z-index: 150;
-  
-    /* start hidden above screen */
-    transform: translateY(-145px);
-    animation: slideBarShort 0.3s ease-out forwards;
-    transition: none;
-  }
-  
-  /* When the container also has `.overview-open.bar-expanded`, animate the bar fully down */
-  .mission-control-container.overview-open.bar-expanded .mc-bar {
-    animation: slideBarFull 0.3s ease-out forwards;
-  }
-  
-  /* The row of desktop‐name buttons at the bottom of the bar */
-  .mc-bar-names {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 40px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 16px;
-  
-    transform: translateY(0);
-    transition: transform 0.3s ease-out;
-  }
-  
-  .mc-bar-name {
-    color: rgb(33, 35, 36);
-    margin-top: 2px;
-    font-size: 12px;
-    padding: 4px 8px;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s;
-  }
-  
-  .mc-bar-name:hover,
-  .mc-bar-name.active {
+  to {
+    transform: translate(0, 0);
     opacity: 1;
   }
-  
-  /* Once fully expanded (hovered), nudge the names downward slightly */
-  .mission-control-container.overview-open.bar-expanded .mc-bar-names {
-    transform: translateY(5px);
-  }
-  
-  /* The full‐screen transparent overlay behind the bar that catches “click to exit” */
-  .mc-exit-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 140;
-  }
-  
+}
+
+/* ---------- The top bar (hidden initially; slides down once `.overview-open` is active) ---------- */
+.mc-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 145px;
+  backdrop-filter: blur(10px);
+  background: rgba(230, 230, 230, 0.7);
+  z-index: 150;
+
+  /* start hidden above screen */
+  transform: translateY(-145px);
+  animation: slideBarShort 0.3s ease-out forwards;
+  transition: none;
+}
+
+/* When container has `.overview-open.bar-expanded`, animate the bar fully down */
+.mission-control-container.overview-open.bar-expanded .mc-bar {
+  animation: slideBarFull 0.3s ease-out forwards;
+}
+
+/* ---------- The row of desktop‐name buttons at the bottom of the bar ---------- */
+.mc-bar-names {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+
+  transform: translateY(0);
+  transition: transform 0.3s ease-out;
+}
+
+.mc-bar-name {
+  color: rgb(33, 35, 36);
+  margin-top: 2px;
+  font-size: 12px;
+  padding: 4px 8px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.mc-bar-name:hover,
+.mc-bar-name.active {
+  opacity: 1;
+}
+
+/* Once fully expanded (hovered), nudge the names downward slightly */
+.mission-control-container.overview-open.bar-expanded .mc-bar-names {
+  transform: translateY(5px);
+}
+
+/* ---------- The full‐screen transparent overlay behind the bar that catches “click to exit” ---------- */
+.mc-exit-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 140;
+}
+
+/* ---------- Desktops Wrapper (moved from MissionControlUI) ---------- */
+.desktops-wrapper {
+  display: flex;
+  gap: 60px;
+  height: 100%;
+  transition: transform 0.5s ease-in-out;
+  position: relative;
+}
+
+/* Override for overview mode: position panels in a row behind the bar */
+.mission-control-container.overview-open .desktops-wrapper {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  padding: 0 20px;
+  z-index: 200;
+  flex-wrap: nowrap;
+
+  transform: translateY(-120px);
+  opacity: 0;
+  transition: none;
+}
+
+/* Once the bar is fully expanded, fly panels in and fade them to opacity:1 */
+.mission-control-container.overview-open.bar-expanded .desktops-wrapper {
+  transform: translateY(5px);
+  opacity: 1;
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+/* ---------- Desktop Panel (full-screen mode) ---------- */
+.desktop-panel {
+  flex-shrink: 0;
+  width: 100vw;
+  height: 100%;
+}
+
+/* Overview-only per-panel base styles */
+.mission-control-container.overview-open .desktop-panel {
+  overflow: hidden;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+
+  transform: translate(var(--tx), var(--ty));
+  opacity: 0;
+}
+
+/* Fly-out animation for each panel once bar is expanded */
+.mission-control-container.overview-open.bar-expanded .desktop-panel {
+  animation: slideFromCenter 0.3s ease-out forwards;
+}
+
+/* ---------- Scale Wrapper Inside Each Panel ---------- */
+.desktop-scale-wrapper {
+  width: 100%;
+  height: 100%;
+}
