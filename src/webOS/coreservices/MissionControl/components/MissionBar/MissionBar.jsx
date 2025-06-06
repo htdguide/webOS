@@ -1,4 +1,5 @@
 // src/components/MissionControl/MissionBar/MissionBar.jsx
+
 import React, { useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import './MissionBar.css';
@@ -35,7 +36,7 @@ const MissionBar = ({
     }
   }, [overviewOpen, activeIndex]);
 
-  // Compute sizing for thumbnails (exact same math as before)
+  // Compute sizing for thumbnails (same math as before)
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
   const THUMB_W = viewport.width * scale;
@@ -50,11 +51,24 @@ const MissionBar = ({
             className="mc-bar"
             onMouseEnter={() => setBarExpanded(true)}
           >
-            <div className="mc-bar-names">
+            {/* 
+              We pass a CSS variable (--thumb-w) into .mc-bar-names so that,
+              once .bar-expanded is added, the CSS can set each .mc-bar-name to that width.
+              But in the “not-yet-expanded” state, the spans have no fixed width
+              and use the original gap:16px from the CSS.
+            */}
+            <div
+              className="mc-bar-names"
+              style={{ '--thumb-w': `${THUMB_W}px` }}
+            >
               {desktops.map((desk, i) => (
                 <span
                   key={desk.id}
-                  className={i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'}
+                  className={
+                    i === activeIndex
+                      ? 'mc-bar-name active'
+                      : 'mc-bar-name'
+                  }
                   onClick={() => {
                     instantSwitchDesktop(i);
                     exitOverview(false);

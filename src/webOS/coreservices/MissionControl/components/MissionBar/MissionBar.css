@@ -1,4 +1,4 @@
-/* src/components/MissionControl/MissionBar.css */
+/* src/components/MissionControl/MissionBar/MissionBar.css */
 
 /* ---------- Animations used by the bar ---------- */
 @keyframes slideBarShort {
@@ -55,13 +55,20 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 16px;
 
+  /* ORIGINAL gap, before hover: 16px (same as the code you started with) */
+  gap: 16px;
   transform: translateY(0);
-  transition: transform 0.3s ease-out;
+
+  /* We’ll animate both gap and transform when .bar-expanded appears */
+  transition: gap 0.3s ease-out, transform 0.3s ease-out;
 }
 
 .mc-bar-name {
+  /* No fixed width in this “pre‐hover” state */
+  display: inline-block;      /* So that width can apply later */
+  box-sizing: border-box;      /* Include padding inside width when expanded */
+  text-align: center;          /* Center the text once width is set */
   color: rgb(33, 35, 36);
   margin-top: 2px;
   font-size: 12px;
@@ -69,6 +76,7 @@
   cursor: pointer;
   opacity: 0.7;
   transition: opacity 0.2s;
+  white-space: nowrap;
 }
 
 .mc-bar-name:hover,
@@ -76,9 +84,16 @@
   opacity: 1;
 }
 
-/* Once fully expanded (hovered), nudge the names downward slightly */
+/* ---------- Expanded state: once the bar is fully slid down AND hovered ---------- */
+/* This selector only applies after the parent has both .overview-open and .bar-expanded */
 .mission-control-container.overview-open.bar-expanded .mc-bar-names {
-  transform: translateY(5px);
+  gap: 30px;                   /* Match the 30px gap used for .desktops-wrapper */
+  transform: translateY(5px);  /* Nudge the row downward exactly like before */
+}
+
+/* Only in that same “expanded” state, give each .mc-bar-name the width of the thumbnail */
+.mission-control-container.overview-open.bar-expanded .mc-bar-name {
+  width: var(--thumb-w);       /* CSS variable set inline via React to `${THUMB_W}px` */
 }
 
 /* ---------- The full‐screen transparent overlay behind the bar that catches “click to exit” ---------- */
@@ -91,7 +106,7 @@
 /* ---------- Desktops Wrapper (moved from MissionControlUI) ---------- */
 .desktops-wrapper {
   display: flex;
-  gap: 60px;
+  gap: 60px;                     /* Normal (non-overview) gap is 60px */
   height: 100%;
   transition: transform 0.5s ease-in-out;
   position: relative;
@@ -106,7 +121,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 30px;
+  gap: 30px;                     /* Same 30px gap that the expanded names use */
   padding: 0 20px;
   z-index: 200;
   flex-wrap: nowrap;
