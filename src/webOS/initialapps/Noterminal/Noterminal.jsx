@@ -1,7 +1,7 @@
 // src/initialapps/Noterminal/Noterminal.jsx
 import React, { useEffect } from 'react';
 import './Noterminal.css';
-import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowProvider';
+import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowWrap';
 import { useStateManager } from '../../stores/StateManager/StateManager';
 import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvider';
 import FlowManager from './components/FlowManager';

@@ -6,7 +6,7 @@
 import React, { useEffect } from 'react';
 import defaultIcon from '../../media/icons/defaultapp.png'; // Adjust the icon path as needed.
 import { useDeviceInfo } from '../../../../src/webOS/contexts/DeviceInfoProvider/DeviceInfoProvider';
-import { useDraggableWindow } from '../../../../src/webOS/components/DraggableWindow/DraggableWindowProvider';
+import { useDraggableWindow } from '../../../../src/webOS/components/DraggableWindow/DraggableWindowWrap';
 
 function Mario64({ onClose }) {
   // Get methods to open and close the draggable window from the provider.

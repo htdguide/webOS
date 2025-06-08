@@ -1,105 +1,70 @@
-// DraggableWindowProvider.jsx
+// src/components/DraggableWindow/DraggableWindowProvider.jsx
 import React, { createContext, useContext, useState, useRef } from 'react';
-import DraggableWindow from './DraggableWindow.jsx';
 import { useFocus } from '../../contexts/FocusControl/FocusControl.jsx';
 
 const DraggableWindowContext = createContext();
 
+/**
+ * Top-level provider.  Stores all windows (with their wrapId),
+ * plus refs, focus state, and imperative APIs.
+ */
 export const DraggableWindowProvider = ({ children }) => {
-  // an array of window-prop objects
+  // [{ wrapId, windowId, windowProps }]
   const [windows, setWindows] = useState([]);
-  // refs keyed by window title
+  // { [windowId]: React.RefObject }
   const windowRefs = useRef({});
-
-  // pull focus state & updater into the provider
   const { focusedComponent, updateFocus } = useFocus();
 
-  /**
-   * Opens a window unless one with the same title is already open.
-   * We do the dedupe check inside setWindows' functional updater,
-   * so even back-to-back calls in the same tick won’t add twice.
-   */
-  const openDraggableWindow = (props) => {
-    const { title } = props;
+  const openDraggableWindow = ({ wrapId, windowProps }) => {
+    const { title } = windowProps;
+    const windowId = `${wrapId}::${title}`;
     setWindows(prev => {
-      if (prev.some(w => w.title === title)) return prev;
-      if (!windowRefs.current[title]) {
-        windowRefs.current[title] = React.createRef();
-      }
-      return [...prev, props];
+      if (prev.some(w => w.windowId === windowId)) return prev;
+      windowRefs.current[windowId] = React.createRef();
+      return [...prev, { wrapId, windowId, windowProps }];
     });
+    return windowId;
   };
 
-  const closeDraggableWindow = (title) => {
-    setWindows(prev => prev.filter(w => w.title !== title));
+  const closeDraggableWindow = (windowId) => {
+    setWindows(prev => prev.filter(w => w.windowId !== windowId));
   };
 
-  // Imperative APIs
-  const showLoading = (title) => {
-    windowRefs.current[title]?.current?.showLoading();
+  const showLoading = (windowId) => {
+    windowRefs.current[windowId]?.current?.showLoading();
   };
-  const hideLoading = (title) => {
-    windowRefs.current[title]?.current?.hideLoading();
+  const hideLoading = (windowId) => {
+    windowRefs.current[windowId]?.current?.hideLoading();
   };
-  const resizeDraggableWindow = (title, newW, newH) => {
-    windowRefs.current[title]?.current?.resizeWindow(newW, newH);
+  const resizeDraggableWindow = (windowId, w, h) => {
+    windowRefs.current[windowId]?.current?.resizeWindow(w, h);
   };
-  const moveDraggableWindow = (title, newX, newY) => {
-    windowRefs.current[title]?.current?.moveWindow(newX, newY);
-  };
-
-  // Context value exposed to consumers
-  const contextValue = {
-    openDraggableWindow,
-    closeDraggableWindow,
-    showLoading,
-    hideLoading,
-    resizeDraggableWindow,
-    moveDraggableWindow,
-    // if any consumer needs to know which is focused
-    isWindowFocused: (title) => focusedComponent === title
+  const moveDraggableWindow = (windowId, x, y) => {
+    windowRefs.current[windowId]?.current?.moveWindow(x, y);
   };
 
   return (
-    <DraggableWindowContext.Provider value={contextValue}>
+    <DraggableWindowContext.Provider
+      value={{
+        // core state
+        windows,
+        windowRefs: windowRefs.current,
+        // focus control
+        focusedComponent,
+        updateFocus,
+        // imperative APIs
+        openDraggableWindow,
+        closeDraggableWindow,
+        showLoading,
+        hideLoading,
+        resizeDraggableWindow,
+        moveDraggableWindow,
+      }}
+    >
       {children}
-
-      {/* render each window, injecting focus props */}
-      {windows.map(w => {
-        const isFocused = focusedComponent === w.title;
-        return (
-          <DraggableWindow
-            key={w.title}
-            ref={windowRefs.current[w.title]}
-            // original props
-            title={w.title}
-            windowWidth={w.windowWidth}
-            windowHeight={w.windowHeight}
-            minWindowWidth={w.minWindowWidth}
-            minWindowHeight={w.minWindowHeight}
-            maxWindowWidth={w.maxWindowWidth}
-            maxWindowHeight={w.maxWindowHeight}
-            initialX={w.initialX}
-            initialY={w.initialY}
-            iframeSrc={w.iframeSrc}
-            // lifted focus props
-            isFocused={isFocused}
-            updateFocus={updateFocus}
-            // wrap onClose so we both run their callback and remove from state
-            onClose={() => {
-              w.onClose?.();
-              closeDraggableWindow(w.title);
-            }}
-            onMount={w.onMount}
-            onUnmount={w.onUnmount}
-            onResize={w.onResize}
-          >
-            {w.content}
-          </DraggableWindow>
-        );
-      })}
     </DraggableWindowContext.Provider>
   );
 };
 
-export const useDraggableWindow = () => useContext(DraggableWindowContext);
+export const useDraggableWindowContext = () =>
+  useContext(DraggableWindowContext);

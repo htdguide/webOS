@@ -8,7 +8,7 @@
 // presses on an empty or single-token input were appending multiple words.
 
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
-import { useDraggableWindow } from '../../../components/DraggableWindow/DraggableWindowProvider';
+import { useDraggableWindow } from '../../../components/DraggableWindow/DraggableWindowWrap';
 import { flushSync } from 'react-dom';
 import '../Noterminal.css';
 

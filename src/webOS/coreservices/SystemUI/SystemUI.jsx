@@ -1,21 +1,18 @@
 // SystemUI.jsx
 import React from 'react';
-import { FocusProvider } from '../../contexts/FocusControl/FocusControl.jsx';
 import { MiniWindowProvider } from '../../components/MiniWindow/MiniWindowProvider.jsx';
-import { DraggableWindowProvider } from '../../components/DraggableWindow/DraggableWindowProvider.jsx';
 import DesktopAssembler from '../DesktopAssembler/DesktopAssembler.jsx';
+import { DraggableWindowWrap } from '../../components/DraggableWindow/DraggableWindowWrap.jsx';
 
 const SystemUI = () => {
   return (
     <div className="desktop-container">
       <div className="desktop-monitor">
-        <FocusProvider>
           <MiniWindowProvider>
-            <DraggableWindowProvider>
+            <DraggableWindowWrap>
               <DesktopAssembler />
-            </DraggableWindowProvider>
+            </DraggableWindowWrap>
           </MiniWindowProvider>
-        </FocusProvider>
       </div>
     </div>
   );

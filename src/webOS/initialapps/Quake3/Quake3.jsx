@@ -6,7 +6,7 @@
 import React, { useEffect } from 'react';
 import defaultIcon from '../../media/icons/defaultapp.png'; // Adjust the icon path as needed.
 import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvider';
-import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowProvider';
+import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowWrap';
 
 function Quake3({ onClose }) {
   // Get methods to open and close the draggable window from the provider.

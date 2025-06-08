@@ -6,6 +6,8 @@ import { MusicServiceProvider } from '../../drivers/MusicService/MusicService.js
 import DisplayController from '../../drivers/DisplayController/DisplayController.jsx';
 import { NotificationProvider } from '../../components/Notification/NotificationProvider.jsx';
 import { WallpaperSrc } from '../../components/Wallpaper/WallpaperSrc.jsx';
+import { DraggableWindowProvider } from '../../components/DraggableWindow/DraggableWindowProvider.jsx';
+import { FocusProvider } from '../../contexts/FocusControl/FocusControl.jsx';
 
 const System = ({ children }) => {
   return (
@@ -15,7 +17,11 @@ const System = ({ children }) => {
           <MusicServiceProvider>
             <DisplayController>
               <NotificationProvider>
-                {children}
+                <FocusProvider>
+                  <DraggableWindowProvider>
+                    {children}
+                  </DraggableWindowProvider>
+                  </FocusProvider>
               </NotificationProvider>
             </DisplayController>
           </MusicServiceProvider>
