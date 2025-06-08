@@ -1,18 +1,20 @@
 // src/components/DraggableWindow/DraggableWindowWrap.jsx
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useDraggableWindowContext } from './DraggableWindowProvider.jsx';
 import DraggableWindow from './DraggableWindow.jsx';
 
 const DraggableWindowWrapContext = createContext();
 
 /**
- * Wrap component that apps use anywhere.
- * It pulls *only* the windows for its wrapId out of the provider,
- * and renders each <DraggableWindow> inline, so you can
- * click, drag, focus, etc. directly on them.
+ * Wrap component that you place wherever you need an isolated window area.
+ *   • Registers its wrapId with the provider on mount
+ *   • Exposes open/close/move/resize/reassign scoped to this wrapId
+ *   • Renders only windows whose wrapId matches
  */
 export const DraggableWindowWrap = ({ wrapId, children }) => {
   const {
+    registerWrap,
+    unregisterWrap,
     windows,
     windowRefs,
     focusedComponent,
@@ -23,25 +25,41 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
     hideLoading,
     resizeDraggableWindow,
     moveDraggableWindow,
+    reassignDraggableWindow,
   } = useDraggableWindowContext();
 
-  // App-facing APIs:
-  const openDraggableWindow = (windowProps) =>
+  // register / unregister this wrap
+  useEffect(() => {
+    registerWrap(wrapId);
+    return () => unregisterWrap(wrapId);
+  }, [wrapId, registerWrap, unregisterWrap]);
+
+  // scoped APIs
+  const openDraggableWindow = windowProps =>
     providerOpen({ wrapId, windowProps });
 
-  const closeDraggableWindow = (title) =>
+  const closeDraggableWindow = title =>
     providerClose(`${wrapId}::${title}`);
 
-  const showLoadingFor = (title) =>
+  const showLoadingFor = title =>
     showLoading(`${wrapId}::${title}`);
-  const hideLoadingFor = (title) =>
+
+  const hideLoadingFor = title =>
     hideLoading(`${wrapId}::${title}`);
+
   const resizeWindow = (title, w, h) =>
     resizeDraggableWindow(`${wrapId}::${title}`, w, h);
+
   const moveWindow = (title, x, y) =>
     moveDraggableWindow(`${wrapId}::${title}`, x, y);
 
-  // Only render the windows belonging to *this* wrapId:
+  const reassignWindow = (title, newWrapId) =>
+    reassignDraggableWindow(`${wrapId}::${title}`, newWrapId);
+
+  const isWindowFocused = title =>
+    focusedComponent === `${wrapId}::${title}`;
+
+  // only show windows for this wrapId
   const myWindows = windows.filter(w => w.wrapId === wrapId);
 
   return (
@@ -53,8 +71,8 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
         hideLoading: hideLoadingFor,
         resizeWindow,
         moveWindow,
-        isWindowFocused: (title) =>
-          focusedComponent === `${wrapId}::${title}`,
+        reassignWindow,
+        isWindowFocused,
       }}
     >
       {children}
@@ -70,14 +88,14 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
           onMount,
           onUnmount,
           onResize,
-          ...restProps
+          ...rest
         } = windowProps;
 
         return (
           <DraggableWindow
             key={windowId}
             ref={ref}
-            {...restProps}
+            {...rest}
             title={title}
             iframeSrc={iframeSrc}
             isFocused={isFocused}
@@ -99,16 +117,23 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
 };
 
 /**
- * Hook for your apps to open/close/move windows:
+ * Hook your components use to manage windows in this wrap:
  *
- *   const {
- *     openDraggableWindow,
- *     closeDraggableWindow,
- *     showLoading,
- *     hideLoading,
- *     resizeWindow,
- *     moveWindow,
- *     isWindowFocused
- *   } = useDraggableWindow();
+ * const {
+ *   openDraggableWindow,
+ *   closeDraggableWindow,
+ *   showLoading,
+ *   hideLoading,
+ *   resizeWindow,
+ *   moveWindow,
+ *   reassignWindow,
+ *   isWindowFocused,
+ * } = useDraggableWindow();
  */
-export const useDraggableWindow = () => useContext(DraggableWindowWrapContext);
+export const useDraggableWindow = () => {
+  const ctx = useContext(DraggableWindowWrapContext);
+  if (!ctx) {
+    throw new Error('useDraggableWindow must be inside DraggableWindowWrap');
+  }
+  return ctx;
+};

@@ -1,64 +1,127 @@
 // src/components/DraggableWindow/DraggableWindowProvider.jsx
-import React, { createContext, useContext, useState, useRef } from 'react';
-import { useFocus } from '../../contexts/FocusControl/FocusControl.jsx';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const DraggableWindowContext = createContext();
 
 /**
- * Top-level provider.  Stores all windows (with their wrapId),
- * plus refs, focus state, and imperative APIs.
+ * Provider that sits at the root of your app.
+ * Keeps track of:
+ *   • registered wrapIds
+ *   • all open windows, each tagged with its wrapId
+ *   • refs, focus, loading, move/resize
  */
 export const DraggableWindowProvider = ({ children }) => {
-  // [{ wrapId, windowId, windowProps }]
-  const [windows, setWindows] = useState([]);
-  // { [windowId]: React.RefObject }
-  const windowRefs = useRef({});
-  const { focusedComponent, updateFocus } = useFocus();
+  const [wraps, setWraps] = useState([]); // array of wrapIds
+  const [windows, setWindows] = useState([]); // { windowId, wrapId, windowProps }[]
+  const [windowRefs, setWindowRefs] = useState({}); // map windowId → React ref
+  const [focusedComponent, setFocusedComponent] = useState(null);
+  const [loadingWindows, setLoadingWindows] = useState(new Set());
 
-  const openDraggableWindow = ({ wrapId, windowProps }) => {
-    const { title } = windowProps;
-    const windowId = `${wrapId}::${title}`;
-    setWindows(prev => {
-      if (prev.some(w => w.windowId === windowId)) return prev;
-      windowRefs.current[windowId] = React.createRef();
-      return [...prev, { wrapId, windowId, windowProps }];
+  // --- Wrap registration ---
+  const registerWrap = useCallback((wrapId) => {
+    setWraps(ws => (ws.includes(wrapId) ? ws : [...ws, wrapId]));
+  }, []);
+
+  const unregisterWrap = useCallback((wrapId) => {
+    setWraps(ws => ws.filter(id => id !== wrapId));
+  }, []);
+
+  // --- Window actions ---
+  const openDraggableWindow = useCallback(({ wrapId, windowProps }) => {
+    const windowId = `${wrapId}::${windowProps.title}`;
+    setWindows(ws => {
+      if (ws.some(w => w.windowId === windowId)) return ws;
+      return [...ws, { windowId, wrapId, windowProps }];
     });
+    setWindowRefs(refs => 
+      refs[windowId] 
+        ? refs 
+        : { ...refs, [windowId]: React.createRef() }
+    );
     return windowId;
-  };
+  }, []);
 
-  const closeDraggableWindow = (windowId) => {
-    setWindows(prev => prev.filter(w => w.windowId !== windowId));
-  };
+  const closeDraggableWindow = useCallback((windowId) => {
+    setWindows(ws => ws.filter(w => w.windowId !== windowId));
+    setWindowRefs(refs => {
+      const { [windowId]: _, ...rest } = refs;
+      return rest;
+    });
+    setLoadingWindows(l => {
+      const copy = new Set(l);
+      copy.delete(windowId);
+      return copy;
+    });
+    if (focusedComponent === windowId) {
+      setFocusedComponent(null);
+    }
+  }, [focusedComponent]);
 
-  const showLoading = (windowId) => {
-    windowRefs.current[windowId]?.current?.showLoading();
-  };
-  const hideLoading = (windowId) => {
-    windowRefs.current[windowId]?.current?.hideLoading();
-  };
-  const resizeDraggableWindow = (windowId, w, h) => {
-    windowRefs.current[windowId]?.current?.resizeWindow(w, h);
-  };
-  const moveDraggableWindow = (windowId, x, y) => {
-    windowRefs.current[windowId]?.current?.moveWindow(x, y);
-  };
+  const showLoading = useCallback((windowId) => {
+    setLoadingWindows(l => new Set(l).add(windowId));
+  }, []);
+
+  const hideLoading = useCallback((windowId) => {
+    setLoadingWindows(l => {
+      const copy = new Set(l);
+      copy.delete(windowId);
+      return copy;
+    });
+  }, []);
+
+  const resizeDraggableWindow = useCallback((windowId, width, height) => {
+    setWindows(ws =>
+      ws.map(w =>
+        w.windowId === windowId
+          ? { ...w, windowProps: { ...w.windowProps, width, height } }
+          : w
+      )
+    );
+  }, []);
+
+  const moveDraggableWindow = useCallback((windowId, x, y) => {
+    setWindows(ws =>
+      ws.map(w =>
+        w.windowId === windowId
+          ? { ...w, windowProps: { ...w.windowProps, x, y } }
+          : w
+      )
+    );
+  }, []);
+
+  // --- Reassign window to a different wrap ---
+  const reassignDraggableWindow = useCallback((windowId, newWrapId) => {
+    setWindows(ws =>
+      ws.map(w =>
+        w.windowId === windowId
+          ? { ...w, wrapId: newWrapId }
+          : w
+      )
+    );
+  }, []);
+
+  const updateFocus = useCallback((windowId) => {
+    setFocusedComponent(windowId);
+  }, []);
 
   return (
     <DraggableWindowContext.Provider
       value={{
-        // core state
+        wraps,
         windows,
-        windowRefs: windowRefs.current,
-        // focus control
+        windowRefs,
         focusedComponent,
-        updateFocus,
-        // imperative APIs
+        loadingWindows,
+        registerWrap,
+        unregisterWrap,
         openDraggableWindow,
         closeDraggableWindow,
         showLoading,
         hideLoading,
         resizeDraggableWindow,
         moveDraggableWindow,
+        reassignDraggableWindow,
+        updateFocus,
       }}
     >
       {children}
@@ -66,5 +129,14 @@ export const DraggableWindowProvider = ({ children }) => {
   );
 };
 
-export const useDraggableWindowContext = () =>
-  useContext(DraggableWindowContext);
+/**
+ * Hook to access provider’s internals.
+ * You shouldn’t need this outside your wrap component.
+ */
+export const useDraggableWindowContext = () => {
+  const ctx = useContext(DraggableWindowContext);
+  if (!ctx) {
+    throw new Error('useDraggableWindowContext must be inside DraggableWindowProvider');
+  }
+  return ctx;
+};

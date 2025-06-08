@@ -17,7 +17,13 @@ const MissionControl = () => {
   // each desktop is { id, ui, name }
   const [desktops, setDesktops] = useState(() => {
     const id = Date.now();
-    return [{ id, ui: <SystemUI key={id} />, name: 'Desktop 1' }];
+    return [
+      {
+        id,
+        ui: <SystemUI key={id} wrapId={id} />,
+        name: 'Desktop 1'
+      }
+    ];
   });
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -25,9 +31,16 @@ const MissionControl = () => {
     setDesktops(d => {
       const newId = Date.now();
       const defaultName = `Desktop ${d.length + 1}`;
-      return [...d, { id: newId, ui: <SystemUI key={newId} />, name: defaultName }];
+      return [
+        ...d,
+        {
+          id: newId,
+          ui: <SystemUI key={newId} wrapId={newId} />,
+          name: defaultName
+        }
+      ];
     });
-    setActiveIndex(d => d + 1);
+    setActiveIndex(idx => idx + 1);
   }, []);
 
   const switchDesktop = useCallback(
