@@ -36,11 +36,11 @@ const DraggableWindow = forwardRef(
     },
     ref
   ) => {
-    const { log, enabled } = useLogger('DraggableWindow');
+    const { enabled } = useLogger('DraggableWindow');
     const { focusedComponent, updateFocus } = useFocus();
     const isFocused = focusedComponent === windowId;
 
-    // Fullscreen context
+    // fullscreen context
     const {
       isFullscreen,
       fullscreenWindowId,
@@ -49,11 +49,10 @@ const DraggableWindow = forwardRef(
     } = useContext(FullscreenContext);
     const isThisFullscreen = isFullscreen && fullscreenWindowId === windowId;
 
-    // Refs
     const windowRef = useRef(null);
     const iframeRef = useRef(null);
 
-    // State: position & size
+    // parse initial coords
     const parseCoord = (val, def) =>
       val === undefined ? def : typeof val === 'number' ? val : parseInt(val, 10) || def;
     const [currentWidth, setCurrentWidth] = useState(windowWidth);
@@ -61,13 +60,11 @@ const DraggableWindow = forwardRef(
     const [currentX, setCurrentX] = useState(parseCoord(initialX, 10));
     const [currentY, setCurrentY] = useState(Math.max(parseCoord(initialY, 10), 26));
 
-    // Mouse/touch dragging/resizing flags
+    // user interaction flags
     const [isUserDragging, setIsUserDragging] = useState(false);
     const [isUserResizing, setIsUserResizing] = useState(false);
-    const [isProgrammaticResize, setIsProgrammaticResize] = useState(false);
-    const [isProgrammaticMove, setIsProgrammaticMove] = useState(false);
 
-    // Transform/scale for fullscreen zoom
+    // track transform for zoom animation
     const [scaleTransform, setScaleTransform] = useState({
       tx: 0,
       ty: 0,
@@ -75,7 +72,7 @@ const DraggableWindow = forwardRef(
       sy: 1,
     });
 
-    // ⇒ Clean up dragging/resizing on mouseup/touchend
+    // stop drag/resize on mouseup/touchend
     useEffect(() => {
       const up = () => {
         setIsUserDragging(false);
@@ -89,13 +86,13 @@ const DraggableWindow = forwardRef(
       };
     }, []);
 
-    // ⇒ Respond to external prop changes
+    // respond to prop changes
     useEffect(() => {
       setCurrentWidth(windowWidth);
       setCurrentHeight(windowHeight);
     }, [windowWidth, windowHeight]);
 
-    // ⇒ Draggable / resizable hook (we still keep your resizing logic)
+    // draggable/resizable integration
     useDraggable(
       windowRef,
       {
@@ -110,7 +107,7 @@ const DraggableWindow = forwardRef(
       onUnmount
     );
 
-    // ⇒ Lifecycle callbacks
+    // focus + mount/unmount callbacks
     useEffect(() => {
       updateFocus(windowId);
       onMount?.();
@@ -118,31 +115,26 @@ const DraggableWindow = forwardRef(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // ⇒ Expose imperative API
+    // imperative API for parent control
     useImperativeHandle(
       ref,
       () => ({
         resizeWindow: (w, h) => {
-          setIsProgrammaticResize(true);
           setCurrentWidth(w);
           setCurrentHeight(h);
-          setTimeout(() => setIsProgrammaticResize(false), 300);
         },
         moveWindow: (x, y) => {
-          setIsProgrammaticMove(true);
           setCurrentX(x);
           setCurrentY(Math.max(y, 26));
-          setTimeout(() => setIsProgrammaticMove(false), 300);
         },
         isFocused,
       }),
       [isFocused]
     );
 
-    // ⇒ Reset transform state once we exit fullscreen
+    // after exiting fullscreen, reset transform so next enter animates
     useEffect(() => {
       if (!isThisFullscreen) {
-        // give the reverse animation a moment, then zero out
         setTimeout(
           () => setScaleTransform({ tx: 0, ty: 0, sx: 1, sy: 1 }),
           500
@@ -150,14 +142,15 @@ const DraggableWindow = forwardRef(
       }
     }, [isThisFullscreen]);
 
-    // Focus restoration for iframe content
+    // restore iframe focus when this window regains focus
     useEffect(() => {
       if (isFocused && iframeSrc && iframeRef.current) {
         setTimeout(() => {
           try {
             const win = iframeRef.current.contentWindow;
             const canvas = win?.document.getElementById('canvas');
-            canvas ? canvas.focus() : win?.focus();
+            if (canvas) canvas.focus();
+            else win?.focus();
           } catch {
             iframeRef.current.focus();
           }
@@ -168,33 +161,20 @@ const DraggableWindow = forwardRef(
     const markFocused = () => updateFocus(windowId);
     const clampedY = Math.max(currentY, 26);
 
-    // Combine transitions: size/pos + transform
-    const baseTransition =
-      !isUserDragging &&
-      !isUserResizing &&
-      (isProgrammaticResize || isProgrammaticMove)
-        ? 'width 300ms ease, height 300ms ease, left 300ms ease, top 300ms ease'
-        : 'none';
-    const combinedTransition = `${baseTransition}${
-      baseTransition === 'none' ? '' : ', '
-    }transform 500ms ease`;
-
     return (
       <div
         ref={windowRef}
-        className={`draggable-window${
-          isFocused ? ' focused' : ''
-        }${isThisFullscreen ? ' fullscreen' : ''}`}
+        className={`draggable-window${isFocused ? ' focused' : ''}${
+          isThisFullscreen ? ' fullscreen' : ''
+        }`}
         style={{
           width: `${currentWidth}px`,
           height: `${currentHeight}px`,
           left: `${currentX}px`,
           top: `${clampedY}px`,
-          transformOrigin: 'top left',
           transform: isThisFullscreen
             ? `translate(${scaleTransform.tx}px, ${scaleTransform.ty}px) scale(${scaleTransform.sx}, ${scaleTransform.sy})`
             : 'none',
-          transition: combinedTransition,
           minWidth:
             minWindowWidth != null
               ? typeof minWindowWidth === 'number'
@@ -242,7 +222,6 @@ const DraggableWindow = forwardRef(
               className="close-button"
               onClick={(e) => {
                 e.stopPropagation();
-                // if we're in fullscreen, step us back out
                 if (isThisFullscreen) exitFullscreen();
                 onClose?.();
               }}
@@ -252,14 +231,13 @@ const DraggableWindow = forwardRef(
               onClick={(e) => {
                 e.stopPropagation();
                 if (!isThisFullscreen) {
-                  // compute the zoom-from transform
                   const rect = windowRef.current.getBoundingClientRect();
                   const tx = -rect.left;
                   const ty = -rect.top;
                   const sx = window.innerWidth / rect.width;
                   const sy = window.innerHeight / rect.height;
                   setScaleTransform({ tx, ty, sx, sy });
-                  // delay the flag flip so CSS sees the transform first
+                  // schedule context flip after transform state is set
                   setTimeout(() => enterFullscreen(windowId), 0);
                 } else {
                   exitFullscreen();
