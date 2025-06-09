@@ -11,7 +11,7 @@ import { MissionControlContext } from '../../MissionControl.jsx';
 import Dock from '../../../../components/Dock/Dock.jsx';
 import { WallpaperPlain } from '../../../../components/Wallpaper/Wallpaper.jsx';
 import { useStateManager } from '../../../../stores/StateManager/StateManager.jsx';
-import MissionBar from '../MissionBar/MissionBar.jsx';
+import MissionBar from '../MissionManager/MissionManager.jsx';
 import './MissionControlUI.css';
 
 const FADE_DURATION = 300;   // match CSS fade timing (ms)

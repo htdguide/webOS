@@ -1,7 +1,7 @@
 // src/components/MissionControl/MissionBar/MissionBar.jsx
 
 import React, { useRef, useEffect } from 'react';
-import './MissionBar.css';
+import './MissionManager.css';
 
 const FADE_DURATION = 300;   // match CSS fade timing (ms)
 const SLIDE_DURATION = 300;  // match wrapper transition (ms)
