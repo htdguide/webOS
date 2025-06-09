@@ -1,4 +1,4 @@
-/* src/components/MissionControl/MissionBar/MissionBar.css */
+/* src/components/MissionControl/MissionBar/MissionManager.css */
 
 /* ---------- Animations used by the bar ---------- */
 @keyframes slideBarShort {
@@ -11,7 +11,13 @@
   to   { transform: translateY(0); }
 }
 
-/* Panels flying in from center when overview-expanded (for .desktop-panel) */
+/* reverse slide-up animation for closing the bar */
+@keyframes slideBarUp {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(-145px); opacity: 0; }
+}
+
+/* Panels flying in from center when opening */
 @keyframes slideFromCenter {
   from {
     transform: translate(var(--tx), var(--ty));
@@ -23,56 +29,64 @@
   }
 }
 
-/* ---------- The top bar (hidden initially; slides down once `.overview-open` is active) ---------- */
+/* slide wrapper (and all panels) back up when closing */
+/* replace your existing slideWrapperUp with this */
+@keyframes slideWrapperUp {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-145px);
+    opacity: 0;
+  }
+}
+
+
+/* ---------- The top bar ---------- */
 .mc-bar {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   height: 145px;
   backdrop-filter: blur(10px);
   background: rgba(230, 230, 230, 0.7);
   z-index: 150;
 
-  /* start hidden above screen */
   transform: translateY(-145px);
   animation: slideBarShort 0.3s ease-out forwards;
   transition: none;
 }
 
-/* When container has `.overview-open.bar-expanded`, animate the bar fully down */
+/* slide down when fully opened */
 .mission-control-container.overview-open.bar-expanded .mc-bar {
   animation: slideBarFull 0.3s ease-out forwards;
 }
 
-/* ---------- The row of desktop‐name buttons at the bottom of the bar ---------- */
+/* slide up when closing */
+.mission-control-container.overview-open.bar-expanded .mc-bar.closing {
+  animation: slideBarUp 0.3s ease-in forwards;
+}
+
+/* ---------- Bar names row ---------- */
 .mc-bar-names {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 0; left: 0; right: 0;
   height: 40px;
   display: flex;
   justify-content: center;
   align-items: center;
-
-  /* ORIGINAL gap, before hover: 16px (same as the code you started with) */
   gap: 16px;
   transform: translateY(0);
-
-  /* We’ll animate both gap and transform when .bar-expanded appears */
   transition: gap 0.3s ease-out, transform 0.3s ease-out;
 }
 
 .mc-bar-name {
-  /* No fixed width in this “pre‐hover” state */
-  display: inline-block;      /* So that width can apply later */
-  box-sizing: border-box;      /* Include padding inside width when expanded */
-  text-align: center;          /* Center the text once width is set */
+  display: inline-block;
+  box-sizing: border-box;
+  text-align: center;
   color: rgb(33, 35, 36);
   margin-top: 2px;
   font-size: 12px;
-  padding: 4px 8px;
   cursor: pointer;
   opacity: 0.7;
   transition: opacity 0.2s;
@@ -84,79 +98,79 @@
   opacity: 1;
 }
 
-/* ---------- Expanded state: once the bar is fully slid down AND hovered ---------- */
-/* This selector only applies after the parent has both .overview-open and .bar-expanded */
+/* expand names on hover */
 .mission-control-container.overview-open.bar-expanded .mc-bar-names {
-  gap: 30px;                   /* Match the 30px gap used for .desktops-wrapper */
-  transform: translateY(5px);  /* Nudge the row downward exactly like before */
+  gap: 30px;
+  transform: translateY(5px);
 }
 
-/* Only in that same “expanded” state, give each .mc-bar-name the width of the thumbnail */
 .mission-control-container.overview-open.bar-expanded .mc-bar-name {
-  width: var(--thumb-w);       /* CSS variable set inline via React to `${THUMB_W}px` */
+  width: var(--thumb-w);
 }
 
-/* ---------- The full‐screen transparent overlay behind the bar that catches “click to exit” ---------- */
+/* ---------- Exit overlay ---------- */
 .mc-exit-overlay {
   position: absolute;
   inset: 0;
   z-index: 140;
 }
 
-/* ---------- Desktops Wrapper (moved from MissionControlUI) ---------- */
+/* ---------- Desktops Wrapper ---------- */
 .desktops-wrapper {
   display: flex;
-  gap: 60px;                     /* Normal (non-overview) gap is 60px */
+  gap: 60px;
   height: 100%;
   transition: transform 0.5s ease-in-out;
   position: relative;
 }
 
-/* Override for overview mode: position panels in a row behind the bar */
+/* position panels behind bar when opening */
 .mission-control-container.overview-open .desktops-wrapper {
   position: absolute;
-  top: 30px;
-  left: 0;
-  right: 0;
+  top: 30px; left: 0; right: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 30px;                     /* Same 30px gap that the expanded names use */
+  gap: 30px;
   padding: 0 20px;
   z-index: 200;
   flex-wrap: nowrap;
-
   transform: translateY(-120px);
   opacity: 0;
   transition: none;
 }
 
-/* Once the bar is fully expanded, fly panels in and fade them to opacity:1 */
+/* fly panels in when bar is expanded */
 .mission-control-container.overview-open.bar-expanded .desktops-wrapper {
   transform: translateY(5px);
   opacity: 1;
   transition: transform 0.3s ease-out, opacity 0.3s ease-out;
 }
 
-/* ---------- Desktop Panel (full-screen mode) ---------- */
+/* fly wrapper (and its panels) back up when closing */
+.mission-control-container.overview-open.bar-expanded .desktops-wrapper.closing {
+  transition: none;
+  transform: translateY(0);
+  animation: slideWrapperUp 0.3s ease-in forwards;
+}
+
+
+/* ---------- Desktop Panel (full-screen) ---------- */
 .desktop-panel {
   flex-shrink: 0;
   width: 100vw;
   height: 100%;
 }
 
-/* Overview-only per-panel base styles */
 .mission-control-container.overview-open .desktop-panel {
   overflow: hidden;
   background: transparent;
   border-radius: 8px;
   cursor: pointer;
-
   transform: translate(var(--tx), var(--ty));
   opacity: 0;
 }
 
-/* Fly-out animation for each panel once bar is expanded */
 .mission-control-container.overview-open.bar-expanded .desktop-panel {
   animation: slideFromCenter 0.3s ease-out forwards;
 }

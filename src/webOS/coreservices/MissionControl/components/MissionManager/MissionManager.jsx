@@ -1,6 +1,4 @@
-// src/components/MissionControl/MissionBar/MissionBar.jsx
-
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import './MissionManager.css';
 
 const FADE_DURATION = 300;   // match CSS fade timing (ms)
@@ -19,10 +17,10 @@ const MissionManager = ({
   onDrop,
   viewport
 }) => {
-  // Refs to track each “panel” so we can scroll the active one into view
+  const [isClosing, setIsClosing] = useState(false);
   const panelRefs = useRef([]);
 
-  // When Mission Control is open, scroll the active thumbnail into view
+  // Scroll active into view when opening
   useEffect(() => {
     if (overviewOpen && panelRefs.current[activeIndex]) {
       panelRefs.current[activeIndex].scrollIntoView({
@@ -33,19 +31,42 @@ const MissionManager = ({
     }
   }, [overviewOpen, activeIndex]);
 
-  // Compute sizing for thumbnails (same math as before)
+  // Kick off the closing animation, then actually close
+  const handleExitOverlayClick = () => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setTimeout(() => {
+      exitOverview(true);
+      setIsClosing(false);
+    }, SLIDE_DURATION);
+  };
+
+  const handleDesktopClick = (i) => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setTimeout(() => {
+      instantSwitchDesktop(i);
+      exitOverview(false);
+      setIsClosing(false);
+    }, SLIDE_DURATION);
+  };
+
+  // thumbnail sizing math
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
   const THUMB_W = viewport.width * scale;
   const centerIndex = (desktops.length - 1) / 2;
 
+  // dynamic classes
+  const barClassName = `mc-bar${isClosing ? ' closing' : ''}`;
+  const wrapperClassName = `desktops-wrapper${isClosing ? ' closing' : ''}`;
+
   return (
     <>
-      {/* ---------- Only show the top bar and exit overlay when overviewOpen is true ---------- */}
       {overviewOpen && (
         <>
           <div
-            className="mc-bar"
+            className={barClassName}
             onMouseEnter={() => setBarExpanded(true)}
           >
             <div
@@ -55,15 +76,8 @@ const MissionManager = ({
               {desktops.map((desk, i) => (
                 <span
                   key={desk.id}
-                  className={
-                    i === activeIndex
-                      ? 'mc-bar-name active'
-                      : 'mc-bar-name'
-                  }
-                  onClick={() => {
-                    instantSwitchDesktop(i);
-                    exitOverview(false);
-                  }}
+                  className={i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'}
+                  onClick={() => handleDesktopClick(i)}
                 >
                   {desk.name || `Desktop ${i + 1}`}
                 </span>
@@ -72,13 +86,12 @@ const MissionManager = ({
           </div>
           <div
             className="mc-exit-overlay"
-            onClick={() => exitOverview(true)}
+            onClick={handleExitOverlayClick}
           />
         </>
       )}
 
-      {/* ---------- Desktops Wrapper (always rendered) ---------- */}
-      <div className="desktops-wrapper" style={wrapperStyle}>
+      <div className={wrapperClassName} style={wrapperStyle}>
         {desktops.map((desk, i) => (
           <div
             ref={el => (panelRefs.current[i] = el)}
@@ -88,14 +101,7 @@ const MissionManager = ({
             onDragStart={overviewOpen ? e => onDragStart(e, i) : undefined}
             onDragOver={overviewOpen ? onDragOver : undefined}
             onDrop={overviewOpen ? e => onDrop(e, i) : undefined}
-            onClick={
-              overviewOpen
-                ? () => {
-                    instantSwitchDesktop(i);
-                    exitOverview(false);
-                  }
-                : undefined
-            }
+            onClick={overviewOpen ? () => handleDesktopClick(i) : undefined}
             style={
               overviewOpen
                 ? {
