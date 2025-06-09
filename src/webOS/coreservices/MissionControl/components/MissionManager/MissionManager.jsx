@@ -6,7 +6,7 @@ import './MissionManager.css';
 const FADE_DURATION = 300;   // match CSS fade timing (ms)
 const SLIDE_DURATION = 300;  // match wrapper transition (ms)
 
-const MissionBar = ({
+const MissionManager = ({
   desktops,
   activeIndex,
   instantSwitchDesktop,
@@ -130,4 +130,4 @@ const MissionBar = ({
   );
 };
 
-export default MissionBar;
+export default MissionManager;

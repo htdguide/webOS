@@ -11,8 +11,8 @@ import { MissionControlContext } from '../../MissionControl.jsx';
 import Dock from '../../../../components/Dock/Dock.jsx';
 import { WallpaperPlain } from '../../../../components/Wallpaper/Wallpaper.jsx';
 import { useStateManager } from '../../../../stores/StateManager/StateManager.jsx';
-import MissionBar from '../MissionManager/MissionManager.jsx';
 import './MissionControlUI.css';
+import MissionManager from '../MissionManager/MissionManager.jsx';
 
 const FADE_DURATION = 300;   // match CSS fade timing (ms)
 const SLIDE_DURATION = 300;  // match wrapper transition (ms)
@@ -268,7 +268,7 @@ const MissionControlUI = () => {
       )}
 
       {/* Always render MissionBar, which now includes the desktops-wrapper */}
-      <MissionBar
+      <MissionManager
         desktops={desktops}
         activeIndex={activeIndex}
         instantSwitchDesktop={instantSwitchDesktop}
