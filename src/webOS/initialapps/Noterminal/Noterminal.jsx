@@ -1,4 +1,5 @@
 // src/initialapps/Noterminal/Noterminal.jsx
+
 import React, { useEffect, useRef } from 'react';
 import './Noterminal.css';
 import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowWrap';
@@ -7,8 +8,7 @@ import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvi
 import FlowManager from './components/FlowManager';
 
 function Noterminal({ onClose: parentOnClose, windowTitle }) {
-  const { openDraggableWindow, hideLoading, resizeWindow, moveWindow } =
-    useDraggableWindow();
+  const { openDraggableWindow, resizeWindow, moveWindow } = useDraggableWindow();
 
   // Terminal styling from global state
   const { state } = useStateManager();
@@ -76,24 +76,15 @@ function Noterminal({ onClose: parentOnClose, windowTitle }) {
       initialX: windowParams.initialX,
       initialY: windowParams.initialY,
       content: terminalContent,
-      onMount: () => {
-        hideLoading(title);
-      },
       onUnmount: () => {
         console.log(`Terminal window "${title}" unmounted.`);
       },
       onClose: () => {
-        // user clicked the X
         parentOnClose?.();
-        // wrap’s DraggableWindow will then call providerClose(windowId)
       },
     });
 
     windowIdRef.current = windowId;
-
-    // **no cleanup** here—so React’s internal remounts won’t tear it down
-
-  // We include all the dependencies the first time this should run.
   }, [
     openDraggableWindow,
     title,
@@ -102,7 +93,6 @@ function Noterminal({ onClose: parentOnClose, windowTitle }) {
     windowParams.initialX,
     windowParams.initialY,
     terminalContent,
-    hideLoading,
     parentOnClose,
   ]);
 

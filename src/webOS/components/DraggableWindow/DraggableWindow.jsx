@@ -8,7 +8,6 @@ import React, {
   useEffect
 } from 'react';
 import useDraggable from '../../interactions/useDraggable/useDraggable.jsx';
-import LoadingScreen from '../LoadingScreen/LoadingScreen.jsx';
 import './DraggableWindow.css';
 import { useLogger } from '../Logger/Logger.jsx';
 import { useFocus } from '../../contexts/FocusControl/FocusControl.jsx';
@@ -52,11 +51,6 @@ const DraggableWindow = forwardRef(
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    // loading + fade state
-    const [isLoading, setIsLoading] = useState(true);
-    const [isFadingOut, setIsFadingOut] = useState(false);
-    const [isIframeLoaded, setIsIframeLoaded] = useState(false);
 
     // dimensions
     const [currentWidth, setCurrentWidth] = useState(windowWidth);
@@ -125,7 +119,7 @@ const DraggableWindow = forwardRef(
       onUnmount
     );
 
-    // fallback mount/unmount callbacks
+    // mount/unmount callbacks
     useEffect(() => {
       if (enabled) log('lifecycle', 'Calling onMount');
       onMount?.();
@@ -141,20 +135,6 @@ const DraggableWindow = forwardRef(
     useImperativeHandle(
       ref,
       () => ({
-        showLoading: () => {
-          if (enabled) log('render', 'showLoading → fade in');
-          setIsFadingOut(false);
-          setIsLoading(true);
-        },
-        hideLoading: () => {
-          if (enabled) log('render', 'hideLoading → fade out');
-          setIsFadingOut(true);
-          setTimeout(() => {
-            setIsLoading(false);
-            setIsFadingOut(false);
-            if (enabled) log('render', 'hideLoading → complete');
-          }, 1000);
-        },
         resizeWindow: (w, h) => {
           if (enabled) log('programmatic', `resizeWindow → ${w}×${h}`);
           setIsProgrammaticResize(true);
@@ -308,24 +288,11 @@ const DraggableWindow = forwardRef(
                 border: 'none',
                 pointerEvents: isUserDragging ? 'none' : 'auto'
               }}
-              onLoad={() => {
-                setIsFadingOut(true);
-                setTimeout(() => {
-                  setIsLoading(false);
-                  setIsFadingOut(false);
-                }, 1000);
-                setIsIframeLoaded(true);
-              }}
               onMouseDown={markFocused}
             />
           ) : (
             <div className="content-inner">
               {children}
-              {isLoading && (
-                <div className={`loading-overlay${isFadingOut ? ' fade-out' : ''}`}>
-                  <LoadingScreen />
-                </div>
-              )}
             </div>
           )}
         </div>
