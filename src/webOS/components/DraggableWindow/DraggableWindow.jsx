@@ -54,7 +54,11 @@ const DraggableWindow = forwardRef(
 
     // parse initial coords
     const parseCoord = (val, def) =>
-      val === undefined ? def : typeof val === 'number' ? val : parseInt(val, 10) || def;
+      val === undefined
+        ? def
+        : typeof val === 'number'
+        ? val
+        : parseInt(val, 10) || def;
     const [currentWidth, setCurrentWidth] = useState(windowWidth);
     const [currentHeight, setCurrentHeight] = useState(windowHeight);
     const [currentX, setCurrentX] = useState(parseCoord(initialX, 10));
@@ -161,12 +165,23 @@ const DraggableWindow = forwardRef(
     const markFocused = () => updateFocus(windowId);
     const clampedY = Math.max(currentY, 26);
 
+    // only disable CSS transitions while dragging
+    const noTransition = isUserDragging;
+
+    // build up className
+    const className = [
+      'draggable-window',
+      isFocused && 'focused',
+      isThisFullscreen && 'fullscreen',
+      noTransition && 'no-transition',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
     return (
       <div
         ref={windowRef}
-        className={`draggable-window${isFocused ? ' focused' : ''}${
-          isThisFullscreen ? ' fullscreen' : ''
-        }`}
+        className={className}
         style={{
           width: `${currentWidth}px`,
           height: `${currentHeight}px`,
@@ -237,7 +252,6 @@ const DraggableWindow = forwardRef(
                   const sx = window.innerWidth / rect.width;
                   const sy = window.innerHeight / rect.height;
                   setScaleTransform({ tx, ty, sx, sy });
-                  // schedule context flip after transform state is set
                   setTimeout(() => enterFullscreen(windowId), 0);
                 } else {
                   exitFullscreen();
