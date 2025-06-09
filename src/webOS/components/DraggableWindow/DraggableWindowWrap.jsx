@@ -1,4 +1,5 @@
 // src/components/DraggableWindow/DraggableWindowWrap.jsx
+
 import React, { createContext, useContext, useEffect } from 'react';
 import { useDraggableWindowContext } from './DraggableWindowProvider.jsx';
 import DraggableWindow from './DraggableWindow.jsx';
@@ -95,6 +96,8 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
           <DraggableWindow
             key={windowId}
             ref={ref}
+            // NEW: pass the unique id down
+            windowId={windowId}
             {...rest}
             title={title}
             iframeSrc={iframeSrc}
