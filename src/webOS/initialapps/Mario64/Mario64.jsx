@@ -1,52 +1,50 @@
-// Mario64.jsx
-// This component loads the Super Mario 64 WASM game inside an iframe.
-// The iframe loads a dedicated HTML file (e.g., Mario64Iframe.html) that sets up the WASM module and canvas.
-// When the window is closed, the iframe is removed, terminating the WASM process.
-
-import React, { useEffect } from 'react';
-import defaultIcon from '../../media/icons/defaultapp.png'; // Adjust the icon path as needed.
+// src/webOS/apps/Mario64.jsx
+import React, { useEffect, useRef } from 'react';
+import defaultIcon from '../../media/icons/defaultapp.png';
 import { useDeviceInfo } from '../../../../src/webOS/contexts/DeviceInfoProvider/DeviceInfoProvider';
 import { useDraggableWindow } from '../../../../src/webOS/components/DraggableWindow/DraggableWindowWrap';
 
-function Mario64({ onClose }) {
-  // Get methods to open and close the draggable window from the provider.
-  const { openDraggableWindow, closeDraggableWindow } = useDraggableWindow();
-  const deviceInfo = useDeviceInfo(); // Can be used to adjust behavior based on device type if needed.
+function Mario64({ onClose: parentOnClose }) {
+  const { openDraggableWindow } = useDraggableWindow();
+  const deviceInfo = useDeviceInfo();
+  const windowIdRef = useRef(null);
 
   useEffect(() => {
-    // Construct the iframe URL.
-    // The query parameter forces a fresh load and prevents caching.
-    const iframeUrl =
-      '/WebintoshHD/Applications/Mario64/wasm/index.html?cb=' + new Date().getTime();
+    const iframeUrl = 
+      '/WebintoshHD/Applications/Mario64/wasm/index.html?cb=' +
+      Date.now();
 
-    // Open the draggable window with the iframeSrc property.
-    openDraggableWindow({
+    // open _once_
+    const windowId = openDraggableWindow({
+      id: 'Mario64',            // stable id to dedupe StrictMode
       title: 'Super Mario 64',
       windowWidth: 800,
       windowHeight: 600,
       minWindowWidth: 600,
       minWindowHeight: 400,
-      onClose, // Callback executed when the window is closed.
+      iframeSrc: iframeUrl,
       onMount: () => {
         console.log('Mario64 iframe window mounted.');
       },
       onUnmount: () => {
         console.log('Mario64 iframe window unmounted.');
       },
-      // Pass the iframe URL to load the WASM game inside the iframe.
-      iframeSrc: iframeUrl,
+      onClose: () => {
+        // called when user clicks the X
+        parentOnClose?.();     // tell your parent if you need to
+        // DraggableWindowWrap will then call providerClose(windowId)
+      },
     });
 
-    // Cleanup: Close the draggable window when the component unmounts.
-    return () => {
-      closeDraggableWindow();
-    };
-  }, [openDraggableWindow, closeDraggableWindow, onClose, deviceInfo.deviceType]);
+    windowIdRef.current = windowId;
 
-  return null; // The draggable window component handles rendering the iframe.
+    // — no cleanup closing the window here —
+    // return () => { closeDraggableWindow(windowId) }
+  }, [openDraggableWindow, parentOnClose, deviceInfo.deviceType]);
+
+  return null;
 }
 
-// Optional connectorInfo for integration in your webOS system.
 Mario64.connectorInfo = {
   name: 'Super Mario 64',
   icon: defaultIcon,
