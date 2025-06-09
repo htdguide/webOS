@@ -18,8 +18,6 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
     unregisterWrap,
     windows,
     windowRefs,
-    focusedComponent,
-    updateFocus,
     openDraggableWindow: providerOpen,
     closeDraggableWindow: providerClose,
     showLoading,
@@ -57,9 +55,6 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
   const reassignWindow = (title, newWrapId) =>
     reassignDraggableWindow(`${wrapId}::${title}`, newWrapId);
 
-  const isWindowFocused = title =>
-    focusedComponent === `${wrapId}::${title}`;
-
   // only show windows for this wrapId
   const myWindows = windows.filter(w => w.wrapId === wrapId);
 
@@ -73,14 +68,12 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
         resizeWindow,
         moveWindow,
         reassignWindow,
-        isWindowFocused,
       }}
     >
       {children}
 
       {myWindows.map(({ windowId, windowProps }) => {
         const ref = windowRefs[windowId];
-        const isFocused = focusedComponent === windowId;
         const {
           title,
           content,
@@ -96,13 +89,10 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
           <DraggableWindow
             key={windowId}
             ref={ref}
-            // NEW: pass the unique id down
             windowId={windowId}
             {...rest}
             title={title}
             iframeSrc={iframeSrc}
-            isFocused={isFocused}
-            updateFocus={updateFocus}
             onClose={() => {
               onClose?.();
               providerClose(windowId);
@@ -130,7 +120,6 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
  *   resizeWindow,
  *   moveWindow,
  *   reassignWindow,
- *   isWindowFocused,
  * } = useDraggableWindow();
  */
 export const useDraggableWindow = () => {
