@@ -30,7 +30,6 @@
 }
 
 /* slide wrapper (and all panels) back up when closing */
-/* replace your existing slideWrapperUp with this */
 @keyframes slideWrapperUp {
   from {
     transform: translateY(0);
@@ -160,6 +159,8 @@
   flex-shrink: 0;
   width: 100vw;
   height: 100%;
+  /* make it a stacking context for our overlay */
+  position: relative;
 }
 
 .mission-control-container.overview-open .desktop-panel {
@@ -179,4 +180,15 @@
 .desktop-scale-wrapper {
   width: 100%;
   height: 100%;
+  /* ensure it sits below the overlay */
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- Invisible blocker overlay ---------- */
+.desktop-panel-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 2;
+  background: transparent;
 }

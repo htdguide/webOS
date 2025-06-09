@@ -113,6 +113,9 @@ const MissionManager = ({
                 : undefined
             }
           >
+            {/* Invisible blocker: intercepts all pointer events on the thumbnail */}
+            {overviewOpen && <div className="desktop-panel-overlay" />}
+
             <div
               className="desktop-scale-wrapper"
               style={
@@ -122,7 +125,8 @@ const MissionManager = ({
                       height: viewport.height,
                       transform: `scale(${scale})`,
                       transformOrigin: 'top left',
-                      pointerEvents: 'none'
+                      /* original pointerEvents: 'none' is still safe,
+                         but the overlay is handling the block now */
                     }
                   : {}
               }
