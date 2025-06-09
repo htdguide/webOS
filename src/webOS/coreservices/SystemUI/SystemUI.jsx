@@ -2,10 +2,10 @@ import React, { useContext } from 'react';
 import { MiniWindowProvider } from '../../components/MiniWindow/MiniWindowProvider.jsx';
 import DesktopAssembler from '../DesktopAssembler/DesktopAssembler.jsx';
 import { DraggableWindowWrap } from '../../components/DraggableWindow/DraggableWindowWrap.jsx';
-import { FullscreenProvider, FullscreenContext } from '../../contexts/FullScreenContext/FullScreenContext.jsx';
+import { FullscreenProvider, FullscreenSpace } from '../../components/FullScreenSpace/FullScreenSpace.jsx';
 
 const SystemUIContent = ({ wrapId }) => {
-  const { isFullscreen } = useContext(FullscreenContext);
+  const { isFullscreen } = useContext(FullscreenSpace);
 
   return (
     <DraggableWindowWrap wrapId={wrapId}>

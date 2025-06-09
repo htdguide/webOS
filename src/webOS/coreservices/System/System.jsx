@@ -6,7 +6,7 @@ import { MusicServiceProvider } from '../../drivers/MusicService/MusicService.js
 import DisplayController from '../../drivers/DisplayController/DisplayController.jsx';
 import { NotificationProvider } from '../../components/Notification/NotificationProvider.jsx';
 import { WallpaperSrc } from '../../components/Wallpaper/WallpaperSrc.jsx';
-import { DraggableWindowProvider } from '../../components/DraggableWindow/DraggableWindowProvider.jsx';
+import { DraggableWindowProvider } from '../../contexts/DraggableWindowProvider/DraggableWindowProvider.jsx';
 import { FocusProvider } from '../../contexts/FocusControl/FocusControl.jsx';
 
 const System = ({ children }) => {

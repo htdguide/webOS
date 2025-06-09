@@ -12,7 +12,7 @@ import useDraggable from '../../interactions/useDraggable/useDraggable.jsx';
 import './DraggableWindow.css';
 import { useLogger } from '../Logger/Logger.jsx';
 import { useFocus } from '../../contexts/FocusControl/FocusControl.jsx';
-import { FullscreenContext } from '../../contexts/FullScreenContext/FullScreenContext.jsx';
+import { FullscreenSpace } from '../FullScreenSpace/FullScreenSpace.jsx';
 
 const DraggableWindow = forwardRef(
   (
@@ -46,7 +46,7 @@ const DraggableWindow = forwardRef(
       fullscreenWindowId,
       enterFullscreen,
       exitFullscreen,
-    } = useContext(FullscreenContext);
+    } = useContext(FullscreenSpace);
     const isThisFullscreen = isFullscreen && fullscreenWindowId === windowId;
 
     const windowRef = useRef(null);

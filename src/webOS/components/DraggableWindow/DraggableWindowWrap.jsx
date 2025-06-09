@@ -6,7 +6,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
-import { useDraggableWindowContext } from './DraggableWindowProvider';
+import { useDraggableWindowContext } from '../../contexts/DraggableWindowProvider/DraggableWindowProvider';
 import DraggableWindow from './DraggableWindow';
 
 const DraggableWindowWrapContext = createContext();

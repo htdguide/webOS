@@ -1,6 +1,8 @@
 import React, { createContext, useState } from 'react';
 
-export const FullscreenContext = createContext({
+//This file creates empty space for full screen
+
+export const FullscreenSpace = createContext({
   isFullscreen: false,
   fullscreenWindowId: null,
   enterFullscreen: (id) => {},
@@ -22,10 +24,10 @@ export const FullscreenProvider = ({ children }) => {
   };
 
   return (
-    <FullscreenContext.Provider
+    <FullscreenSpace.Provider
       value={{ isFullscreen, fullscreenWindowId, enterFullscreen, exitFullscreen }}
     >
       {children}
-    </FullscreenContext.Provider>
+    </FullscreenSpace.Provider>
   );
 };
