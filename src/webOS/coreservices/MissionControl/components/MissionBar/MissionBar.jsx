@@ -1,7 +1,6 @@
 // src/components/MissionControl/MissionBar/MissionBar.jsx
 
 import React, { useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import './MissionBar.css';
 
 const FADE_DURATION = 300;   // match CSS fade timing (ms)
@@ -13,8 +12,6 @@ const MissionBar = ({
   instantSwitchDesktop,
   exitOverview,
   setBarExpanded,
-  portalReady,
-  scaleRefs,
   wrapperStyle,
   overviewOpen,
   onDragStart,
@@ -51,12 +48,6 @@ const MissionBar = ({
             className="mc-bar"
             onMouseEnter={() => setBarExpanded(true)}
           >
-            {/* 
-              We pass a CSS variable (--thumb-w) into .mc-bar-names so that,
-              once .bar-expanded is added, the CSS can set each .mc-bar-name to that width.
-              But in the “not-yet-expanded” state, the spans have no fixed width
-              and use the original gap:16px from the CSS.
-            */}
             <div
               className="mc-bar-names"
               style={{ '--thumb-w': `${THUMB_W}px` }}
@@ -117,9 +108,6 @@ const MissionBar = ({
             }
           >
             <div
-              ref={el => {
-                scaleRefs.current[i] = el;
-              }}
               className="desktop-scale-wrapper"
               style={
                 overviewOpen
@@ -133,9 +121,7 @@ const MissionBar = ({
                   : {}
               }
             >
-              {portalReady[i] &&
-                scaleRefs.current[i] &&
-                createPortal(desk.ui, scaleRefs.current[i])}
+              {desk.ui}
             </div>
           </div>
         ))}
