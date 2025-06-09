@@ -75,7 +75,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 16px;
+  gap: 32px;
   transform: translateY(0);
   transition: gap 0.3s ease-out, transform 0.3s ease-out;
 }
@@ -165,7 +165,7 @@
 .mission-control-container.overview-open .desktop-panel {
   overflow: hidden;
   background: transparent;
-  border-radius: 8px;
+  border-radius: 2px;
   cursor: pointer;
   transform: translate(var(--tx), var(--ty));
   opacity: 0;
