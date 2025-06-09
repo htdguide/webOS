@@ -1,54 +1,50 @@
-// Mario64.jsx
-// This component loads the Super Mario 64 WASM game inside an iframe.
-// The iframe loads a dedicated HTML file (e.g., Mario64Iframe.html) that sets up the WASM module and canvas.
-// When the window is closed, the iframe is removed, terminating the WASM process.
-
-import React, { useEffect } from 'react';
-import defaultIcon from '../../media/icons/defaultapp.png'; // Adjust the icon path as needed.
+// src/webOS/apps/Quake3.jsx
+import React, { useEffect, useRef } from 'react';
+import defaultIcon from '../../media/icons/defaultapp.png';
 import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvider';
 import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowWrap';
 
-function Quake3({ onClose }) {
-  // Get methods to open and close the draggable window from the provider.
-  const { openDraggableWindow, closeDraggableWindow } = useDraggableWindow();
-  const deviceInfo = useDeviceInfo(); // Can be used to adjust behavior based on device type if needed.
+function Quake3({ onClose: parentOnClose }) {
+  const { openDraggableWindow } = useDraggableWindow();
+  const deviceInfo = useDeviceInfo();
+  const windowIdRef = useRef(null);
 
   useEffect(() => {
-    // Construct the iframe URL.
-    // The query parameter forces a fresh load and prevents caching.
     const iframeUrl =
-      '/WebintoshHD/Applications/Quake3/Quake3.htm?cb=' + new Date().getTime();
+      '/WebintoshHD/Applications/Quake3/Quake3.htm?cb=' + Date.now();
 
-    // Open the draggable window with the iframeSrc property.
-    openDraggableWindow({
+    // open _once_
+    const windowId = openDraggableWindow({
+      id: 'Quake3',            // stable ID to dedupe StrictMode
       title: 'Quake3',
       windowWidth: 800,
       windowHeight: 600,
       minWindowWidth: 600,
       minWindowHeight: 400,
-      onClose, // Callback executed when the window is closed.
+      iframeSrc: iframeUrl,
       onMount: () => {
         console.log('Quake3 iframe window mounted.');
       },
       onUnmount: () => {
         console.log('Quake3 iframe window unmounted.');
       },
-      // Pass the iframe URL to load the WASM game inside the iframe.
-      iframeSrc: iframeUrl,
+      onClose: () => {
+        // called when the user clicks the X
+        parentOnClose?.();
+        // DraggableWindowWrap will handle the actual close by windowId
+      },
     });
 
-    // Cleanup: Close the draggable window when the component unmounts.
-    return () => {
-      closeDraggableWindow();
-    };
-  }, [openDraggableWindow, closeDraggableWindow, onClose, deviceInfo.deviceType]);
+    windowIdRef.current = windowId;
 
-  return null; // The draggable window component handles rendering the iframe.
+    // — no cleanup here —
+  }, [openDraggableWindow, parentOnClose, deviceInfo.deviceType]);
+
+  return null;
 }
 
-// Optional connectorInfo for integration in your webOS system.
 Quake3.connectorInfo = {
-  name: 'Super Mario 64',
+  name: 'Quake3',
   icon: defaultIcon,
   priority: 4,
 };
