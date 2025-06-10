@@ -2,14 +2,14 @@
 import React from 'react';
 import Display from './coreservices/Display/Display';
 
-const Efi = () => {
+const BIOS = () => {
 
   return (
     <Display/>
   );
 };
 
-export default Efi;
+export default BIOS;
 
 
 

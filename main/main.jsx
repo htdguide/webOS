@@ -2,14 +2,14 @@
 import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import Efi from '../src/efi/Efi';
+import BIOS from '../src/BIOS/BIOS';
 
 
 const Main = () => {
 
   return (
     <StrictMode>  
-       <Efi/>
+       <BIOS/>
     </StrictMode>
   );
 };
