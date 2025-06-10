@@ -13,13 +13,14 @@ import './DraggableWindow.css';
 import { useLogger } from '../Logger/Logger.jsx';
 import { useFocus } from '../../contexts/FocusControl/FocusControl.jsx';
 import { FullscreenSpace } from '../FullScreenSpace/FullScreenSpace.jsx';
-// NEW: hook into your provider
 import { useDraggableWindowContext } from '../../contexts/DraggableWindowProvider/DraggableWindowProvider.jsx';
+
+const CORNER_HANDLES = ['br', 'tr', 'bl', 'tl'];
 
 const DraggableWindow = forwardRef(
   (
     {
-      wrapId,                    // receive wrapId here
+      wrapId,
       windowId,
       title,
       windowWidth,
@@ -39,30 +40,21 @@ const DraggableWindow = forwardRef(
     },
     ref
   ) => {
-    // include wrapId in your logger tag
     const { enabled } = useLogger(`DraggableWindow [wrap:${wrapId}]`);
-
     const { focusedComponent, updateFocus } = useFocus();
     const isFocused = focusedComponent === windowId;
-
-    // pull fullscreen state from context
     const {
       isFullscreen,
       fullscreenWindowId,
       enterFullscreen,
       exitFullscreen,
     } = useContext(FullscreenSpace);
-
-    // NEW: pull in enable/disable from provider
     const { enableFullscreenForWrap, disableFullscreenForWrap } = useDraggableWindowContext();
-
-    // now check wrapId, not windowId
     const isThisFullscreen = isFullscreen && fullscreenWindowId === wrapId;
 
     const windowRef = useRef(null);
     const iframeRef = useRef(null);
 
-    // parse initial coordinates
     const parseCoord = (val, def) =>
       val === undefined
         ? def
@@ -75,11 +67,11 @@ const DraggableWindow = forwardRef(
     const [currentX, setCurrentX] = useState(parseCoord(initialX, 10));
     const [currentY, setCurrentY] = useState(Math.max(parseCoord(initialY, 10), 26));
 
-    // user interaction flags
     const [isUserDragging, setIsUserDragging] = useState(false);
     const [isUserResizing, setIsUserResizing] = useState(false);
+    // Track exactly which handle is active
+    const [activeResizeHandle, setActiveResizeHandle] = useState(null);
 
-    // track transform for zoom animation
     const [scaleTransform, setScaleTransform] = useState({
       tx: 0,
       ty: 0,
@@ -92,6 +84,7 @@ const DraggableWindow = forwardRef(
       const up = () => {
         setIsUserDragging(false);
         setIsUserResizing(false);
+        setActiveResizeHandle(null);
       };
       window.addEventListener('mouseup', up);
       window.addEventListener('touchend', up);
@@ -176,10 +169,11 @@ const DraggableWindow = forwardRef(
     const markFocused = () => updateFocus(windowId);
     const clampedY = Math.max(currentY, 26);
 
-    // only disable CSS transitions while dragging
-    const noTransition = isUserDragging;
+    // only disable CSS transitions while dragging OR corner‐resize
+    const noTransition =
+      isUserDragging ||
+      (isUserResizing && CORNER_HANDLES.includes(activeResizeHandle));
 
-    // build up className
     const className = [
       'draggable-window',
       isFocused && 'focused',
@@ -250,7 +244,6 @@ const DraggableWindow = forwardRef(
                 e.stopPropagation();
                 if (isThisFullscreen) {
                   exitFullscreen();
-                  // NEW: flip off in provider
                   disableFullscreenForWrap(wrapId);
                 }
                 onClose?.();
@@ -267,15 +260,12 @@ const DraggableWindow = forwardRef(
                   const sx = window.innerWidth / rect.width;
                   const sy = window.innerHeight / rect.height;
                   setScaleTransform({ tx, ty, sx, sy });
-                  // trigger fullscreen by wrapId
                   setTimeout(() => {
                     enterFullscreen(wrapId);
-                    // NEW: flip on in provider
                     enableFullscreenForWrap(wrapId);
                   }, 0);
                 } else {
                   exitFullscreen();
-                  // NEW: flip off in provider
                   disableFullscreenForWrap(wrapId);
                 }
               }}
@@ -323,11 +313,13 @@ const DraggableWindow = forwardRef(
             onMouseDown={() => {
               markFocused();
               setIsUserResizing(true);
+              setActiveResizeHandle(pos);
             }}
             onTouchStart={(e) => {
               e.preventDefault();
               markFocused();
               setIsUserResizing(true);
+              setActiveResizeHandle(pos);
             }}
           />
         ))}

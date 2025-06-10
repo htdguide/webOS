@@ -1,5 +1,8 @@
-// useDraggable.jsx
+// src/webOS/interactions/useDraggable/useDraggable.jsx
+
 import { useEffect, useState, useRef } from 'react';
+
+const CORNER_TYPES = ['bottom-right', 'bottom-left', 'top-right', 'top-left'];
 
 function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
   const [isDragging, setIsDragging] = useState(false);
@@ -38,7 +41,7 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     return () => { if (onUnmount) onUnmount(); };
   }, [onMount, onUnmount]);
 
-  // --- Snap preview overlay ---
+  // --- Snap preview overlay (unchanged) ---
   const showSnapPreview = () => {
     if (!previewRef.current && snapDirection) {
       const preview = document.createElement('div');
@@ -92,7 +95,7 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     else hideSnapPreview();
   }, [snapDirection]);
 
-  // --- Snap actions ---
+  // --- Snap actions (unchanged) ---
   const enterFullscreen = () => {
     const container = windowRef.current.parentNode;
     const rect = container.getBoundingClientRect();
@@ -235,7 +238,12 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     };
 
     const handleEnd = () => {
+      // if we were dragging & snapped, finish snap
       if (isDragging && snapDirection) snapToPosition();
+
+      // always clear transition‐suppression when resizing stops
+      windowRef.current?.classList.remove('no-transition');
+
       setIsDragging(false);
       setResizeType(null);
       clearTimeout(snapTimerRef.current);
@@ -278,6 +286,12 @@ function useDraggable(windowRef, sizeProps, onMount, onUnmount, onResize) {
     event.stopPropagation();
     const clientX = event.touches ? event.touches[0].clientX : event.clientX;
     const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+
+    // if this is a corner, suppress CSS transitions on the window
+    if (CORNER_TYPES.includes(type)) {
+      windowRef.current?.classList.add('no-transition');
+    }
+
     setResizeType(type);
     dragStartPos.current = { x: clientX, y: clientY };
     const container = windowRef.current.parentNode;
