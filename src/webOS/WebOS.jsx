@@ -6,11 +6,12 @@ import "./webOS.css";
 
 const WebOS = () => {
 
+  const webOSver = import.meta.env.VITE_APP_WEBOS_VERSION;
   return (
     <System>
       <MissionControl/>
       <div className='version'>
-        version 0.2.4
+        v{webOSver} alpha
       </div>
     </System>
   );
