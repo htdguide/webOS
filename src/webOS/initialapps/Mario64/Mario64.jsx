@@ -23,12 +23,6 @@ function Mario64({ onClose: parentOnClose }) {
       minWindowWidth: 600,
       minWindowHeight: 400,
       iframeSrc: iframeUrl,
-      onMount: () => {
-        console.log('Mario64 iframe window mounted.');
-      },
-      onUnmount: () => {
-        console.log('Mario64 iframe window unmounted.');
-      },
       onClose: () => {
         // called when user clicks the X
         parentOnClose?.();     // tell your parent if you need to

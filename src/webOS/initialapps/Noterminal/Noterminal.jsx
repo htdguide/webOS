@@ -76,9 +76,6 @@ function Noterminal({ onClose: parentOnClose, windowTitle }) {
       initialX: windowParams.initialX,
       initialY: windowParams.initialY,
       content: terminalContent,
-      onUnmount: () => {
-        console.log(`Terminal window "${title}" unmounted.`);
-      },
       onClose: () => {
         parentOnClose?.();
       },

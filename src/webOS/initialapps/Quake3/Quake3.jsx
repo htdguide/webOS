@@ -22,12 +22,6 @@ function Quake3({ onClose: parentOnClose }) {
       minWindowWidth: 600,
       minWindowHeight: 400,
       iframeSrc: iframeUrl,
-      onMount: () => {
-        console.log('Quake3 iframe window mounted.');
-      },
-      onUnmount: () => {
-        console.log('Quake3 iframe window unmounted.');
-      },
       onClose: () => {
         // called when the user clicks the X
         parentOnClose?.();
