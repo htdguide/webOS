@@ -114,6 +114,7 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
           <DraggableWindow
             key={windowId}
             ref={ref}
+            wrapId={wrapId}            // ← pass wrapId down
             windowId={windowId}
             {...rest}
             title={title}

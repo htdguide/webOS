@@ -1,4 +1,4 @@
-// src/components/DraggableWindow/DraggableWindow.jsx
+// src/webOS/components/DraggableWindow/DraggableWindow.jsx
 
 import React, {
   useRef,
@@ -17,6 +17,7 @@ import { FullscreenSpace } from '../FullScreenSpace/FullScreenSpace.jsx';
 const DraggableWindow = forwardRef(
   (
     {
+      wrapId,                    // ← receive it here
       windowId,
       title,
       windowWidth,
@@ -36,7 +37,9 @@ const DraggableWindow = forwardRef(
     },
     ref
   ) => {
-    const { enabled } = useLogger('DraggableWindow');
+    // you can now include wrapId in your logger or other logic
+    const { enabled } = useLogger(`DraggableWindow [wrap:${wrapId}]`);
+
     const { focusedComponent, updateFocus } = useFocus();
     const isFocused = focusedComponent === windowId;
 
