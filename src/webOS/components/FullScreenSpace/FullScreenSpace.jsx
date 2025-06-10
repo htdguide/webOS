@@ -1,15 +1,15 @@
 import React, { createContext, useState } from 'react';
 
-//This file creates empty space for full screen
-
+// Context for fullscreen management, now also carries wrapId
 export const FullscreenSpace = createContext({
   isFullscreen: false,
   fullscreenWindowId: null,
-  enterFullscreen: (id) => {},
+  wrapId: null,
+  enterFullscreen: () => {},
   exitFullscreen: () => {},
 });
 
-export const FullscreenProvider = ({ children }) => {
+export const FullscreenProvider = ({ children, wrapId }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [fullscreenWindowId, setFullscreenWindowId] = useState(null);
 
@@ -25,7 +25,13 @@ export const FullscreenProvider = ({ children }) => {
 
   return (
     <FullscreenSpace.Provider
-      value={{ isFullscreen, fullscreenWindowId, enterFullscreen, exitFullscreen }}
+      value={{
+        isFullscreen,
+        fullscreenWindowId,
+        wrapId,
+        enterFullscreen,
+        exitFullscreen
+      }}
     >
       {children}
     </FullscreenSpace.Provider>

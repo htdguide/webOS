@@ -1,5 +1,5 @@
 // main.jsx
-import React, { StrictMode, useState, useEffect } from 'react';
+import React, { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import System from '../System/System.jsx';
@@ -10,7 +10,9 @@ const Main = () => {
   return (
     <StrictMode>
       <System>
+        <div className='display-container'>
         <MissionControl/>
+        </div>
         <div className="version">
         v0.2.4 alpha
       </div>

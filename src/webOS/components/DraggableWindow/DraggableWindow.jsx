@@ -17,7 +17,7 @@ import { FullscreenSpace } from '../FullScreenSpace/FullScreenSpace.jsx';
 const DraggableWindow = forwardRef(
   (
     {
-      wrapId,                    // ← receive it here
+      wrapId,                    // receive wrapId here
       windowId,
       title,
       windowWidth,
@@ -37,31 +37,34 @@ const DraggableWindow = forwardRef(
     },
     ref
   ) => {
-    // you can now include wrapId in your logger or other logic
+    // include wrapId in your logger tag
     const { enabled } = useLogger(`DraggableWindow [wrap:${wrapId}]`);
 
     const { focusedComponent, updateFocus } = useFocus();
     const isFocused = focusedComponent === windowId;
 
-    // fullscreen context
+    // pull fullscreen state from context
     const {
       isFullscreen,
       fullscreenWindowId,
       enterFullscreen,
       exitFullscreen,
     } = useContext(FullscreenSpace);
-    const isThisFullscreen = isFullscreen && fullscreenWindowId === windowId;
+
+    // now check wrapId, not windowId
+    const isThisFullscreen = isFullscreen && fullscreenWindowId === wrapId;
 
     const windowRef = useRef(null);
     const iframeRef = useRef(null);
 
-    // parse initial coords
+    // parse initial coordinates
     const parseCoord = (val, def) =>
       val === undefined
         ? def
         : typeof val === 'number'
         ? val
         : parseInt(val, 10) || def;
+
     const [currentWidth, setCurrentWidth] = useState(windowWidth);
     const [currentHeight, setCurrentHeight] = useState(windowHeight);
     const [currentX, setCurrentX] = useState(parseCoord(initialX, 10));
@@ -255,7 +258,8 @@ const DraggableWindow = forwardRef(
                   const sx = window.innerWidth / rect.width;
                   const sy = window.innerHeight / rect.height;
                   setScaleTransform({ tx, ty, sx, sy });
-                  setTimeout(() => enterFullscreen(windowId), 0);
+                  // trigger fullscreen by wrapId
+                  setTimeout(() => enterFullscreen(wrapId), 0);
                 } else {
                   exitFullscreen();
                 }

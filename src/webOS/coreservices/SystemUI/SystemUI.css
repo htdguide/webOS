@@ -1,0 +1,17 @@
+/* The monitor (desktop container) */
+.desktop-monitor {
+    width: 100vw;
+    height: 100vh;
+    background-color: #2e2e2e; /* Monitor background, e.g., dark grey */
+    position: relative; /* So internal absolutely positioned elements use this as reference */
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    z-index: 1;
+    /* Add the transition here so it applies on both add/remove of the class */
+    transition: transform 0.5s ease;
+}
+
+/* When any window is fullscreen, slide the desktop away */
+.desktop-monitor.slide-left {
+    transform: translateX(-100vw);
+  }
