@@ -1,10 +1,17 @@
 // src/webOS/components/DraggableWindow/DraggableWindowProvider.jsx
+
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
 const DraggableWindowContext = createContext();
 
 /**
  * Provider that sits at the root of your app.
+ * Tracks:
+ *  • registered wraps
+ *  • open windows + their refs
+ *  • focus state
+ *  • loading state
+ *  • per-wrap `isFullscreenEnabled`
  */
 export function DraggableWindowProvider({ children }) {
   const [wraps, setWraps] = useState([]);
@@ -13,14 +20,34 @@ export function DraggableWindowProvider({ children }) {
   const [focusedComponent, setFocusedComponent] = useState(null);
   const [loadingWindows, setLoadingWindows] = useState(new Set());
 
+  // NEW: track fullscreen‐enabled per wrapId
+  const [fullscreenEnabledByWrap, setFullscreenEnabledByWrap] = useState({});
+
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
   const registerWrap = useCallback(wrapId => {
     setWraps(ws => (ws.includes(wrapId) ? ws : [...ws, wrapId]));
+    // initialize flag to false on first registration
+    setFullscreenEnabledByWrap(fe =>
+      fe.hasOwnProperty(wrapId) ? fe : { ...fe, [wrapId]: false }
+    );
   }, []);
 
   const unregisterWrap = useCallback(wrapId => {
     setWraps(ws => ws.filter(id => id !== wrapId));
+    setFullscreenEnabledByWrap(fe => {
+      const { [wrapId]: _, ...rest } = fe;
+      return rest;
+    });
+  }, []);
+
+  // call these to flip the flag for a given wrapId
+  const enableFullscreenForWrap = useCallback(wrapId => {
+    setFullscreenEnabledByWrap(fe => ({ ...fe, [wrapId]: true }));
+  }, []);
+
+  const disableFullscreenForWrap = useCallback(wrapId => {
+    setFullscreenEnabledByWrap(fe => ({ ...fe, [wrapId]: false }));
   }, []);
 
   const openDraggableWindow = useCallback(({ wrapId, windowProps }) => {
@@ -106,6 +133,12 @@ export function DraggableWindowProvider({ children }) {
         windowRefs,
         focusedComponent,
         loadingWindows,
+
+        // NEW API
+        fullscreenEnabledByWrap,
+        enableFullscreenForWrap,
+        disableFullscreenForWrap,
+
         registerWrap,
         unregisterWrap,
         openDraggableWindow,

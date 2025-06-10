@@ -13,6 +13,8 @@ import './DraggableWindow.css';
 import { useLogger } from '../Logger/Logger.jsx';
 import { useFocus } from '../../contexts/FocusControl/FocusControl.jsx';
 import { FullscreenSpace } from '../FullScreenSpace/FullScreenSpace.jsx';
+// NEW: hook into your provider
+import { useDraggableWindowContext } from '../../contexts/DraggableWindowProvider/DraggableWindowProvider.jsx';
 
 const DraggableWindow = forwardRef(
   (
@@ -50,6 +52,9 @@ const DraggableWindow = forwardRef(
       enterFullscreen,
       exitFullscreen,
     } = useContext(FullscreenSpace);
+
+    // NEW: pull in enable/disable from provider
+    const { enableFullscreenForWrap, disableFullscreenForWrap } = useDraggableWindowContext();
 
     // now check wrapId, not windowId
     const isThisFullscreen = isFullscreen && fullscreenWindowId === wrapId;
@@ -243,7 +248,11 @@ const DraggableWindow = forwardRef(
               className="close-button"
               onClick={(e) => {
                 e.stopPropagation();
-                if (isThisFullscreen) exitFullscreen();
+                if (isThisFullscreen) {
+                  exitFullscreen();
+                  // NEW: flip off in provider
+                  disableFullscreenForWrap(wrapId);
+                }
                 onClose?.();
               }}
             />
@@ -259,9 +268,15 @@ const DraggableWindow = forwardRef(
                   const sy = window.innerHeight / rect.height;
                   setScaleTransform({ tx, ty, sx, sy });
                   // trigger fullscreen by wrapId
-                  setTimeout(() => enterFullscreen(wrapId), 0);
+                  setTimeout(() => {
+                    enterFullscreen(wrapId);
+                    // NEW: flip on in provider
+                    enableFullscreenForWrap(wrapId);
+                  }, 0);
                 } else {
                   exitFullscreen();
+                  // NEW: flip off in provider
+                  disableFullscreenForWrap(wrapId);
                 }
               }}
             />
