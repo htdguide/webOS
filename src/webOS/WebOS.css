@@ -16,3 +16,12 @@
   z-index: 9999;
 }
 
+/* Mobile view: Adjust the version label for smaller screens */
+@media (max-width: 600px) {
+  .version {
+    font-size: 8px;
+    top: 30px;
+    right: 4px;
+    bottom: auto;
+  }
+}

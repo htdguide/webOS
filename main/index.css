@@ -12,3 +12,24 @@ body, html {
   z-index: 0;
 }
 
+/* Hide React error overlay */
+#react-error-overlay {
+  display: none !important;
+}
+
+/* App.css */
+
+/* Hide any iframes that might be embedded inadvertently */
+body > iframe {
+  display: none;
+}
+
+/* Prevent scrolling on the global document.
+   Note: The .desktop container is our new full-size "screen" */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100%;
+}
+

@@ -1,3 +1,5 @@
+// src/components/MissionControl/MissionManager.jsx
+
 import React, { useRef, useEffect, useState } from 'react';
 import './MissionManager.css';
 
@@ -19,6 +21,24 @@ const MissionManager = ({
 }) => {
   const [isClosing, setIsClosing] = useState(false);
   const panelRefs = useRef([]);
+
+  // ---- Dynamic --screenratio CSS variable ----
+  useEffect(() => {
+    const updateScreenRatio = () => {
+      // width / height aspect ratio
+      const ratio = window.innerWidth / window.innerHeight;
+      // set on :root so it's available globally
+      document.documentElement.style.setProperty('--screenratio', ratio);
+    };
+    // initialize and subscribe
+    updateScreenRatio();
+    window.addEventListener('resize', updateScreenRatio);
+    // cleanup
+    return () => {
+      window.removeEventListener('resize', updateScreenRatio);
+    };
+  }, []);
+  // --------------------------------------------
 
   // Scroll active into view when opening
   useEffect(() => {
@@ -125,8 +145,6 @@ const MissionManager = ({
                       height: viewport.height,
                       transform: `scale(${scale})`,
                       transformOrigin: 'top left',
-                      /* original pointerEvents: 'none' is still safe,
-                         but the overlay is handling the block now */
                     }
                   : {}
               }
