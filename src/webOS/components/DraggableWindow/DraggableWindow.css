@@ -240,7 +240,7 @@
 
 /* Fullscreen state: only this toggles */
 .draggable-window.fullscreen {
-  position: fixed;
+  position: flex;
   border-radius: 0;
   border: 0;
   top: 0 !important;

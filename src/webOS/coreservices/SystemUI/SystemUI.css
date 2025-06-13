@@ -1,17 +1,38 @@
+/* desktop-monitor.css */
+
 /* The monitor (desktop container) */
 .desktop-monitor {
     width: 100vw;
     height: 100vh;
-    background-color: #2e2e2e; /* Monitor background, e.g., dark grey */
-    position: relative; /* So internal absolutely positioned elements use this as reference */
+    background-color: #2e2e2e;          /* Monitor background */
+    opacity: 1;
+    position: relative;                  /* So internal absolutely positioned elements use this as reference */
     overflow: hidden;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     z-index: 1;
-    /* Add the transition here so it applies on both add/remove of the class */
+
+    /* Only animate transform by default; no opacity transition */
     transition: transform 0.5s ease;
 }
 
 /* When any window is fullscreen, slide the desktop away */
 .desktop-monitor.slide-left {
+    /* 1) Slide off screen */
     transform: translateX(-100vw);
-  }
+
+    /* 2) Fade-out background after 1s delay, over 1s */
+    opacity: 0;
+
+    /* 3) Disable pointer events */
+    pointer-events: none;
+
+    /* Animate both transform and opacity on slide-out */
+    transition:
+        transform 0.5s ease,
+        opacity 0.5s ease-out 0.2s;
+}
+
+/* If you still want elements INSIDE the desktop to be clickable */
+.desktop-monitor.slide-left * {
+    pointer-events: auto;
+}
