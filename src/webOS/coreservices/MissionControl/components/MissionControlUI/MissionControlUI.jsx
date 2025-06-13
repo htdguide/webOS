@@ -16,6 +16,7 @@ import MissionManager from '../MissionManager/MissionManager.jsx';
 
 const FADE_DURATION = 300;   // match CSS fade timing (ms)
 const SLIDE_DURATION = 300;  // match wrapper transition (ms)
+const OPEN_DELAY = 200;      // new delay before fade (ms)
 
 const MissionControlUI = () => {
   const {
@@ -31,6 +32,8 @@ const MissionControlUI = () => {
   const overlayVisible =
     state.groups.missionControl?.overlayVisible === 'true';
 
+  // New flag: render wallpaper at opacity 0 immediately when opening
+  const [showWallpaperPlaceholder, setShowWallpaperPlaceholder] = useState(false);
   // track when each portal can mount (initially all false)
   const [portalReady, setPortalReady] = useState(() =>
     desktops.map(() => false)
@@ -49,18 +52,15 @@ const MissionControlUI = () => {
 
     let newReady;
     if (currLen > prevLen) {
-      // One or more desktops added: keep existing flags, append `false` for each new desktop
       const diffCount = currLen - prevLen;
       newReady = [...prevReady, ...Array(diffCount).fill(false)];
     } else if (currLen < prevLen) {
-      // One or more desktops removed: rebuild `newReady` by matching IDs
       const idToReady = {};
       prevDesktops.forEach((d, idx) => {
         idToReady[d.id] = prevReady[idx];
       });
       newReady = desktops.map(d => idToReady[d.id] || false);
     } else {
-      // Same length → probably reordered: reorder flags by matching IDs
       const idToReady = {};
       prevDesktops.forEach((d, idx) => {
         idToReady[d.id] = prevReady[idx];
@@ -68,7 +68,6 @@ const MissionControlUI = () => {
       newReady = desktops.map(d => idToReady[d.id] || false);
     }
 
-    // Update state and refs once
     setPortalReady(newReady);
     prevDesktopsRef.current = desktops;
     prevPortalReadyRef.current = newReady;
@@ -147,14 +146,24 @@ const MissionControlUI = () => {
     }
   }, [isFading]);
 
-  // 7) Open overview
+  // 7) Open overview with initial wallpaper placeholder + delay
   const openOverview = useCallback(() => {
     setPrevIndex(activeIndex);
     setBarExpanded(false);
-    editStateValue('desktop', 'iconVisible', 'false');
-    editStateValue('desktop', 'menubarVisible', 'false');
-    editStateValue('missionControl', 'opened', 'true');
-    setIsFading(true);
+
+    // 1) immediately render wallpaper at opacity:0
+    setShowWallpaperPlaceholder(true);
+
+    // 2) after 200ms, perform the original hide/fade actions
+    const t = setTimeout(() => {
+      editStateValue('desktop', 'iconVisible', 'false');
+      editStateValue('desktop', 'menubarVisible', 'false');
+      editStateValue('missionControl', 'opened', 'true');
+      setIsFading(true);
+    }, OPEN_DELAY);
+
+    // cleanup if unmounted early
+    return () => clearTimeout(t);
   }, [activeIndex, editStateValue]);
 
   // instant switch desktop
@@ -175,9 +184,13 @@ const MissionControlUI = () => {
   // 8) Exit overview
   const exitOverview = useCallback(
     (restore = true) => {
+      // hide the wallpaper placeholder immediately
+      setShowWallpaperPlaceholder(false);
+
       setOverviewOpen(false);
       setIsFading(false);
       setBarExpanded(false);
+
       if (state.groups.missionControl.opened === 'true') {
         editStateValue('desktop', 'iconVisible', 'true');
         editStateValue('desktop', 'menubarVisible', 'true');
@@ -263,11 +276,12 @@ const MissionControlUI = () => {
         </div>
       )}
 
-      {(isFading || overviewOpen) && (
+      {/* render wallpaper as soon as placeholder is set, then fade when isFading */}
+      {(showWallpaperPlaceholder || isFading || overviewOpen) && (
         <WallpaperPlain className="mc-wallpaper" />
       )}
 
-      {/* Always render MissionBar, which now includes the desktops-wrapper */}
+      {/* Always render MissionManager (formerly MissionBar) */}
       <MissionManager
         desktops={desktops}
         activeIndex={activeIndex}
