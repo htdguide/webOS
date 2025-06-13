@@ -1,0 +1,372 @@
+// src/hooks/useDock/useDock.jsx
+
+import { useContext, useState, useRef, useEffect } from 'react';
+
+export function useDock({
+  AppsContext,
+  DOCK_CONFIG,
+  useDeviceInfo,
+  useStateManager,
+  useLogger,
+}) {
+  // Logger
+  const { log, enabled } = useLogger('Dock');
+
+  // Device info
+  const deviceInfo = useDeviceInfo();
+  const isPortrait = deviceInfo.orientation === 'portrait';
+  if (enabled) log('render', `Device orientation: ${deviceInfo.orientation}`);
+
+  // Dock visibility from state manager
+  const { state } = useStateManager();
+  const isDockVisible =
+    state.groups.dock &&
+    state.groups.dock.dockVisible === 'true';
+  if (enabled) log('config', `Dock visibility: ${isDockVisible}`);
+
+  // Base config + overrides
+  let config = { ...DOCK_CONFIG };
+  if (isPortrait && config.vertical) {
+    if (enabled) log('config', 'Applying portrait vertical overrides');
+    config = { ...config, ...config.vertical };
+  } else if (config.DOCK_POSITION === 'left' && config.left) {
+    if (enabled) log('config', 'Applying left-position overrides');
+    config = { ...config, ...config.left };
+  } else if (config.DOCK_POSITION === 'right' && config.right) {
+    if (enabled) log('config', 'Applying right-position overrides');
+    config = { ...config, ...config.right };
+  }
+
+  const {
+    ICON_SIZE,
+    ICON_MARGIN,
+    ADDITIONAL_MARGIN,
+    DOCK_SPREAD,
+    MAX_SCALE,
+    INITIAL_TRANSITION,
+    NO_TRANSITION,
+    ENABLE_MAGNIFICATION,
+    DOCK_POSITION,
+    DOCK_MARGIN,
+    DOTS_MARGIN_BOTTOM,
+    APP_NAME_TOOLTIP_OFFSET,
+    APP_NAME_BACKGROUND_PADDING,
+    APP_NAME_FONT_SIZE,
+    ICONS_PER_PAGE,
+  } = config;
+
+  if (enabled) {
+    log(
+      'config',
+      `Dock config: POSITION=${DOCK_POSITION}, ICON_SIZE=${ICON_SIZE}, ICON_MARGIN=${ICON_MARGIN}`
+    );
+  }
+
+  // Layout orientation
+  const isVerticalDock = DOCK_POSITION === 'left' || DOCK_POSITION === 'right';
+
+  // Apps context
+  const { apps, openedApps, setOpenedApps } = useContext(AppsContext);
+  const baseDockApps = apps.filter((app) => app.indock);
+  const extraOpenApps = apps.filter(
+    (app) => !app.indock && openedApps.includes(app.id)
+  );
+  const dockApps = [
+    ...baseDockApps.sort((a, b) => a.priority - b.priority),
+    ...extraOpenApps,
+  ];
+  if (enabled) log('render', `Total dock apps: ${dockApps.length}`);
+
+  // Pagination
+  const iconsPerPage = isPortrait ? ICONS_PER_PAGE || 4 : dockApps.length;
+  const paginationEnabled = isPortrait && dockApps.length > iconsPerPage;
+  const totalPages = paginationEnabled
+    ? Math.ceil(dockApps.length / iconsPerPage)
+    : 1;
+  const [currentPage, setCurrentPage] = useState(0);
+
+  useEffect(() => {
+    if (enabled && paginationEnabled) {
+      log(
+        'layout',
+        `Pagination: pages=${totalPages}, currentPage=${currentPage}`
+      );
+    }
+  }, [currentPage, paginationEnabled, totalPages, enabled, log]);
+
+  const appsToRender = paginationEnabled
+    ? dockApps.slice(
+        currentPage * iconsPerPage,
+        (currentPage + 1) * iconsPerPage
+      )
+    : dockApps;
+
+  // Refs
+  const outerRef = useRef(null);
+  const iconsContainerRef = useRef(null);
+  const initialTransitionTimeoutRef = useRef(null);
+
+  // Local state
+  const [scales, setScales] = useState(dockApps.map(() => 1));
+  const [shouldTransition, setShouldTransition] = useState(true);
+  const [hoveredApp, setHoveredApp] = useState(null);
+  const [activeApp, setActiveApp] = useState(null);
+  const [touchStartX, setTouchStartX] = useState(null);
+
+  // Touch handlers
+  const handleTouchStart = (e) => {
+    const x = e.touches[0].clientX;
+    if (enabled) log('userInteraction', `Touch start x=${x}`);
+    setTouchStartX(x);
+  };
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const x2 = e.changedTouches[0].clientX;
+    const delta = x2 - touchStartX;
+    const threshold = 50;
+
+    if (delta < -threshold && currentPage < totalPages - 1) {
+      if (enabled) log('userInteraction', `Swipe left → page ${currentPage + 1}`);
+      setCurrentPage(currentPage + 1);
+    } else if (delta > threshold && currentPage > 0) {
+      if (enabled) log('userInteraction', `Swipe right → page ${currentPage - 1}`);
+      setCurrentPage(currentPage - 1);
+    }
+    setTouchStartX(null);
+
+    if (paginationEnabled) {
+      const reset = [...scales];
+      const start = currentPage * iconsPerPage;
+      for (let i = 0; i < appsToRender.length; i++) {
+        reset[start + i] = 1;
+      }
+      setScales(reset);
+      if (enabled) {
+        log(
+          'layout',
+          `Reset scales after swipe for indices ${start}–${start + appsToRender.length - 1}`
+        );
+      }
+    }
+  };
+
+  // Mouse handlers
+  const handleMouseEnter = () => {
+    if (initialTransitionTimeoutRef.current) {
+      clearTimeout(initialTransitionTimeoutRef.current);
+    }
+    setShouldTransition(true);
+    initialTransitionTimeoutRef.current = setTimeout(() => {
+      setShouldTransition(false);
+      if (enabled) log('layout', 'Initial transition end; disabling transition');
+    }, 300);
+    if (enabled) log('userInteraction', 'Mouse entered dock area');
+  };
+  const handleMouseMove = (e) => {
+    if (!iconsContainerRef.current) return;
+    const rect = iconsContainerRef.current.getBoundingClientRect();
+    const pos = isVerticalDock
+      ? e.clientY - rect.top
+      : e.clientX - rect.left;
+    if (enabled) log('userInteraction', `Mouse move pos=${pos}`);
+
+    if (!ENABLE_MAGNIFICATION) {
+      if (paginationEnabled) {
+        const reset = [...scales];
+        const start = currentPage * iconsPerPage;
+        for (let i = 0; i < appsToRender.length; i++) {
+          reset[start + i] = 1;
+        }
+        setScales(reset);
+        if (enabled) log('layout', 'Magnification off; reset page scales');
+      } else {
+        setScales(dockApps.map(() => 1));
+        if (enabled) log('layout', 'Magnification off; reset all scales');
+      }
+      return;
+    }
+
+    if (paginationEnabled) {
+      const updated = [...scales];
+      const start = currentPage * iconsPerPage;
+      for (let i = 0; i < appsToRender.length; i++) {
+        const center =
+          ICON_MARGIN + ICON_SIZE / 2 + i * (ICON_SIZE + 2 * ICON_MARGIN);
+        const dist = Math.abs(pos - center);
+        const scale =
+          dist > DOCK_SPREAD
+            ? 1
+            : 1 + (MAX_SCALE - 1) * (1 - dist / DOCK_SPREAD);
+        updated[start + i] = scale;
+      }
+      setScales(updated);
+      if (enabled) {
+        log(
+          'layout',
+          `Updated page scales [${updated
+            .slice(start, start + appsToRender.length)
+            .map((s) => s.toFixed(2))
+            .join(', ')}]`
+        );
+      }
+    } else {
+      const updated = dockApps.map((_, idx) => {
+        const center =
+          ICON_MARGIN + ICON_SIZE / 2 + idx * (ICON_SIZE + 2 * ICON_MARGIN);
+        const dist = Math.abs(pos - center);
+        return dist > DOCK_SPREAD
+          ? 1
+          : 1 + (MAX_SCALE - 1) * (1 - dist / DOCK_SPREAD);
+      });
+      setScales(updated);
+      if (enabled) {
+        log('layout', `Updated all scales [${updated.map((s) => s.toFixed(2)).join(', ')}]`);
+      }
+    }
+  };
+  const handleMouseLeave = () => {
+    if (paginationEnabled) {
+      const reset = [...scales];
+      const start = currentPage * iconsPerPage;
+      for (let i = 0; i < appsToRender.length; i++) {
+        reset[start + i] = 1;
+      }
+      setScales(reset);
+      if (enabled) log('layout', `Mouse left; reset page ${currentPage} scales`);
+    } else {
+      setScales(dockApps.map(() => 1));
+      if (enabled) log('layout', 'Mouse left; reset all scales');
+    }
+    setShouldTransition(true);
+    if (initialTransitionTimeoutRef.current) {
+      clearTimeout(initialTransitionTimeoutRef.current);
+    }
+    if (enabled) log('userInteraction', 'Mouse left dock area');
+  };
+
+  // Position & bounds calculators
+  const computeIconPositions = () => {
+    const centers = [];
+    let pos = 0;
+    const visScales = paginationEnabled
+      ? scales.slice(currentPage * iconsPerPage, currentPage * iconsPerPage + appsToRender.length)
+      : scales;
+
+    for (let i = 0; i < appsToRender.length; i++) {
+      const dyn = ICON_MARGIN + (visScales[i] - 1) * ADDITIONAL_MARGIN;
+      if (i === 0) {
+        pos = dyn;
+      } else {
+        const prevDyn = ICON_MARGIN + (visScales[i - 1] - 1) * ADDITIONAL_MARGIN;
+        pos += ICON_SIZE + prevDyn + dyn;
+      }
+      centers.push(pos + ICON_SIZE / 2);
+    }
+
+    const lastDyn = appsToRender.length
+      ? ICON_MARGIN + (visScales[appsToRender.length - 1] - 1) * ADDITIONAL_MARGIN
+      : 0;
+    const containerDimension = appsToRender.length
+      ? centers[centers.length - 1] + ICON_SIZE / 2 + lastDyn
+      : 0;
+
+    if (enabled) {
+      log('layout', `Icon centers=[${centers.join(', ')}], dimension=${containerDimension}`);
+    }
+    return { centers, containerDimension };
+  };
+  const computeBackgroundBounds = () => {
+    if (!appsToRender.length) {
+      if (enabled) log('layout', 'No apps → empty background');
+      return { start: 0, size: 0 };
+    }
+    const { centers } = computeIconPositions();
+    let min = Infinity, max = -Infinity;
+    const visScales = paginationEnabled
+      ? scales.slice(currentPage * iconsPerPage, currentPage * iconsPerPage + appsToRender.length)
+      : scales;
+
+    appsToRender.forEach((_, i) => {
+      const start = centers[i] - (ICON_SIZE / 2) * visScales[i];
+      const end = centers[i] + (ICON_SIZE / 2) * visScales[i];
+      min = Math.min(min, start);
+      max = Math.max(max, end);
+    });
+
+    const size = max - min;
+    if (enabled) log('layout', `Background bounds start=${min}, size=${size}`);
+    return { start: min, size };
+  };
+
+  // App open/focus
+  const openApp = (app) => {
+    setActiveApp(app.id);
+    if (enabled) log('userInteraction', `Opening/focusing app: ${app.id}`);
+    if (app.link) {
+      window.open(app.link, '_blank', 'noopener,noreferrer');
+      if (enabled) log('behavior', `Opened external link: ${app.id}`);
+    } else {
+      setOpenedApps((prev) => {
+        if (!prev.includes(app.id)) {
+          if (enabled) log('behavior', `Adding to openedApps: ${app.id}`);
+          return [...prev, app.id];
+        } else {
+          if (enabled) log('behavior', `Focusing already-open: ${app.id}`);
+          return prev;
+        }
+      });
+    }
+  };
+
+  // Icon hover
+  const handleIconMouseEnter = (appId) => {
+    setHoveredApp(appId);
+  };
+  const handleIconMouseLeave = () => {
+    setHoveredApp(null);
+  };
+
+  // Final computed
+  const { containerDimension } = computeIconPositions();
+  const { start: bgStart, size: bgSize } = computeBackgroundBounds();
+
+  return {
+    outerRef,
+    iconsContainerRef,
+    isDockVisible,
+    paginationEnabled,
+    isVerticalDock,
+    appsToRender,
+    scales,
+    shouldTransition,
+    hoveredApp,
+    activeApp,
+    openedApps,
+    currentPage,
+    totalPages,
+    iconsPerPage,
+    containerDimension,
+    bgStart,
+    bgSize,
+    DOCK_POSITION,
+    DOCK_MARGIN,
+    DOTS_MARGIN_BOTTOM,
+    APP_NAME_TOOLTIP_OFFSET,
+    APP_NAME_BACKGROUND_PADDING,
+    APP_NAME_FONT_SIZE,
+    ICON_SIZE,
+    ICON_MARGIN,
+    ADDITIONAL_MARGIN,
+    INITIAL_TRANSITION,
+    NO_TRANSITION,
+    handleTouchStart,
+    handleTouchEnd,
+    handleMouseEnter,
+    handleMouseMove,
+    handleMouseLeave,
+    openApp,
+    handleIconMouseEnter,
+    handleIconMouseLeave,
+    setCurrentPage,
+  };
+}

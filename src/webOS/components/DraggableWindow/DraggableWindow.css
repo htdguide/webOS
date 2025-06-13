@@ -49,31 +49,55 @@
   gap: 10px;
 }
 
+/* Base styles for both buttons */
 .close-button,
 .resize-button {
-  width: 12px;
-  height: 12px;
+  position: relative;      /* for the ::before pseudo */
+  margin-top: 3px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
   border: 1px !important;
   padding: 0;
   margin-left: -2px;
   line-height: 0;
   appearance: none;
-  position: relative;
-  top: -5px;
   cursor: default;
+  background: transparent; /* background comes from focused/unfocused rules below */
+}
+
+/* decorative duplicate behind each button */
+.close-button::before,
+.resize-button::before {
+  content: '';
+  position: absolute;
+  top: -0.5px;    /* 1px above */
+  left: -0.5px;   /* 1px left */
+  width: calc(100% + 1px);
+  height: calc(100% + 1px);
+  border-radius: 50%;
+  pointer-events: none;  /* unclickable */
+  z-index: -1;           /* behind the real button */
+}
+
+/* darker “shadow” colors for each pseudo-element -30 for all rgb colors comparing originals*/
+.close-button::before {
+  background: rgb(225, 65, 60);
+}
+.resize-button::before {
+  background: rgb(50, 170, 35);
 }
 
 /* Buttons coloring */
 .draggable-window.focused .close-button {
-  background: rgb(235, 105, 85);
+  background: rgb(255, 95, 90);
   border-color: rgb(0, 0, 0);
 }
 .draggable-window.focused .close-button:hover {
   background: #bf4943;
 }
 .draggable-window.focused .resize-button {
-  background: rgb(95, 195, 85);
+  background: rgb(80, 200, 65);
 }
 .draggable-window.focused .resize-button:hover {
   background: #49bf43;
@@ -238,7 +262,7 @@
   cursor: ew-resize;
 }
 
-/* Fullscreen state: only this toggles */
+/* Fullscreen state */
 .draggable-window.fullscreen {
   position: flex;
   border-radius: 0;
@@ -250,7 +274,6 @@
   margin: 0;
   transform: none !important;
 
-  /* standard ease-out: fast start, slow finish */
   transition:
     left 0.4s cubic-bezier(0.215, 0.61, 0.355, 1),
     top 0.4s cubic-bezier(0.215, 0.61, 0.355, 1),
