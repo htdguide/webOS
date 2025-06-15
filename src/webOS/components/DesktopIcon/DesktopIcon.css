@@ -1,3 +1,5 @@
+/* src/components/DesktopIcon/DesktopIcon.css */
+
 /*************************************************************
  * Container for the entire desktop icon
  *************************************************************/
@@ -11,6 +13,8 @@
   user-select: none;
   z-index: 5;
   transition: left 0.2s, top 0.2s, box-shadow 0.2s, opacity 0.5s;
+
+  /* --icon-width and --icon-height are set inline by DesktopIcon.jsx */
 }
 
 /* Slight transparency only while dragging, not when selected. */
@@ -30,21 +34,21 @@
  *************************************************************/
 .icon-frame {
   position: relative;
-  width: 45px;
-  height: 45px;
+  width: calc(var(--icon-width) - 19px);
+  height: calc(var(--icon-height) - 19px);
   margin-bottom: 8px;
 }
 
 /* 
   The highlight behind the icon. 
-  It's 50×50, absolutely positioned.
+  Uses CSS calc() based on icon dimensions.
 */
 .icon-highlight {
   position: absolute;
   top: -4.5px;
   left: -4.5px;
-  width: 50px;
-  height: 50px;
+  width: calc(var(--icon-width) - 14px);
+  height: calc(var(--icon-height) - 14px);
   background-color: rgba(0, 0, 0, 0.4); 
   border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 5px;
@@ -58,12 +62,12 @@
 }
 
 /* 
-  The icon image, pinned to 45×45.
+  The icon image, sized based on icon dimensions.
 */
 .icon-image {
   position: relative;
-  width: 45px;
-  height: 45px;
+  width: calc(var(--icon-width) - 19px);
+  height: calc(var(--icon-height) - 19px);
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;

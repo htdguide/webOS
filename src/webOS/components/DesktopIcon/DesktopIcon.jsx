@@ -15,9 +15,8 @@ import {
   ICON_HEIGHT
 } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 
-// Use the new StateManager hook instead of the old UIStateStorage.
 import { useStateManager } from '../../stores/StateManager/StateManager';
-import { useLogger } from '../Logger/Logger.jsx'; // <-- Import the logger
+import { useLogger } from '../Logger/Logger.jsx';
 
 function DesktopIcon({
   name,
@@ -28,13 +27,9 @@ function DesktopIcon({
   position: controlledPosition,
   onPositionChange
 }) {
-  // Initialize logger for this component
+  const iconRef = useRef(null);
   const { log, enabled } = useLogger('DesktopIcon');
 
-  const iconRef = useRef(null);
-
-  // Local state for position and dragging.
-  // We'll initialize from the prop and then keep in sync.
   const [position, setPosition] = useState(
     controlledPosition || { x: 100, y: 100 }
   );
@@ -42,7 +37,7 @@ function DesktopIcon({
   const [holdTimer, setHoldTimer] = useState(null);
   const [lastTap, setLastTap] = useState(0);
 
-  // Sync local state whenever parent-controlled position changes
+  // Sync with controlled prop
   useEffect(() => {
     if (
       controlledPosition &&
@@ -51,22 +46,19 @@ function DesktopIcon({
     ) {
       setPosition(controlledPosition);
     }
-  }, [controlledPosition]);
+  }, [controlledPosition, position.x, position.y]);
 
-  // Helper that updates both local state and notifies parent
   const updatePosition = (newPos) => {
     setPosition(newPos);
     if (onPositionChange) onPositionChange(newPos);
   };
 
-  // Get icon visibility from the new StateManager.
+  // Visibility from StateManager
   const { state } = useStateManager();
-  // Assume icon visibility is stored in a group named "desktop" as a string.
-  const iconVisibleStr = state.groups.desktop && state.groups.desktop.iconVisible;
-  // Only if the value is exactly "false", we consider icons hidden.
+  const iconVisibleStr =
+    state.groups.desktop && state.groups.desktop.iconVisible;
   const isIconVisible = iconVisibleStr === 'false' ? false : true;
 
-  // Log rendering with the current position
   if (enabled) {
     log(
       'render',
@@ -140,7 +132,6 @@ function DesktopIcon({
     );
   };
 
-  // Wrappers to log single- and double-click/tap events
   const wrapperOnClick = () => {
     if (enabled) {
       log('userInteraction', `Icon single-clicked/tapped: "${name}"`);
@@ -155,9 +146,10 @@ function DesktopIcon({
     onDoubleClick();
   };
 
-  // The style ensures the icon is placed using absolute coordinates
-  // relative to its parent container (the desktop div).
+  // Inject CSS variables for width/height so CSS can calc remap
   const iconStyle = {
+    '--icon-width': `${ICON_WIDTH}px`,
+    '--icon-height': `${ICON_HEIGHT}px`,
     width: ICON_WIDTH,
     height: ICON_HEIGHT,
     left: position.x,
