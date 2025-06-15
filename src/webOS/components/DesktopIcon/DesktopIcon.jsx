@@ -13,10 +13,6 @@ import {
 import { useStateManager } from '../../stores/StateManager/StateManager';
 import { useLogger } from '../Logger/Logger.jsx';
 import {
-  TOP_MARGIN,
-  LEFT_MARGIN,
-  RIGHT_MARGIN,
-  BOTTOM_MARGIN,
   HOLD_THRESHOLD,
   DOUBLE_TAP_DELAY
 } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
@@ -37,17 +33,23 @@ function DesktopIcon({
 }) {
   const iconRef = useRef(null);
   const { log, enabled } = useLogger('DesktopIcon');
-
-  // dynamic config from state manager
   const { state } = useStateManager();
   const desktopCfg = state.groups.desktop;
-  const gridGap = parseInt(desktopCfg.gridGap, 10) || 30;
-  const iconWidth = parseInt(desktopCfg.iconWidth, 10) || 64;
-  const iconHeight = parseInt(desktopCfg.iconHeight, 10) || 64;
-  const gridSize = iconHeight;
+
+  // grid & icon sizing
+  const gridGap    = parseInt(desktopCfg.gridGap,      10) || 30;
+  const iconWidth  = parseInt(desktopCfg.iconWidth,    10) || 64;
+  const iconHeight = parseInt(desktopCfg.iconHeight,   10) || 64;
+  const gridSize   = iconHeight;
+
+  // NEW: margins from state
+  const topMargin    = parseInt(desktopCfg.topMargin,    10) || 40;
+  const leftMargin   = parseInt(desktopCfg.leftMargin,   10) || 20;
+  const rightMargin  = parseInt(desktopCfg.rightMargin,  10) || 20;
+  const bottomMargin = parseInt(desktopCfg.bottomMargin, 10) || 100;
 
   const [position, setPosition] = useState(
-    controlledPosition || { x: 100, y: 100 }
+    controlledPosition || { x: leftMargin, y: topMargin }
   );
   const [isDragging, setIsDragging] = useState(false);
   const [holdTimer, setHoldTimer] = useState(null);
@@ -69,15 +71,11 @@ function DesktopIcon({
     if (onPositionChange) onPositionChange(newPos);
   };
 
-  const iconVisibleStr =
-    state.groups.desktop && state.groups.desktop.iconVisible;
+  const iconVisibleStr = desktopCfg.iconVisible;
   const isIconVisible = iconVisibleStr === 'false' ? false : true;
 
   if (enabled) {
-    log(
-      'render',
-      `Rendering icon "${name}" at x=${position.x},y=${position.y}`
-    );
+    log('render', `Rendering icon "${name}" at x=${position.x},y=${position.y}`);
   }
 
   const handleMouseDown = (e) => {
@@ -112,7 +110,14 @@ function DesktopIcon({
           iconRef,
           updatePosition,
           setIsDragging,
-          { TOP_MARGIN, LEFT_MARGIN, RIGHT_MARGIN, BOTTOM_MARGIN, gridGap, gridSize }
+          {
+            TOP_MARGIN: topMargin,
+            LEFT_MARGIN: leftMargin,
+            RIGHT_MARGIN: rightMargin,
+            BOTTOM_MARGIN: bottomMargin,
+            gridGap,
+            gridSize
+          }
         );
       },
       HOLD_THRESHOLD
@@ -155,7 +160,14 @@ function DesktopIcon({
           iconRef,
           updatePosition,
           setIsDragging,
-          { TOP_MARGIN, LEFT_MARGIN, RIGHT_MARGIN, BOTTOM_MARGIN, gridGap, gridSize }
+          {
+            TOP_MARGIN: topMargin,
+            LEFT_MARGIN: leftMargin,
+            RIGHT_MARGIN: rightMargin,
+            BOTTOM_MARGIN: bottomMargin,
+            gridGap,
+            gridSize
+          }
         );
       },
       HOLD_THRESHOLD

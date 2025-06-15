@@ -1,4 +1,3 @@
-
 {
   "welcomeWrap": {
     "welcomeEnabled": "true"
@@ -15,7 +14,11 @@
     "menubarVisible": "true",
     "gridGap": "30",
     "iconWidth": "64",
-    "iconHeight": "64"
+    "iconHeight": "64",
+    "topMargin": "40",
+    "leftMargin": "20",
+    "rightMargin": "20",
+    "bottomMargin": "100"
   },
   "terminalSettings": {
     "fontSize": "12px",

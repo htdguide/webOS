@@ -4,30 +4,30 @@ import React, { useState, useContext, useEffect, useRef } from 'react';
 import { AppsContext } from '../../contexts/AppsContext/AppsContext.jsx';
 import DesktopIcon from '../DesktopIcon/DesktopIcon.jsx';
 import { useStateManager } from '../../stores/StateManager/StateManager';
-import {
-  TOP_MARGIN,
-  LEFT_MARGIN,
-  RIGHT_MARGIN,
-  BOTTOM_MARGIN,
-  HOLD_THRESHOLD  // still imported but unused for groups
-} from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
+import { useLogger } from '../Logger/Logger.jsx';
 import './IconGrid.css';
 import { FocusWrapper } from '../../contexts/FocusControl/FocusControl.jsx';
-import { useLogger } from '../Logger/Logger.jsx';
 
 function IconGrid({ onOpenApp }) {
   const { apps } = useContext(AppsContext);
   const { log, enabled } = useLogger('IconGrid');
   const desktopApps = apps.filter((cfg) => !cfg.indock);
 
-  // dynamic config
   const { state } = useStateManager();
   const desktopCfg = state.groups.desktop;
-  const gridGap = parseInt(desktopCfg.gridGap, 10) || 30;
-  const iconWidth = parseInt(desktopCfg.iconWidth, 10) || 64;
+
+  // sizing & grid
+  const gridGap    = parseInt(desktopCfg.gridGap,    10) || 30;
+  const iconWidth  = parseInt(desktopCfg.iconWidth,  10) || 64;
   const iconHeight = parseInt(desktopCfg.iconHeight, 10) || 64;
-  const gridSize = iconHeight;
-  const cellSize = gridSize + gridGap;
+  const gridSize   = iconHeight;
+  const cellSize   = gridSize + gridGap;
+
+  // NEW: margins from state
+  const topMargin    = parseInt(desktopCfg.topMargin,    10) || 40;
+  const leftMargin   = parseInt(desktopCfg.leftMargin,   10) || 20;
+  const rightMargin  = parseInt(desktopCfg.rightMargin,  10) || 20;
+  const bottomMargin = parseInt(desktopCfg.bottomMargin, 10) || 100;
 
   // keep each icon’s grid coords
   const primaryGridRef = useRef(
@@ -43,8 +43,8 @@ function IconGrid({ onOpenApp }) {
     const p = {};
     for (const [id, { col, row }] of Object.entries(primaryGridRef.current)) {
       p[id] = {
-        x: LEFT_MARGIN + col * cellSize,
-        y: TOP_MARGIN  + row * cellSize
+        x: leftMargin + col * cellSize,
+        y: topMargin  + row * cellSize
       };
     }
     return p;
@@ -130,14 +130,14 @@ function IconGrid({ onOpenApp }) {
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  // ── Single-icon drag → snaps grid coords ─────────────────────────
+  // ── Single‐icon drag → snaps grid coords ─────────────────────────
   const handlePositionChange = (id, pos) => {
-    const col = Math.round((pos.x - LEFT_MARGIN) / cellSize);
-    const row = Math.round((pos.y - TOP_MARGIN)  / cellSize);
+    const col = Math.round((pos.x - leftMargin) / cellSize);
+    const row = Math.round((pos.y - topMargin)  / cellSize);
     primaryGridRef.current[id] = { col, row };
     const newPos = {
-      x: LEFT_MARGIN + col * cellSize,
-      y: TOP_MARGIN  + row * cellSize
+      x: leftMargin + col * cellSize,
+      y: topMargin  + row * cellSize
     };
     setIconPositions((prev) => ({ ...prev, [id]: newPos }));
   };
@@ -158,8 +158,8 @@ function IconGrid({ onOpenApp }) {
 
     // container bounds
     const { width, height } = containerRef.current.getBoundingClientRect();
-    const maxX = width  - RIGHT_MARGIN  - gridSize;
-    const maxY = height - BOTTOM_MARGIN - gridSize;
+    const maxX = width  - rightMargin  - gridSize;
+    const maxY = height - bottomMargin - gridSize;
 
     // drag handler
     const handleMove = (mv) => {
@@ -171,8 +171,8 @@ function IconGrid({ onOpenApp }) {
       selectedIcons.forEach((sid) => {
         const orig = groupOriginalPositionsRef.current[sid];
         let nx = orig.x + dx, ny = orig.y + dy;
-        nx = Math.max(LEFT_MARGIN, Math.min(maxX, nx));
-        ny = Math.max(TOP_MARGIN,  Math.min(maxY, ny));
+        nx = Math.max(leftMargin, Math.min(maxX, nx));
+        ny = Math.max(topMargin,  Math.min(maxY, ny));
         const el = document.getElementById(`desktop-icon-${sid}`);
         if (el) {
           el.style.transition = 'none';
@@ -202,14 +202,18 @@ function IconGrid({ onOpenApp }) {
         const orig = groupOriginalPositionsRef.current[sid];
         const movedX = orig.x + dx;
         const movedY = orig.y + dy;
-        // compute grid cell
-        const col = Math.round((movedX - LEFT_MARGIN) / cellSize);
-        const row = Math.round((movedY - TOP_MARGIN)  / cellSize);
-        // clamp into bounds
-        const maxCols = Math.floor((containerRef.current.clientWidth  - LEFT_MARGIN - RIGHT_MARGIN)  / cellSize);
-        const maxRows = Math.floor((containerRef.current.clientHeight - TOP_MARGIN  - BOTTOM_MARGIN) / cellSize);
-        const fx = LEFT_MARGIN + Math.max(0, Math.min(col, maxCols)) * cellSize;
-        const fy = TOP_MARGIN  + Math.max(0, Math.min(row, maxRows)) * cellSize;
+        const col = Math.round((movedX - leftMargin) / cellSize);
+        const row = Math.round((movedY - topMargin)  / cellSize);
+
+        const maxCols = Math.floor(
+          (containerRef.current.clientWidth  - leftMargin - rightMargin)  / cellSize
+        );
+        const maxRows = Math.floor(
+          (containerRef.current.clientHeight - topMargin  - bottomMargin) / cellSize
+        );
+
+        const fx = leftMargin + Math.max(0, Math.min(col, maxCols)) * cellSize;
+        const fy = topMargin  + Math.max(0, Math.min(row, maxRows)) * cellSize;
 
         const el = document.getElementById(`desktop-icon-${sid}`);
         if (el) {
@@ -221,8 +225,8 @@ function IconGrid({ onOpenApp }) {
           const onTrans = () => {
             el.removeEventListener('transitionend', onTrans);
             primaryGridRef.current[sid] = {
-              col: Math.round((fx - LEFT_MARGIN) / cellSize),
-              row: Math.round((fy - TOP_MARGIN)  / cellSize)
+              col: Math.round((fx - leftMargin) / cellSize),
+              row: Math.round((fy - topMargin)  / cellSize)
             };
             setIconPositions((prev) => ({
               ...prev,
@@ -234,14 +238,13 @@ function IconGrid({ onOpenApp }) {
       });
     };
 
-    // start dragging right away
     window.addEventListener('mousemove',    handleMove);
     window.addEventListener('mouseup',      handleEnd);
     window.addEventListener('touchmove',    handleMove, { passive: false });
     window.addEventListener('touchend',     handleEnd);
   };
 
-  // ── Recompute pixel positions on resize ───────────────────────────
+  // ── Recompute on resize ───────────────────────────────────────────
   useEffect(() => {
     const handleResize = () => {
       setIconPositions(computePositions());
@@ -249,7 +252,7 @@ function IconGrid({ onOpenApp }) {
     window.addEventListener('resize', handleResize);
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
-  }, [gridGap, gridSize]);
+  }, [gridGap, gridSize, topMargin, leftMargin]);
 
   if (enabled) log('render', `Rendering ${desktopApps.length} icons`);
 
