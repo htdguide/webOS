@@ -1,8 +1,8 @@
 // src/components/IconGrid/IconGrid.jsx
 
-import React, { useState, useContext, useEffect, useRef } from "react";
-import { AppsContext } from "../../contexts/AppsContext/AppsContext.jsx";
-import DesktopIcon from "../DesktopIcon/DesktopIcon.jsx";
+import React, { useState, useContext, useEffect, useRef } from 'react';
+import { AppsContext } from '../../contexts/AppsContext/AppsContext.jsx';
+import DesktopIcon from '../DesktopIcon/DesktopIcon.jsx';
 import {
   GRID_GAP,
   TOP_MARGIN,
@@ -13,12 +13,12 @@ import {
   ICON_WIDTH,
   ICON_HEIGHT,
   HOLD_THRESHOLD
-} from "../../configs/DesktopIconConfig/DesktopIconConfig.jsx";
-import "./IconGrid.css";
-import { FocusWrapper } from "../../contexts/FocusControl/FocusControl.jsx";
-import { useLogger } from "../Logger/Logger.jsx";
+} from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
+import './IconGrid.css';
+import { FocusWrapper } from '../../contexts/FocusControl/FocusControl.jsx';
+import { useLogger } from '../Logger/Logger.jsx';
 
-/** Compute (x,y) from priority */
+/** Compute default (x,y) from priority */
 function getPositionFromPriority(priority) {
   const safe = priority > 0 ? priority : 1;
   const cell = GRID_SIZE + GRID_GAP;
@@ -30,12 +30,10 @@ function getPositionFromPriority(priority) {
 
 function IconGrid({ onOpenApp }) {
   const { apps } = useContext(AppsContext);
-  const { log, enabled } = useLogger("IconGrid");
-
-  // Only desktop apps
+  const { log, enabled } = useLogger('IconGrid');
   const desktopApps = apps.filter((cfg) => !cfg.indock);
 
-  // Primary positions (only updated by drag)
+  // 1) Primary positions (only updated by drag)
   const primaryPositionsRef = useRef(
     desktopApps.reduce((map, cfg) => {
       map[cfg.id] = getPositionFromPriority(cfg.priority);
@@ -43,7 +41,7 @@ function IconGrid({ onOpenApp }) {
     }, {})
   );
 
-  // Actual rendered positions
+  // 2) Rendered positions
   const [iconPositions, setIconPositions] = useState(
     primaryPositionsRef.current
   );
@@ -52,40 +50,41 @@ function IconGrid({ onOpenApp }) {
     iconPositionsRef.current = iconPositions;
   }, [iconPositions]);
 
-  // Which icons are selected
+  // 3) Selection state
   const [selectedIcons, setSelectedIcons] = useState([]);
-  // Prevent the *very next* background-click from clearing selection
   const suppressNextClickRef = useRef(false);
-  // Prevent the *next* single-icon click after a group drag
   const [suppressIconClick, setSuppressIconClick] = useState(false);
 
-  // Rectangle during drag-select
+  // 4) Drag‐select box
   const [selectionBox, setSelectionBox] = useState(null);
 
-  // For group-drag snapshots
+  // 5) Group‐drag helpers
   const groupOriginalPositionsRef = useRef({});
   const groupHoldTimerRef = useRef(null);
 
   const containerRef = useRef(null);
 
   const handleWallpaperClick = () => {
-    if (enabled) log("userInteraction", "Wallpaper clicked → deselect all");
+    if (enabled) log('userInteraction', 'Wallpaper clicked → deselect all');
     setSelectedIcons([]);
   };
+
   const handleIconClick = (id) => {
-    if (enabled) log("userInteraction", `Icon clicked → select ${id}`);
+    if (enabled) log('userInteraction', `Icon clicked → select ${id}`);
     setSelectedIcons([id]);
   };
+
   const handleIconDoubleClick = (id) => {
-    if (enabled) log("userInteraction", `Icon dbl-click → open ${id}`);
+    if (enabled) log('userInteraction', `Icon dbl-click → open ${id}`);
     onOpenApp(id);
   };
 
   // ───────────────────────────────────────────────────────────────────────
-  // Draw translucent box, then on mouseup pick all overlapping icons
+  // Draw translucent selection box, then on mouse‐up pick all overlapping icons
   // ───────────────────────────────────────────────────────────────────────
   const handleSelectionMouseDown = (e) => {
-    if (e.button !== 0) return;
+    if (e.button !== 0) return; // left button only
+
     const startX = e.clientX;
     const startY = e.clientY;
     setSelectionBox({ x: startX, y: startY, width: 0, height: 0 });
@@ -102,8 +101,8 @@ function IconGrid({ onOpenApp }) {
     };
 
     const handleMouseUp = (up) => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
 
       const endX = up.clientX;
       const endY = up.clientY;
@@ -112,7 +111,7 @@ function IconGrid({ onOpenApp }) {
       const rectW = Math.abs(endX - startX);
       const rectH = Math.abs(endY - startY);
 
-      // Pixel-based hit-test
+      // Pixel‐based hit test
       const hits = desktopApps
         .filter((cfg) => {
           const pos = iconPositionsRef.current[cfg.id];
@@ -125,21 +124,20 @@ function IconGrid({ onOpenApp }) {
         })
         .map((cfg) => cfg.id);
 
-      if (enabled)
-        log("userInteraction", `Selected icons: [${hits.join(", ")}]`);
+      if (enabled) log('userInteraction', `Selected icons: [${hits.join(', ')}]`);
       setSelectedIcons(hits);
       setSelectionBox(null);
 
-      // don’t immediately clear them
+      // Prevent this mouse‐up from immediately deselecting
       suppressNextClickRef.current = true;
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
   };
 
   // ───────────────────────────────────────────────────────────────────────
-  // Hold on any selected icon → group-drag all of them
+  // Hold on any selected icon → group‐drag all of them
   // ───────────────────────────────────────────────────────────────────────
   const handleGroupMouseDown = (e, id) => {
     if (selectedIcons.length <= 1) return;
@@ -148,7 +146,7 @@ function IconGrid({ onOpenApp }) {
     const startX = e.clientX;
     const startY = e.clientY;
 
-    // snapshot
+    // Snapshot originals
     groupOriginalPositionsRef.current = {};
     selectedIcons.forEach((sid) => {
       groupOriginalPositionsRef.current[sid] = {
@@ -156,34 +154,30 @@ function IconGrid({ onOpenApp }) {
       };
     });
 
-    // cancel if user moves/up too early
+    // Cancel if moved/up too early
     if (groupHoldTimerRef.current) clearTimeout(groupHoldTimerRef.current);
     const cancelHold = () => {
       clearTimeout(groupHoldTimerRef.current);
-      window.removeEventListener("mousemove", cancelHold);
-      window.removeEventListener("mouseup", cancelHold);
+      window.removeEventListener('mousemove', cancelHold);
+      window.removeEventListener('mouseup', cancelHold);
     };
-    window.addEventListener("mousemove", cancelHold);
-    window.addEventListener("mouseup", cancelHold);
+    window.addEventListener('mousemove', cancelHold);
+    window.addEventListener('mouseup', cancelHold);
 
+    // Start hold timer
     groupHoldTimerRef.current = setTimeout(() => {
-      window.removeEventListener("mousemove", cancelHold);
-      window.removeEventListener("mouseup", cancelHold);
+      window.removeEventListener('mousemove', cancelHold);
+      window.removeEventListener('mouseup', cancelHold);
 
-      const { width, height } =
-        containerRef.current.getBoundingClientRect();
+      const { width, height } = containerRef.current.getBoundingClientRect();
       const cell = GRID_SIZE + GRID_GAP;
       const maxX = width - RIGHT_MARGIN - GRID_SIZE;
       const maxY = height - BOTTOM_MARGIN - GRID_SIZE;
 
       const handleMove = (mv) => {
         mv.preventDefault();
-        const cx = mv.touches
-          ? mv.touches[0].clientX
-          : mv.clientX;
-        const cy = mv.touches
-          ? mv.touches[0].clientY
-          : mv.clientY;
+        const cx = mv.touches ? mv.touches[0].clientX : mv.clientX;
+        const cy = mv.touches ? mv.touches[0].clientY : mv.clientY;
         const dx = cx - startX;
         const dy = cy - startY;
 
@@ -195,7 +189,7 @@ function IconGrid({ onOpenApp }) {
           ny = Math.max(TOP_MARGIN, Math.min(maxY, ny));
           const el = document.getElementById(`desktop-icon-${sid}`);
           if (el) {
-            el.style.transition = "none";
+            el.style.transition = 'none';
             el.style.left = `${nx}px`;
             el.style.top = `${ny}px`;
           }
@@ -203,13 +197,13 @@ function IconGrid({ onOpenApp }) {
       };
 
       const handleEnd = (upEvt) => {
-        // prevent that stray click from resetting selection
+        // Keep the whole group selected afterwards
         setSuppressIconClick(true);
 
-        window.removeEventListener("mousemove", handleMove);
-        window.removeEventListener("mouseup", handleEnd);
-        window.removeEventListener("touchmove", handleMove);
-        window.removeEventListener("touchend", handleEnd);
+        window.removeEventListener('mousemove', handleMove);
+        window.removeEventListener('mouseup', handleEnd);
+        window.removeEventListener('touchmove', handleMove);
+        window.removeEventListener('touchend', handleEnd);
 
         const cx = upEvt.changedTouches
           ? upEvt.changedTouches[0].clientX
@@ -219,6 +213,7 @@ function IconGrid({ onOpenApp }) {
           : upEvt.clientY;
         const dx = cx - startX;
         const dy = cy - startY;
+        const cellSize = GRID_SIZE + GRID_GAP;
 
         selectedIcons.forEach((sid) => {
           const orig = groupOriginalPositionsRef.current[sid];
@@ -226,54 +221,119 @@ function IconGrid({ onOpenApp }) {
           const movedY = orig.y + dy;
           const snappedX =
             LEFT_MARGIN +
-            Math.round((movedX - LEFT_MARGIN) / cell) * cell;
+            Math.round((movedX - LEFT_MARGIN) / cellSize) * cellSize;
           const snappedY =
             TOP_MARGIN +
-            Math.round((movedY - TOP_MARGIN) / cell) * cell;
+            Math.round((movedY - TOP_MARGIN) / cellSize) * cellSize;
           const fx = Math.max(LEFT_MARGIN, Math.min(maxX, snappedX));
-          const fy =
-            Math.max(TOP_MARGIN, Math.min(maxY, snappedY));
+          const fy = Math.max(TOP_MARGIN, Math.min(maxY, snappedY));
 
           const el = document.getElementById(`desktop-icon-${sid}`);
           if (el) {
-            el.style.transition = "left 0.2s ease, top 0.2s ease";
+            el.style.transition = 'left 0.2s ease, top 0.2s ease';
             el.offsetWidth; // force reflow
             el.style.left = `${fx}px`;
             el.style.top = `${fy}px`;
-
             const onTrans = () => {
-              el.removeEventListener("transitionend", onTrans);
+              el.removeEventListener('transitionend', onTrans);
               primaryPositionsRef.current[sid] = { x: fx, y: fy };
               setIconPositions((prev) => ({
                 ...prev,
                 [sid]: { x: fx, y: fy }
               }));
             };
-            el.addEventListener("transitionend", onTrans);
+            el.addEventListener('transitionend', onTrans);
           }
         });
       };
 
-      window.addEventListener("mousemove", handleMove);
-      window.addEventListener("mouseup", handleEnd);
-      window.addEventListener("touchmove", handleMove, {
-        passive: false
-      });
-      window.addEventListener("touchend", handleEnd);
+      window.addEventListener('mousemove', handleMove);
+      window.addEventListener('mouseup', handleEnd);
+      window.addEventListener('touchmove', handleMove, { passive: false });
+      window.addEventListener('touchend', handleEnd);
     }, HOLD_THRESHOLD);
   };
 
-  // your existing resize logic here…
+  // ───────────────────────────────────────────────────────────────────────
+  // Auto-rearrange on resize (restores icons into visible grid cells)
+  // ───────────────────────────────────────────────────────────────────────
   useEffect(() => {
     const handleResize = () => {
-      /* … */
-    };
-    window.addEventListener("resize", handleResize);
-    handleResize();
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+      const container = containerRef.current;
+      if (!container) return;
+      const { width, height } = container.getBoundingClientRect();
+      const cell = GRID_SIZE + GRID_GAP;
 
-  if (enabled) log("render", `Rendering ${desktopApps.length} icons`);
+      const cols = Math.max(
+        1,
+        Math.floor((width - LEFT_MARGIN - RIGHT_MARGIN + GRID_GAP) / cell)
+      );
+      const rows = Math.max(
+        1,
+        Math.floor((height - TOP_MARGIN - BOTTOM_MARGIN + GRID_GAP) / cell)
+      );
+
+      const occupied = new Set();
+      const newPositions = {};
+
+      // A) Keep primaries in-view
+      desktopApps.forEach((cfg) => {
+        const id = cfg.id;
+        const prim = primaryPositionsRef.current[id];
+        const c0 = Math.round((prim.x - LEFT_MARGIN) / cell);
+        const r0 = Math.round((prim.y - TOP_MARGIN) / cell);
+        if (r0 >= 0 && r0 < rows && c0 >= 0 && c0 < cols) {
+          const key = `${r0},${c0}`;
+          if (!occupied.has(key)) {
+            occupied.add(key);
+            newPositions[id] = { x: prim.x, y: prim.y };
+          }
+        }
+      });
+
+      // B) Slot off-screen onto first free cell
+      desktopApps.forEach((cfg) => {
+        const id = cfg.id;
+        if (newPositions[id]) return;
+        const prim = primaryPositionsRef.current[id];
+        const c = Math.round((prim.x - LEFT_MARGIN) / cell);
+        const r = Math.round((prim.y - TOP_MARGIN) / cell);
+        const offScreen = r < 0 || r >= rows || c < 0 || c >= cols;
+        if (offScreen) {
+          outer: for (let cc = 0; cc < cols; cc++) {
+            for (let rr = 0; rr < rows; rr++) {
+              const key = `${rr},${cc}`;
+              if (!occupied.has(key)) {
+                occupied.add(key);
+                newPositions[id] = {
+                  x: LEFT_MARGIN + cc * cell,
+                  y: TOP_MARGIN + rr * cell
+                };
+                break outer;
+              }
+            }
+          }
+        }
+      });
+
+      // C) Anything else back to its primary
+      desktopApps.forEach((cfg) => {
+        const id = cfg.id;
+        if (!newPositions[id]) {
+          newPositions[id] = { ...primaryPositionsRef.current[id] };
+        }
+      });
+
+      // D) Commit
+      setIconPositions(() => newPositions);
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // on mount
+    return () => window.removeEventListener('resize', handleResize);
+  }, []); // no iconPositions dependency
+
+  if (enabled) log('render', `Rendering ${desktopApps.length} icons`);
 
   return (
     <FocusWrapper name="IconGrid">
@@ -303,13 +363,9 @@ function IconGrid({ onOpenApp }) {
             selectedCount={selectedIcons.length}
             onClick={() => handleIconClick(cfg.id)}
             onDoubleClick={() => handleIconDoubleClick(cfg.id)}
-            onGroupMouseDown={(e) =>
-              handleGroupMouseDown(e, cfg.id)
-            }
+            onGroupMouseDown={(e) => handleGroupMouseDown(e, cfg.id)}
             disableClick={suppressIconClick}
-            clearDisableClick={() =>
-              setSuppressIconClick(false)
-            }
+            clearDisableClick={() => setSuppressIconClick(false)}
             position={iconPositions[cfg.id]}
             onPositionChange={(pos) => {
               primaryPositionsRef.current[cfg.id] = pos;
