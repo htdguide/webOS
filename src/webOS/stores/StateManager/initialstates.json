@@ -1,3 +1,4 @@
+
 {
   "welcomeWrap": {
     "welcomeEnabled": "true"
@@ -11,7 +12,10 @@
   },
   "desktop": {
     "iconVisible": "true",
-    "menubarVisible": "true"
+    "menubarVisible": "true",
+    "gridGap": "30",
+    "iconWidth": "64",
+    "iconHeight": "64"
   },
   "terminalSettings": {
     "fontSize": "12px",

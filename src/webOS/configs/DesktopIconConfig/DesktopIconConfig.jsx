@@ -15,7 +15,7 @@ export const BOTTOM_MARGIN = 100;
 export const GRID_GAP = 30;
 
 // Time thresholds
-export const HOLD_THRESHOLD = 100;
+export const HOLD_THRESHOLD = 50;
 export const DOUBLE_TAP_DELAY = 300;
 
 /**

@@ -12,7 +12,7 @@ function BatteryBarApp() {
       : 0;
 
   const batteryFillStyle = {
-    top: '9.5px',
+    top: '9.3px',
     left: '3px',
     height: '8px',
     width: `${(batteryLevel / 100) * 18.5}px`,

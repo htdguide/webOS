@@ -45,6 +45,6 @@
 .battery-bar-level-indicator {
   position: absolute;
   background-color: #000; /* Ensuring original color is retained */
-  border-radius: 2px;
+  border-radius: 1.5px;
   transition: width 0.3s ease;
 }

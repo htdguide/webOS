@@ -10,13 +10,16 @@ import {
   handleTap
 } from '../../interactions/IconInteractions/IconInteractions.jsx';
 
-import {
-  ICON_WIDTH,
-  ICON_HEIGHT
-} from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
-
 import { useStateManager } from '../../stores/StateManager/StateManager';
 import { useLogger } from '../Logger/Logger.jsx';
+import {
+  TOP_MARGIN,
+  LEFT_MARGIN,
+  RIGHT_MARGIN,
+  BOTTOM_MARGIN,
+  HOLD_THRESHOLD,
+  DOUBLE_TAP_DELAY
+} from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 
 function DesktopIcon({
   id,
@@ -35,6 +38,14 @@ function DesktopIcon({
   const iconRef = useRef(null);
   const { log, enabled } = useLogger('DesktopIcon');
 
+  // dynamic config from state manager
+  const { state } = useStateManager();
+  const desktopCfg = state.groups.desktop;
+  const gridGap = parseInt(desktopCfg.gridGap, 10) || 30;
+  const iconWidth = parseInt(desktopCfg.iconWidth, 10) || 64;
+  const iconHeight = parseInt(desktopCfg.iconHeight, 10) || 64;
+  const gridSize = iconHeight;
+
   const [position, setPosition] = useState(
     controlledPosition || { x: 100, y: 100 }
   );
@@ -42,7 +53,7 @@ function DesktopIcon({
   const [holdTimer, setHoldTimer] = useState(null);
   const [lastTap, setLastTap] = useState(0);
 
-  // Sync with controlled prop
+  // sync controlledPosition
   useEffect(() => {
     if (
       controlledPosition &&
@@ -58,8 +69,6 @@ function DesktopIcon({
     if (onPositionChange) onPositionChange(newPos);
   };
 
-  // Visibility from StateManager
-  const { state } = useStateManager();
   const iconVisibleStr =
     state.groups.desktop && state.groups.desktop.iconVisible;
   const isIconVisible = iconVisibleStr === 'false' ? false : true;
@@ -67,22 +76,20 @@ function DesktopIcon({
   if (enabled) {
     log(
       'render',
-      `Rendering icon "${name}" at position x=${position.x}, y=${position.y}`
+      `Rendering icon "${name}" at x=${position.x},y=${position.y}`
     );
   }
 
   const handleMouseDown = (e) => {
-    // If multi-selected, defer to grid’s group-drag logic
     if (isSelected && selectedCount > 1 && onGroupMouseDown) {
       onGroupMouseDown(e);
       return;
     }
-
     e.preventDefault();
     if (enabled) {
       log(
         'userInteraction',
-        `Mouse down on icon "${name}" at clientX=${e.clientX}, clientY=${e.clientY}`
+        `Mouse down on "${name}" at clientX=${e.clientX},clientY=${e.clientY}`
       );
     }
     startHold(
@@ -94,7 +101,7 @@ function DesktopIcon({
         if (enabled) {
           log(
             'userInteraction',
-            `Start dragging icon "${name}" at x=${x}, y=${y} (offsetX=${offsetX}, offsetY=${offsetY})`
+            `Start dragging "${name}" at x=${x},y=${y}`
           );
         }
         startDragging(
@@ -104,15 +111,16 @@ function DesktopIcon({
           offsetY,
           iconRef,
           updatePosition,
-          setIsDragging
+          setIsDragging,
+          { TOP_MARGIN, LEFT_MARGIN, RIGHT_MARGIN, BOTTOM_MARGIN, gridGap, gridSize }
         );
-      }
+      },
+      HOLD_THRESHOLD
     );
   };
 
   const handleTouchStart = (e) => {
     const touch = e.touches[0];
-    // Multi-select group drag on touch too
     if (isSelected && selectedCount > 1 && onGroupMouseDown) {
       onGroupMouseDown({
         clientX: touch.clientX,
@@ -124,7 +132,7 @@ function DesktopIcon({
     if (enabled) {
       log(
         'userInteraction',
-        `Touch start on icon "${name}" at clientX=${touch.clientX}, clientY=${touch.clientY}`
+        `Touch start on "${name}" at x=${touch.clientX},y=${touch.clientY}`
       );
     }
     startHold(
@@ -136,7 +144,7 @@ function DesktopIcon({
         if (enabled) {
           log(
             'userInteraction',
-            `Start dragging icon "${name}" (touch) at x=${x}, y=${y} (offsetX=${offsetX}, offsetY=${offsetY})`
+            `Start drag (touch) "${name}" at x=${x},y=${y}`
           );
         }
         startDragging(
@@ -146,32 +154,28 @@ function DesktopIcon({
           offsetY,
           iconRef,
           updatePosition,
-          setIsDragging
+          setIsDragging,
+          { TOP_MARGIN, LEFT_MARGIN, RIGHT_MARGIN, BOTTOM_MARGIN, gridGap, gridSize }
         );
-      }
+      },
+      HOLD_THRESHOLD
     );
   };
 
   const wrapperOnClick = () => {
-    if (enabled) {
-      log('userInteraction', `Icon single-clicked/tapped: "${name}"`);
-    }
+    if (enabled) log('userInteraction', `Single-click "${name}"`);
     onClick();
   };
-
   const wrapperOnDoubleClick = () => {
-    if (enabled) {
-      log('userInteraction', `Icon double-clicked/tapped: "${name}"`);
-    }
+    if (enabled) log('userInteraction', `Double-click "${name}"`);
     onDoubleClick();
   };
 
-  // Inject CSS variables for width/height so CSS can calc remap
   const iconStyle = {
-    '--icon-width': `${ICON_WIDTH}px`,
-    '--icon-height': `${ICON_HEIGHT}px`,
-    width: ICON_WIDTH,
-    height: ICON_HEIGHT,
+    '--icon-width': `${iconWidth}px`,
+    '--icon-height': `${iconHeight}px`,
+    width: iconWidth,
+    height: iconHeight,
     left: position.x,
     top: position.y,
     opacity: isIconVisible ? 1 : 0,
@@ -191,37 +195,41 @@ function DesktopIcon({
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       onMouseUp={() => {
-        if (enabled) {
-          log('userInteraction', `Mouse up on icon "${name}"`);
-        }
+        if (enabled) log('userInteraction', `Mouse up "${name}"`);
         cancelHold(holdTimer, setHoldTimer);
       }}
       onTouchEnd={(e) => {
-        if (enabled) {
-          log('userInteraction', `Touch end on icon "${name}"`);
-        }
+        if (enabled) log('userInteraction', `Touch end "${name}"`);
         cancelHold(holdTimer, setHoldTimer);
-        // here we prevent the stray click from re-selecting only one
         if (disableClick) {
           clearDisableClick();
           return;
         }
-        handleTap(lastTap, setLastTap, wrapperOnDoubleClick, wrapperOnClick);
+        handleTap(
+          lastTap,
+          setLastTap,
+          wrapperOnDoubleClick,
+          wrapperOnClick,
+          DOUBLE_TAP_DELAY
+        );
       }}
       onMouseLeave={() => {
-        if (enabled) {
-          log('userInteraction', `Mouse left icon "${name}"`);
-        }
+        if (enabled) log('userInteraction', `Mouse leave "${name}"`);
         cancelHold(holdTimer, setHoldTimer);
       }}
       onClick={(e) => {
         e.stopPropagation();
-        // likewise suppress the next tap
         if (disableClick) {
           clearDisableClick();
           return;
         }
-        handleTap(lastTap, setLastTap, wrapperOnDoubleClick, wrapperOnClick);
+        handleTap(
+          lastTap,
+          setLastTap,
+          wrapperOnDoubleClick,
+          wrapperOnClick,
+          DOUBLE_TAP_DELAY
+        );
       }}
     >
       <div className="icon-frame">
