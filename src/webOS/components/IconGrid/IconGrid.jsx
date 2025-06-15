@@ -1,6 +1,6 @@
 // src/components/IconGrid/IconGrid.jsx
-
 import React, { useState, useContext, useEffect, useRef } from 'react';
+import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowWrap.jsx';
 import { AppsContext } from '../../contexts/AppsContext/AppsContext.jsx';
 import DesktopIcon from '../DesktopIcon/DesktopIcon.jsx';
 import { useStateManager } from '../../stores/StateManager/StateManager';
@@ -9,8 +9,9 @@ import './IconGrid.css';
 import { FocusWrapper } from '../../contexts/FocusControl/FocusControl.jsx';
 
 function IconGrid({ onOpenApp }) {
+  const { wrapId } = useDraggableWindow();
   const { apps } = useContext(AppsContext);
-  const { log, enabled } = useLogger('IconGrid');
+  const { log, enabled } = useLogger(`IconGrid[${wrapId}]`);
   const desktopApps = apps.filter((cfg) => !cfg.indock);
 
   const { state } = useStateManager();
@@ -23,7 +24,7 @@ function IconGrid({ onOpenApp }) {
   const gridSize   = iconHeight;
   const cellSize   = gridSize + gridGap;
 
-  // NEW: margins from state
+  // margins
   const topMargin    = parseInt(desktopCfg.topMargin,    10) || 40;
   const leftMargin   = parseInt(desktopCfg.leftMargin,   10) || 20;
   const rightMargin  = parseInt(desktopCfg.rightMargin,  10) || 20;
@@ -59,13 +60,15 @@ function IconGrid({ onOpenApp }) {
   const suppressNextClickRef = useRef(false);
   const [suppressIconClick, setSuppressIconClick] = useState(false);
 
-  // selection‐box
+  // selection-box
   const [selectionBox, setSelectionBox] = useState(null);
 
-  // group‐drag snapshots
+  // group-drag snapshots
   const groupOriginalPositionsRef = useRef({});
 
   const containerRef = useRef(null);
+
+  // ── Handlers ─────────────────────────────────────────────────────
 
   const handleWallpaperClick = () => {
     if (enabled) log('userInteraction', 'Wallpaper clicked → deselect all');
@@ -82,7 +85,7 @@ function IconGrid({ onOpenApp }) {
     onOpenApp(id);
   };
 
-  // ── Selection‐box logic ────────────────────────────────────────────
+  // selection-box logic
   const handleSelectionMouseDown = (e) => {
     if (e.button !== 0) return;
     const startX = e.clientX, startY = e.clientY;
@@ -130,7 +133,7 @@ function IconGrid({ onOpenApp }) {
     window.addEventListener('mouseup', handleMouseUp);
   };
 
-  // ── Single‐icon drag → snaps grid coords ─────────────────────────
+  // single-icon drag → snaps grid coords
   const handlePositionChange = (id, pos) => {
     const col = Math.round((pos.x - leftMargin) / cellSize);
     const row = Math.round((pos.y - topMargin)  / cellSize);
@@ -142,7 +145,7 @@ function IconGrid({ onOpenApp }) {
     setIconPositions((prev) => ({ ...prev, [id]: newPos }));
   };
 
-  // ── Group‐drag logic → starts immediately for multiple selection ──
+  // group-drag logic → starts immediately for multiple selection
   const handleGroupMouseDown = (e, id) => {
     if (selectedIcons.length <= 1) return;
     e.preventDefault();
@@ -173,7 +176,7 @@ function IconGrid({ onOpenApp }) {
         let nx = orig.x + dx, ny = orig.y + dy;
         nx = Math.max(leftMargin, Math.min(maxX, nx));
         ny = Math.max(topMargin,  Math.min(maxY, ny));
-        const el = document.getElementById(`desktop-icon-${sid}`);
+        const el = document.getElementById(`desktop-icon-${wrapId}-${sid}`);
         if (el) {
           el.style.transition = 'none';
           el.style.left      = `${nx}px`;
@@ -215,7 +218,7 @@ function IconGrid({ onOpenApp }) {
         const fx = leftMargin + Math.max(0, Math.min(col, maxCols)) * cellSize;
         const fy = topMargin  + Math.max(0, Math.min(row, maxRows)) * cellSize;
 
-        const el = document.getElementById(`desktop-icon-${sid}`);
+        const el = document.getElementById(`desktop-icon-${wrapId}-${sid}`);
         if (el) {
           el.style.transition = 'left 0.2s ease, top 0.2s ease';
           void el.offsetWidth;
@@ -252,13 +255,14 @@ function IconGrid({ onOpenApp }) {
     window.addEventListener('resize', handleResize);
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
-  }, [gridGap, gridSize, topMargin, leftMargin]);
+  }, [gridGap, gridSize, topMargin, leftMargin, wrapId]);
 
-  if (enabled) log('render', `Rendering ${desktopApps.length} icons`);
+  if (enabled) log('render', `Rendering ${desktopApps.length} icons in wrap ${wrapId}`);
 
   return (
-    <FocusWrapper name="IconGrid">
+    <FocusWrapper key={wrapId} name={`IconGrid-${wrapId}`}>
       <div
+        id={`icon-grid-container-${wrapId}`}
         ref={containerRef}
         className="desktop-content"
         onClick={(e) => {
@@ -276,7 +280,8 @@ function IconGrid({ onOpenApp }) {
       >
         {desktopApps.map((cfg) => (
           <DesktopIcon
-            key={cfg.id}
+            key={`${wrapId}-${cfg.id}`}
+            wrapId={wrapId}
             id={cfg.id}
             name={cfg.name}
             icon={cfg.icon}

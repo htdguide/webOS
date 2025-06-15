@@ -18,6 +18,7 @@ import {
 } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 
 function DesktopIcon({
+  wrapId,
   id,
   name,
   onDoubleClick,
@@ -32,7 +33,7 @@ function DesktopIcon({
   onPositionChange
 }) {
   const iconRef = useRef(null);
-  const { log, enabled } = useLogger('DesktopIcon');
+  const { log, enabled } = useLogger(`DesktopIcon[${wrapId}]`);
   const { state } = useStateManager();
   const desktopCfg = state.groups.desktop;
 
@@ -42,7 +43,7 @@ function DesktopIcon({
   const iconHeight = parseInt(desktopCfg.iconHeight,   10) || 64;
   const gridSize   = iconHeight;
 
-  // NEW: margins from state
+  // margins
   const topMargin    = parseInt(desktopCfg.topMargin,    10) || 40;
   const leftMargin   = parseInt(desktopCfg.leftMargin,   10) || 20;
   const rightMargin  = parseInt(desktopCfg.rightMargin,  10) || 20;
@@ -71,11 +72,13 @@ function DesktopIcon({
     if (onPositionChange) onPositionChange(newPos);
   };
 
-  const iconVisibleStr = desktopCfg.iconVisible;
-  const isIconVisible = iconVisibleStr === 'false' ? false : true;
+  const isIconVisible = desktopCfg.iconVisible !== 'false';
 
   if (enabled) {
-    log('render', `Rendering icon "${name}" at x=${position.x},y=${position.y}`);
+    log(
+      'render',
+      `Rendering "${name}" at x=${position.x},y=${position.y}`
+    );
   }
 
   const handleMouseDown = (e) => {
@@ -178,6 +181,7 @@ function DesktopIcon({
     if (enabled) log('userInteraction', `Single-click "${name}"`);
     onClick();
   };
+
   const wrapperOnDoubleClick = () => {
     if (enabled) log('userInteraction', `Double-click "${name}"`);
     onDoubleClick();
@@ -198,7 +202,7 @@ function DesktopIcon({
 
   return (
     <div
-      id={`desktop-icon-${id}`}
+      id={`desktop-icon-${wrapId}-${id}`}
       ref={iconRef}
       className={`desktop-icon ${
         isSelected ? 'selected' : ''

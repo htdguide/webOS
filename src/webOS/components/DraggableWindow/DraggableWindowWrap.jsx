@@ -38,7 +38,7 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
     return () => unregisterWrap(wrapId);
   }, [wrapId, registerWrap, unregisterWrap]);
 
-  // memoize all scoped APIs so their identity stays constant
+  // memoize all scoped APIs + wrapId so their identity stays constant
   const openDraggableWindow = useCallback(
     (windowProps) => providerOpen({ wrapId, windowProps }),
     [providerOpen, wrapId]
@@ -68,9 +68,9 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
     [providerReassign]
   );
 
-  // bundle into one stable object
   const contextValue = useMemo(
     () => ({
+      wrapId,
       openDraggableWindow,
       closeDraggableWindow,
       showLoading,
@@ -80,6 +80,7 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
       reassignWindow,
     }),
     [
+      wrapId,
       openDraggableWindow,
       closeDraggableWindow,
       showLoading,
@@ -114,7 +115,7 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
           <DraggableWindow
             key={windowId}
             ref={ref}
-            wrapId={wrapId}            // ← pass wrapId down
+            wrapId={wrapId}
             windowId={windowId}
             {...rest}
             title={title}
@@ -136,17 +137,9 @@ export const DraggableWindowWrap = ({ wrapId, children }) => {
 };
 
 /**
- * Hook your components use to manage windows in this wrap:
+ * Hook your components use to manage windows and know their wrapId:
  *
- * const {
- *   openDraggableWindow,
- *   closeDraggableWindow,
- *   showLoading,
- *   hideLoading,
- *   resizeWindow,
- *   moveWindow,
- *   reassignWindow,
- * } = useDraggableWindow();
+ * const { wrapId, openDraggableWindow, ... } = useDraggableWindow();
  */
 export const useDraggableWindow = () => {
   const ctx = useContext(DraggableWindowWrapContext);
