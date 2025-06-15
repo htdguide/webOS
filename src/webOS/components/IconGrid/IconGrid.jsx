@@ -1,14 +1,8 @@
 // src/components/IconGrid/IconGrid.jsx
 
-import React, {
-  useState,
-  useContext,
-  useEffect,
-  useRef
-} from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import { AppsContext } from "../../contexts/AppsContext/AppsContext.jsx";
 import DesktopIcon from "../DesktopIcon/DesktopIcon.jsx";
-
 import {
   GRID_GAP,
   TOP_MARGIN,
@@ -17,21 +11,20 @@ import {
   BOTTOM_MARGIN,
   GRID_SIZE
 } from "../../configs/DesktopIconConfig/DesktopIconConfig.jsx";
-
 import "./IconGrid.css";
 import { FocusWrapper } from "../../contexts/FocusControl/FocusControl.jsx";
 import { useLogger } from "../Logger/Logger.jsx";
 
 /**
- * Helper to convert a priority number into an (x,y) position on the desktop.
- * Uses GRID_SIZE and GRID_GAP to space icons out relative to the desktop content.
+ * Compute (x,y) from priority.
  */
 function getPositionFromPriority(priority) {
-  const safePriority = priority && priority > 0 ? priority : 1;
-  const effectiveCellSize = GRID_SIZE + GRID_GAP;
-  const x = LEFT_MARGIN;
-  const y = TOP_MARGIN + (safePriority - 1) * effectiveCellSize;
-  return { x, y };
+  const safe = priority > 0 ? priority : 1;
+  const cell = GRID_SIZE + GRID_GAP;
+  return {
+    x: LEFT_MARGIN,
+    y: TOP_MARGIN + (safe - 1) * cell
+  };
 }
 
 function IconGrid({ onOpenApp }) {
@@ -39,111 +32,85 @@ function IconGrid({ onOpenApp }) {
   const { log, enabled } = useLogger("IconGrid");
 
   // Only desktop apps
-  const desktopApps = apps.filter((iconConfig) => !iconConfig.indock);
+  const desktopApps = apps.filter((cfg) => !cfg.indock);
 
-  // Build the initial (original) positions map
-  const buildInitialPositions = () => {
-    const map = {};
-    desktopApps.forEach((iconConfig) => {
-      map[iconConfig.id] = getPositionFromPriority(
-        iconConfig.priority
-      );
-    });
-    return map;
-  };
-
-  // originalPositionsRef.current never changes
-  const originalPositionsRef = useRef(buildInitialPositions());
-
-  // iconPositions: { [iconId]: {x,y} }
-  const [iconPositions, setIconPositions] = useState(
-    originalPositionsRef.current
+  // 1) Build initial primary positions once
+  const primaryPositionsRef = useRef(
+    desktopApps.reduce((map, cfg) => {
+      map[cfg.id] = getPositionFromPriority(cfg.priority);
+      return map;
+    }, {})
   );
+
+  // 2) This is what we actually render (could be primary or secondary)
+  const [iconPositions, setIconPositions] = useState(
+    primaryPositionsRef.current
+  );
+
+  // 3) Mirror state into a ref so our resize handler always sees fresh data
+  const iconPositionsRef = useRef(iconPositions);
+  useEffect(() => {
+    iconPositionsRef.current = iconPositions;
+  }, [iconPositions]);
 
   const [selectedIcon, setSelectedIcon] = useState(null);
   const containerRef = useRef(null);
 
   const handleWallpaperClick = () => {
-    if (enabled)
-      log(
-        "userInteraction",
-        "Wallpaper clicked: deselecting any selected icon"
-      );
+    if (enabled) log("userInteraction", "Wallpaper clicked → deselect");
     setSelectedIcon(null);
   };
-
-  const handleIconClick = (iconId) => {
-    if (enabled)
-      log(
-        "userInteraction",
-        `Icon clicked: ${iconId}`
-      );
-    setSelectedIcon(iconId);
+  const handleIconClick = (id) => {
+    if (enabled) log("userInteraction", `Icon clicked → ${id}`);
+    setSelectedIcon(id);
+  };
+  const handleIconDoubleClick = (id) => {
+    if (enabled) log("userInteraction", `Icon dbl-click → open ${id}`);
+    onOpenApp(id);
   };
 
-  const handleIconDoubleClick = (iconId) => {
-    if (enabled)
-      log(
-        "userInteraction",
-        `Icon double-clicked: ${iconId} (opening app)`
-      );
-    onOpenApp(iconId);
-  };
-
-  // On window resize: restore old positions if spot is free, then
-  // move any truly off-screen icons into the first available cell.
+  // 4) Attach resize listener only once
   useEffect(() => {
     const handleResize = () => {
       const container = containerRef.current;
       if (!container) return;
-      const rect = container.getBoundingClientRect();
+      const { width, height } = container.getBoundingClientRect();
       const cell = GRID_SIZE + GRID_GAP;
 
-      // Compute how many cols/rows fit
       const cols = Math.max(
         1,
-        Math.floor((rect.width - LEFT_MARGIN - RIGHT_MARGIN + GRID_GAP) / cell)
+        Math.floor((width - LEFT_MARGIN - RIGHT_MARGIN + GRID_GAP) / cell)
       );
       const rows = Math.max(
         1,
-        Math.floor((rect.height - TOP_MARGIN - BOTTOM_MARGIN + GRID_GAP) / cell)
+        Math.floor((height - TOP_MARGIN - BOTTOM_MARGIN + GRID_GAP) / cell)
       );
 
-      // 1) Mark occupied cells by current positions (that are on-screen)
       const occupied = new Set();
-      Object.entries(iconPositions).forEach(([id, pos]) => {
-        const c = Math.round((pos.x - LEFT_MARGIN) / cell);
-        const r = Math.round((pos.y - TOP_MARGIN) / cell);
-        if (r >= 0 && r < rows && c >= 0 && c < cols) {
-          occupied.add(`${r},${c}`);
+      const newPositions = {};
+
+      // A) Restore any primary positions now in view & free
+      desktopApps.forEach((cfg) => {
+        const id = cfg.id;
+        const prim = primaryPositionsRef.current[id];
+        const c0 = Math.round((prim.x - LEFT_MARGIN) / cell);
+        const r0 = Math.round((prim.y - TOP_MARGIN) / cell);
+        if (r0 >= 0 && r0 < rows && c0 >= 0 && c0 < cols) {
+          const key = `${r0},${c0}`;
+          if (!occupied.has(key)) {
+            occupied.add(key);
+            newPositions[id] = { x: prim.x, y: prim.y };
+          }
         }
       });
 
-      const updates = {};
-
-      // 2) Restore icons whose original spot is back on-screen & free
-      Object.entries(originalPositionsRef.current).forEach(
-        ([id, origPos]) => {
-          const c0 = Math.round((origPos.x - LEFT_MARGIN) / cell);
-          const r0 = Math.round((origPos.y - TOP_MARGIN) / cell);
-          const currentlyAtOrig =
-            iconPositions[id].x === origPos.x &&
-            iconPositions[id].y === origPos.y;
-          const inView = r0 >= 0 && r0 < rows && c0 >= 0 && c0 < cols;
-          const free = !occupied.has(`${r0},${c0}`);
-          if (inView && free && !currentlyAtOrig) {
-            occupied.add(`${r0},${c0}`);
-            updates[id] = { x: origPos.x, y: origPos.y };
-          }
-        }
-      );
-
-      // 3) Move any icons still off-screen into the first free cell,
-      //    scanning **column-major** (fill down each column).
-      Object.entries(iconPositions).forEach(([id, pos]) => {
-        if (updates[id]) return; // already restored
-        const c = Math.round((pos.x - LEFT_MARGIN) / cell);
-        const r = Math.round((pos.y - TOP_MARGIN) / cell);
+      // B) Give a secondary spot to any off-screen primaries (column-major)
+      desktopApps.forEach((cfg) => {
+        const id = cfg.id;
+        if (newPositions[id]) return; // already placed
+        const prim = primaryPositionsRef.current[id];
+        const c = Math.round((prim.x - LEFT_MARGIN) / cell);
+        const r = Math.round((prim.y - TOP_MARGIN) / cell);
         const offScreen = r < 0 || r >= rows || c < 0 || c >= cols;
         if (offScreen) {
           outer: for (let cc = 0; cc < cols; cc++) {
@@ -151,7 +118,7 @@ function IconGrid({ onOpenApp }) {
               const key = `${rr},${cc}`;
               if (!occupied.has(key)) {
                 occupied.add(key);
-                updates[id] = {
+                newPositions[id] = {
                   x: LEFT_MARGIN + cc * cell,
                   y: TOP_MARGIN + rr * cell
                 };
@@ -162,28 +129,24 @@ function IconGrid({ onOpenApp }) {
         }
       });
 
-      // Apply batched updates, if any
-      if (Object.keys(updates).length > 0) {
-        setIconPositions((prev) => {
-          const next = { ...prev };
-          Object.entries(updates).forEach(([id, np]) => {
-            next[id] = np;
-          });
-          return next;
-        });
-      }
+      // C) Any untouched icons go back to their primary
+      desktopApps.forEach((cfg) => {
+        const id = cfg.id;
+        if (!newPositions[id]) {
+          newPositions[id] = { ...primaryPositionsRef.current[id] };
+        }
+      });
+
+      // D) Commit _once_
+      setIconPositions((_) => newPositions);
     };
 
     window.addEventListener("resize", handleResize);
-    handleResize(); // run once on mount
+    handleResize();  // run on mount
     return () => window.removeEventListener("resize", handleResize);
-  }, [iconPositions]);
+  }, []);  // <<— no iconPositions dependency!
 
-  if (enabled)
-    log(
-      "render",
-      `Rendering ${desktopApps.length} desktop icons`
-    );
+  if (enabled) log("render", `Rendering ${desktopApps.length} icons`);
 
   return (
     <FocusWrapper name="IconGrid">
@@ -192,23 +155,23 @@ function IconGrid({ onOpenApp }) {
         className="desktop-content"
         onClick={handleWallpaperClick}
       >
-        {desktopApps.map((iconConfig) => (
+        {desktopApps.map((cfg) => (
           <DesktopIcon
-            key={iconConfig.id}
-            name={iconConfig.name}
-            icon={iconConfig.icon}
-            isSelected={selectedIcon === iconConfig.id}
-            onClick={() => handleIconClick(iconConfig.id)}
-            onDoubleClick={() =>
-              handleIconDoubleClick(iconConfig.id)
-            }
-            position={iconPositions[iconConfig.id]}
-            onPositionChange={(pos) =>
+            key={cfg.id}
+            name={cfg.name}
+            icon={cfg.icon}
+            isSelected={selectedIcon === cfg.id}
+            onClick={() => handleIconClick(cfg.id)}
+            onDoubleClick={() => handleIconDoubleClick(cfg.id)}
+            position={iconPositions[cfg.id]}
+            onPositionChange={(pos) => {
+              // when user drags: update primary + display immediately
+              primaryPositionsRef.current[cfg.id] = pos;
               setIconPositions((prev) => ({
                 ...prev,
-                [iconConfig.id]: pos
-              }))
-            }
+                [cfg.id]: pos
+              }));
+            }}
           />
         ))}
       </div>
