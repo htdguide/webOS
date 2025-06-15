@@ -19,10 +19,15 @@ import { useStateManager } from '../../stores/StateManager/StateManager';
 import { useLogger } from '../Logger/Logger.jsx';
 
 function DesktopIcon({
+  id,
   name,
   onDoubleClick,
   onClick,
   isSelected,
+  selectedCount,
+  onGroupMouseDown,
+  disableClick,
+  clearDisableClick,
   icon,
   position: controlledPosition,
   onPositionChange
@@ -67,6 +72,12 @@ function DesktopIcon({
   }
 
   const handleMouseDown = (e) => {
+    // If multi-selected, defer to grid’s group-drag logic
+    if (isSelected && selectedCount > 1 && onGroupMouseDown) {
+      onGroupMouseDown(e);
+      return;
+    }
+
     e.preventDefault();
     if (enabled) {
       log(
@@ -101,6 +112,15 @@ function DesktopIcon({
 
   const handleTouchStart = (e) => {
     const touch = e.touches[0];
+    // Multi-select group drag on touch too
+    if (isSelected && selectedCount > 1 && onGroupMouseDown) {
+      onGroupMouseDown({
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        touches: e.touches
+      });
+      return;
+    }
     if (enabled) {
       log(
         'userInteraction',
@@ -162,6 +182,7 @@ function DesktopIcon({
 
   return (
     <div
+      id={`desktop-icon-${id}`}
       ref={iconRef}
       className={`desktop-icon ${
         isSelected ? 'selected' : ''
@@ -180,6 +201,11 @@ function DesktopIcon({
           log('userInteraction', `Touch end on icon "${name}"`);
         }
         cancelHold(holdTimer, setHoldTimer);
+        // here we prevent the stray click from re-selecting only one
+        if (disableClick) {
+          clearDisableClick();
+          return;
+        }
         handleTap(lastTap, setLastTap, wrapperOnDoubleClick, wrapperOnClick);
       }}
       onMouseLeave={() => {
@@ -190,6 +216,11 @@ function DesktopIcon({
       }}
       onClick={(e) => {
         e.stopPropagation();
+        // likewise suppress the next tap
+        if (disableClick) {
+          clearDisableClick();
+          return;
+        }
         handleTap(lastTap, setLastTap, wrapperOnDoubleClick, wrapperOnClick);
       }}
     >

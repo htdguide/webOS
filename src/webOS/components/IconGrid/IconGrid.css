@@ -1,4 +1,4 @@
-/* Desktop.css */
+/* src/components/IconGrid/IconGrid.css */
 
 /* Desktop content: fills the monitor (desktop-monitor) */
 .desktop-content {
@@ -29,4 +29,13 @@
 
 .desktop-icon.selected {
   z-index: 2;
+}
+
+/* Selection rectangle for multi-select */
+.selection-rectangle {
+  position: absolute;
+  border: 1px dashed #3399FF;
+  background-color: rgba(51, 153, 255, 0.2);
+  z-index: 2;
+  pointer-events: none;
 }
