@@ -1,31 +1,49 @@
 // src/hooks/useDock/useDock.jsx
 
 import { useContext, useState, useRef, useEffect } from 'react';
+import { useStateManager } from '../../stores/StateManager/StateManager';
 
 export function useDock({
   AppsContext,
   DOCK_CONFIG,
   useDeviceInfo,
-  useStateManager,
   useLogger,
 }) {
-  // Logger
+  // --- Logger
   const { log, enabled } = useLogger('Dock');
 
-  // Device info
+  // --- Device info
   const deviceInfo = useDeviceInfo();
   const isPortrait = deviceInfo.orientation === 'portrait';
   if (enabled) log('render', `Device orientation: ${deviceInfo.orientation}`);
 
-  // Dock visibility from state manager
-  const { state } = useStateManager();
-  const isDockVisible =
-    state.groups.dock &&
-    state.groups.dock.dockVisible === 'true';
-  if (enabled) log('config', `Dock visibility: ${isDockVisible}`);
+  // --- State manager (persistent settings)
+  const { state: managerState } = useStateManager();
+  const dockState = managerState.groups.dock || {};
 
-  // Base config + overrides
+  // --- Compute config by merging static + overrides
   let config = { ...DOCK_CONFIG };
+
+  // parse & override from state.groups.dock
+  const override = {};
+  if (dockState.ICON_SIZE != null) {
+    const n = parseInt(dockState.ICON_SIZE, 10);
+    if (!isNaN(n)) override.ICON_SIZE = n;
+  }
+  if (dockState.ENABLE_MAGNIFICATION != null) {
+    override.ENABLE_MAGNIFICATION = dockState.ENABLE_MAGNIFICATION === 'true';
+  }
+  if (dockState.MAX_SCALE != null) {
+    const f = parseFloat(dockState.MAX_SCALE);
+    if (!isNaN(f)) override.MAX_SCALE = f;
+  }
+  if (dockState.DOCK_POSITION) {
+    override.DOCK_POSITION = dockState.DOCK_POSITION;
+  }
+  // apply overrides
+  config = { ...config, ...override };
+
+  // apply portrait / left / right overrides from the config object itself
   if (isPortrait && config.vertical) {
     if (enabled) log('config', 'Applying portrait vertical overrides');
     config = { ...config, ...config.vertical };
@@ -58,14 +76,21 @@ export function useDock({
   if (enabled) {
     log(
       'config',
-      `Dock config: POSITION=${DOCK_POSITION}, ICON_SIZE=${ICON_SIZE}, ICON_MARGIN=${ICON_MARGIN}`
+      `Dock config: POSITION=${DOCK_POSITION}, ICON_SIZE=${ICON_SIZE}, ENABLE_MAGNIFICATION=${ENABLE_MAGNIFICATION}`
     );
   }
 
-  // Layout orientation
+  // --- Dock visibility
+  const { state } = useStateManager();
+  const isDockVisible =
+    state.groups.dock &&
+    state.groups.dock.dockVisible === 'true';
+  if (enabled) log('config', `Dock visibility: ${isDockVisible}`);
+
+  // --- Layout orientation
   const isVerticalDock = DOCK_POSITION === 'left' || DOCK_POSITION === 'right';
 
-  // Apps context
+  // --- Apps context
   const { apps, openedApps, setOpenedApps } = useContext(AppsContext);
   const baseDockApps = apps.filter((app) => app.indock);
   const extraOpenApps = apps.filter(
@@ -77,7 +102,7 @@ export function useDock({
   ];
   if (enabled) log('render', `Total dock apps: ${dockApps.length}`);
 
-  // Pagination
+  // --- Pagination
   const iconsPerPage = isPortrait ? ICONS_PER_PAGE || 4 : dockApps.length;
   const paginationEnabled = isPortrait && dockApps.length > iconsPerPage;
   const totalPages = paginationEnabled
@@ -101,19 +126,17 @@ export function useDock({
       )
     : dockApps;
 
-  // Refs
+  // --- Refs & local state
   const outerRef = useRef(null);
   const iconsContainerRef = useRef(null);
   const initialTransitionTimeoutRef = useRef(null);
-
-  // Local state
   const [scales, setScales] = useState(dockApps.map(() => 1));
   const [shouldTransition, setShouldTransition] = useState(true);
   const [hoveredApp, setHoveredApp] = useState(null);
   const [activeApp, setActiveApp] = useState(null);
   const [touchStartX, setTouchStartX] = useState(null);
 
-  // Touch handlers
+  // --- Touch handlers
   const handleTouchStart = (e) => {
     const x = e.touches[0].clientX;
     if (enabled) log('userInteraction', `Touch start x=${x}`);
@@ -134,6 +157,7 @@ export function useDock({
     }
     setTouchStartX(null);
 
+    // reset scales after swipe
     if (paginationEnabled) {
       const reset = [...scales];
       const start = currentPage * iconsPerPage;
@@ -150,7 +174,7 @@ export function useDock({
     }
   };
 
-  // Mouse handlers
+  // --- Mouse handlers
   const handleMouseEnter = () => {
     if (initialTransitionTimeoutRef.current) {
       clearTimeout(initialTransitionTimeoutRef.current);
@@ -171,6 +195,7 @@ export function useDock({
     if (enabled) log('userInteraction', `Mouse move pos=${pos}`);
 
     if (!ENABLE_MAGNIFICATION) {
+      // reset scales
       if (paginationEnabled) {
         const reset = [...scales];
         const start = currentPage * iconsPerPage;
@@ -186,6 +211,7 @@ export function useDock({
       return;
     }
 
+    // magnification on …
     if (paginationEnabled) {
       const updated = [...scales];
       const start = currentPage * iconsPerPage;
@@ -244,7 +270,7 @@ export function useDock({
     if (enabled) log('userInteraction', 'Mouse left dock area');
   };
 
-  // Position & bounds calculators
+  // --- Position & bounds helpers
   const computeIconPositions = () => {
     const centers = [];
     let pos = 0;
@@ -275,6 +301,7 @@ export function useDock({
     }
     return { centers, containerDimension };
   };
+
   const computeBackgroundBounds = () => {
     if (!appsToRender.length) {
       if (enabled) log('layout', 'No apps → empty background');
@@ -283,7 +310,7 @@ export function useDock({
     const { centers } = computeIconPositions();
     let min = Infinity, max = -Infinity;
     const visScales = paginationEnabled
-      ? scales.slice(currentPage * iconsPerPage, currentPage * iconsPerPage + appsToRender.length)
+      ? scales.slice(currentPage * iconsPerPage, currentPage * ICONS_PER_PAGE + appsToRender.length)
       : scales;
 
     appsToRender.forEach((_, i) => {
@@ -298,7 +325,7 @@ export function useDock({
     return { start: min, size };
   };
 
-  // App open/focus
+  // --- openApp & hover
   const openApp = (app) => {
     setActiveApp(app.id);
     if (enabled) log('userInteraction', `Opening/focusing app: ${app.id}`);
@@ -318,7 +345,6 @@ export function useDock({
     }
   };
 
-  // Icon hover
   const handleIconMouseEnter = (appId) => {
     setHoveredApp(appId);
   };
@@ -326,7 +352,7 @@ export function useDock({
     setHoveredApp(null);
   };
 
-  // Final computed
+  // --- Final computed values
   const { containerDimension } = computeIconPositions();
   const { start: bgStart, size: bgSize } = computeBackgroundBounds();
 

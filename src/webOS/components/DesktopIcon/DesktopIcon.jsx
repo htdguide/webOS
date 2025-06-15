@@ -1,17 +1,20 @@
 // src/components/DesktopIcon/DesktopIcon.jsx
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './DesktopIcon.css';
+
 import {
   startHold,
   startDragging,
   cancelHold,
   handleTap
 } from '../../interactions/IconInteractions/IconInteractions.jsx';
+
 import {
   ICON_WIDTH,
   ICON_HEIGHT
 } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
+
 // Use the new StateManager hook instead of the old UIStateStorage.
 import { useStateManager } from '../../stores/StateManager/StateManager';
 import { useLogger } from '../Logger/Logger.jsx'; // <-- Import the logger
@@ -22,18 +25,39 @@ function DesktopIcon({
   onClick,
   isSelected,
   icon,
-  position: initialPosition
+  position: controlledPosition,
+  onPositionChange
 }) {
   // Initialize logger for this component
   const { log, enabled } = useLogger('DesktopIcon');
 
+  const iconRef = useRef(null);
+
   // Local state for position and dragging.
-  const [position, setPosition] = useState(initialPosition || { x: 100, y: 100 });
+  // We'll initialize from the prop and then keep in sync.
+  const [position, setPosition] = useState(
+    controlledPosition || { x: 100, y: 100 }
+  );
   const [isDragging, setIsDragging] = useState(false);
   const [holdTimer, setHoldTimer] = useState(null);
   const [lastTap, setLastTap] = useState(0);
 
-  const iconRef = useRef(null);
+  // Sync local state whenever parent-controlled position changes
+  useEffect(() => {
+    if (
+      controlledPosition &&
+      (controlledPosition.x !== position.x ||
+        controlledPosition.y !== position.y)
+    ) {
+      setPosition(controlledPosition);
+    }
+  }, [controlledPosition]);
+
+  // Helper that updates both local state and notifies parent
+  const updatePosition = (newPos) => {
+    setPosition(newPos);
+    if (onPositionChange) onPositionChange(newPos);
+  };
 
   // Get icon visibility from the new StateManager.
   const { state } = useStateManager();
@@ -44,13 +68,19 @@ function DesktopIcon({
 
   // Log rendering with the current position
   if (enabled) {
-    log('render', `Rendering icon "${name}" at position x=${position.x}, y=${position.y}`);
+    log(
+      'render',
+      `Rendering icon "${name}" at position x=${position.x}, y=${position.y}`
+    );
   }
 
   const handleMouseDown = (e) => {
     e.preventDefault();
     if (enabled) {
-      log('userInteraction', `Mouse down on icon "${name}" at clientX=${e.clientX}, clientY=${e.clientY}`);
+      log(
+        'userInteraction',
+        `Mouse down on icon "${name}" at clientX=${e.clientX}, clientY=${e.clientY}`
+      );
     }
     startHold(
       e.clientX,
@@ -59,9 +89,20 @@ function DesktopIcon({
       setHoldTimer,
       (x, y, offsetX, offsetY) => {
         if (enabled) {
-          log('userInteraction', `Start dragging icon "${name}" at x=${x}, y=${y} (offsetX=${offsetX}, offsetY=${offsetY})`);
+          log(
+            'userInteraction',
+            `Start dragging icon "${name}" at x=${x}, y=${y} (offsetX=${offsetX}, offsetY=${offsetY})`
+          );
         }
-        startDragging(x, y, offsetX, offsetY, iconRef, setPosition, setIsDragging);
+        startDragging(
+          x,
+          y,
+          offsetX,
+          offsetY,
+          iconRef,
+          updatePosition,
+          setIsDragging
+        );
       }
     );
   };
@@ -69,7 +110,10 @@ function DesktopIcon({
   const handleTouchStart = (e) => {
     const touch = e.touches[0];
     if (enabled) {
-      log('userInteraction', `Touch start on icon "${name}" at clientX=${touch.clientX}, clientY=${touch.clientY}`);
+      log(
+        'userInteraction',
+        `Touch start on icon "${name}" at clientX=${touch.clientX}, clientY=${touch.clientY}`
+      );
     }
     startHold(
       touch.clientX,
@@ -78,9 +122,20 @@ function DesktopIcon({
       setHoldTimer,
       (x, y, offsetX, offsetY) => {
         if (enabled) {
-          log('userInteraction', `Start dragging icon "${name}" (touch) at x=${x}, y=${y} (offsetX=${offsetX}, offsetY=${offsetY})`);
+          log(
+            'userInteraction',
+            `Start dragging icon "${name}" (touch) at x=${x}, y=${y} (offsetX=${offsetX}, offsetY=${offsetY})`
+          );
         }
-        startDragging(x, y, offsetX, offsetY, iconRef, setPosition, setIsDragging);
+        startDragging(
+          x,
+          y,
+          offsetX,
+          offsetY,
+          iconRef,
+          updatePosition,
+          setIsDragging
+        );
       }
     );
   };
@@ -108,13 +163,17 @@ function DesktopIcon({
     left: position.x,
     top: position.y,
     opacity: isIconVisible ? 1 : 0,
-    transition: isDragging ? 'none' : 'left 0.3s, top 0.3s, opacity 0.5s'
+    transition: isDragging
+      ? 'none'
+      : 'left 0.3s, top 0.3s, opacity 0.5s'
   };
 
   return (
     <div
       ref={iconRef}
-      className={`desktop-icon ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}`}
+      className={`desktop-icon ${
+        isSelected ? 'selected' : ''
+      } ${isDragging ? 'dragging' : ''}`}
       style={iconStyle}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}

@@ -1,14 +1,23 @@
 // src/components/IconGrid/IconGrid.jsx
 
-import React, { useState, useContext } from "react";
+import React, {
+  useState,
+  useContext,
+  useEffect,
+  useRef
+} from "react";
 import { AppsContext } from "../../contexts/AppsContext/AppsContext.jsx";
 import DesktopIcon from "../DesktopIcon/DesktopIcon.jsx";
+
 import {
   GRID_GAP,
   TOP_MARGIN,
   LEFT_MARGIN,
+  RIGHT_MARGIN,
+  BOTTOM_MARGIN,
+  GRID_SIZE
 } from "../../configs/DesktopIconConfig/DesktopIconConfig.jsx";
-import { GRID_SIZE } from "../../configs/DesktopIconConfig/DesktopIconConfig.jsx";
+
 import "./IconGrid.css";
 import { FocusWrapper } from "../../contexts/FocusControl/FocusControl.jsx";
 import { useLogger } from "../Logger/Logger.jsx";
@@ -27,62 +36,181 @@ function getPositionFromPriority(priority) {
 
 function IconGrid({ onOpenApp }) {
   const { apps } = useContext(AppsContext);
-
-  // Create a logger bound to this component name.
-  // Internally, it will:
-  //   1) Read `developer.logsenabled` from StateManager.
-  //   2) If logs are enabled ("true"), let us know via `enabled`, and print formatted logs with group names.
-  // `log` signature: log(groupName: string, message: string)
   const { log, enabled } = useLogger("IconGrid");
 
+  // Only desktop apps
+  const desktopApps = apps.filter((iconConfig) => !iconConfig.indock);
+
+  // Build the initial (original) positions map
+  const buildInitialPositions = () => {
+    const map = {};
+    desktopApps.forEach((iconConfig) => {
+      map[iconConfig.id] = getPositionFromPriority(
+        iconConfig.priority
+      );
+    });
+    return map;
+  };
+
+  // originalPositionsRef.current never changes
+  const originalPositionsRef = useRef(buildInitialPositions());
+
+  // iconPositions: { [iconId]: {x,y} }
+  const [iconPositions, setIconPositions] = useState(
+    originalPositionsRef.current
+  );
+
   const [selectedIcon, setSelectedIcon] = useState(null);
+  const containerRef = useRef(null);
 
   const handleWallpaperClick = () => {
-    // Group: "userInteraction"
-    if (enabled) log("userInteraction", "Wallpaper clicked: deselecting any selected icon");
+    if (enabled)
+      log(
+        "userInteraction",
+        "Wallpaper clicked: deselecting any selected icon"
+      );
     setSelectedIcon(null);
   };
 
   const handleIconClick = (iconId) => {
-    // Group: "userInteraction"
-    if (enabled) log("userInteraction", `Icon clicked: ${iconId}`);
+    if (enabled)
+      log(
+        "userInteraction",
+        `Icon clicked: ${iconId}`
+      );
     setSelectedIcon(iconId);
   };
 
   const handleIconDoubleClick = (iconId) => {
-    // Group: "userInteraction"
-    if (enabled) log("userInteraction", `Icon double-clicked: ${iconId} (opening app)`);
+    if (enabled)
+      log(
+        "userInteraction",
+        `Icon double-clicked: ${iconId} (opening app)`
+      );
     onOpenApp(iconId);
   };
 
-  // Filter out apps that are “in dock” to get desktop icons
-  const desktopApps = apps.filter((iconConfig) => !iconConfig.indock);
+  // On window resize: restore old positions if spot is free, then
+  // move any truly off-screen icons into the first available cell.
+  useEffect(() => {
+    const handleResize = () => {
+      const container = containerRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const cell = GRID_SIZE + GRID_GAP;
 
-  // Group: "render"
-  if (enabled) log("render", `Rendering ${desktopApps.length} desktop icons`);
+      // Compute how many cols/rows fit
+      const cols = Math.max(
+        1,
+        Math.floor((rect.width - LEFT_MARGIN - RIGHT_MARGIN + GRID_GAP) / cell)
+      );
+      const rows = Math.max(
+        1,
+        Math.floor((rect.height - TOP_MARGIN - BOTTOM_MARGIN + GRID_GAP) / cell)
+      );
+
+      // 1) Mark occupied cells by current positions (that are on-screen)
+      const occupied = new Set();
+      Object.entries(iconPositions).forEach(([id, pos]) => {
+        const c = Math.round((pos.x - LEFT_MARGIN) / cell);
+        const r = Math.round((pos.y - TOP_MARGIN) / cell);
+        if (r >= 0 && r < rows && c >= 0 && c < cols) {
+          occupied.add(`${r},${c}`);
+        }
+      });
+
+      const updates = {};
+
+      // 2) Restore icons whose original spot is back on-screen & free
+      Object.entries(originalPositionsRef.current).forEach(
+        ([id, origPos]) => {
+          const c0 = Math.round((origPos.x - LEFT_MARGIN) / cell);
+          const r0 = Math.round((origPos.y - TOP_MARGIN) / cell);
+          const currentlyAtOrig =
+            iconPositions[id].x === origPos.x &&
+            iconPositions[id].y === origPos.y;
+          const inView = r0 >= 0 && r0 < rows && c0 >= 0 && c0 < cols;
+          const free = !occupied.has(`${r0},${c0}`);
+          if (inView && free && !currentlyAtOrig) {
+            occupied.add(`${r0},${c0}`);
+            updates[id] = { x: origPos.x, y: origPos.y };
+          }
+        }
+      );
+
+      // 3) Move any icons still off-screen into the first free cell,
+      //    scanning **column-major** (fill down each column).
+      Object.entries(iconPositions).forEach(([id, pos]) => {
+        if (updates[id]) return; // already restored
+        const c = Math.round((pos.x - LEFT_MARGIN) / cell);
+        const r = Math.round((pos.y - TOP_MARGIN) / cell);
+        const offScreen = r < 0 || r >= rows || c < 0 || c >= cols;
+        if (offScreen) {
+          outer: for (let cc = 0; cc < cols; cc++) {
+            for (let rr = 0; rr < rows; rr++) {
+              const key = `${rr},${cc}`;
+              if (!occupied.has(key)) {
+                occupied.add(key);
+                updates[id] = {
+                  x: LEFT_MARGIN + cc * cell,
+                  y: TOP_MARGIN + rr * cell
+                };
+                break outer;
+              }
+            }
+          }
+        }
+      });
+
+      // Apply batched updates, if any
+      if (Object.keys(updates).length > 0) {
+        setIconPositions((prev) => {
+          const next = { ...prev };
+          Object.entries(updates).forEach(([id, np]) => {
+            next[id] = np;
+          });
+          return next;
+        });
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize(); // run once on mount
+    return () => window.removeEventListener("resize", handleResize);
+  }, [iconPositions]);
+
+  if (enabled)
+    log(
+      "render",
+      `Rendering ${desktopApps.length} desktop icons`
+    );
 
   return (
     <FocusWrapper name="IconGrid">
-      {/* The desktop content fills its parent monitor */}
-      <div className="desktop-content" onClick={handleWallpaperClick}>
-        {desktopApps.map((iconConfig) => {
-          const position = getPositionFromPriority(iconConfig.priority);
-
-          // Group: "layout"
-          if (enabled) log("layout", `Position for icon ${iconConfig.id}: x=${position.x}, y=${position.y}`);
-
-          return (
-            <DesktopIcon
-              key={iconConfig.id}
-              name={iconConfig.name}
-              icon={iconConfig.icon}
-              isSelected={selectedIcon === iconConfig.id}
-              onClick={() => handleIconClick(iconConfig.id)}
-              onDoubleClick={() => handleIconDoubleClick(iconConfig.id)}
-              position={position}
-            />
-          );
-        })}
+      <div
+        ref={containerRef}
+        className="desktop-content"
+        onClick={handleWallpaperClick}
+      >
+        {desktopApps.map((iconConfig) => (
+          <DesktopIcon
+            key={iconConfig.id}
+            name={iconConfig.name}
+            icon={iconConfig.icon}
+            isSelected={selectedIcon === iconConfig.id}
+            onClick={() => handleIconClick(iconConfig.id)}
+            onDoubleClick={() =>
+              handleIconDoubleClick(iconConfig.id)
+            }
+            position={iconPositions[iconConfig.id]}
+            onPositionChange={(pos) =>
+              setIconPositions((prev) => ({
+                ...prev,
+                [iconConfig.id]: pos
+              }))
+            }
+          />
+        ))}
       </div>
     </FocusWrapper>
   );

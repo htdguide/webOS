@@ -3,7 +3,11 @@
     "welcomeEnabled": "true"
   },
   "dock": {
-    "dockVisible": "true"
+    "dockVisible": "true",
+    "ICON_SIZE": "45",
+    "ENABLE_MAGNIFICATION": "false",
+    "MAX_SCALE": "1.4",
+    "DOCK_POSITION": "bottom"
   },
   "desktop": {
     "iconVisible": "true",

@@ -1,4 +1,5 @@
-// IconInteractions.jsx
+// src/interactions/IconInteractions/IconInteractions.jsx
+
 import {
   TOP_MARGIN,
   LEFT_MARGIN,
@@ -7,7 +8,7 @@ import {
   GRID_GAP,
   HOLD_THRESHOLD,
   DOUBLE_TAP_DELAY,
-  GRID_SIZE, // <--- Import from DesktopIconConfig now
+  GRID_SIZE
 } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 
 /**
@@ -26,14 +27,14 @@ export const startHold = (
   startY,
   iconRef,
   setHoldTimer,
-  startDragging
+  startDraggingCallback
 ) => {
   const rect = iconRef.current.getBoundingClientRect();
   const offsetX = startX - rect.left;
   const offsetY = startY - rect.top;
 
   const timer = setTimeout(() => {
-    startDragging(startX, startY, offsetX, offsetY);
+    startDraggingCallback(startX, startY, offsetX, offsetY);
   }, HOLD_THRESHOLD);
 
   setHoldTimer(timer);
@@ -82,12 +83,13 @@ export const startDragging = (
   };
 
   const handleEnd = () => {
+    // Clean up listeners
     window.removeEventListener('mousemove', handleMove);
     window.removeEventListener('mouseup', handleEnd);
     window.removeEventListener('touchmove', handleMove);
     window.removeEventListener('touchend', handleEnd);
 
-    // Get the current icon rect and container rect to compute relative positions.
+    // Recompute positions from the DOM
     const rect = iconRef.current.getBoundingClientRect();
     const container = iconRef.current.parentNode;
     const containerRect = container.getBoundingClientRect();
@@ -95,33 +97,42 @@ export const startDragging = (
     const relativeTop = rect.top - containerRect.top;
     const snapSize = getSnapSize();
 
-    const snappedX =
+    // Compute the “ideal” snapped coordinates
+    const rawSnappedX =
       LEFT_MARGIN +
       Math.round((relativeLeft - LEFT_MARGIN) / snapSize) * snapSize;
-    const snappedY =
+    const rawSnappedY =
       TOP_MARGIN +
       Math.round((relativeTop - TOP_MARGIN) / snapSize) * snapSize;
 
-    // Add a short transition so the icon "flies" to the snapped position.
+    // Recompute the same max bounds
+    const maxX = containerRect.width - RIGHT_MARGIN - GRID_SIZE;
+    const maxY = containerRect.height - BOTTOM_MARGIN - GRID_SIZE;
+
+    // **NEW**: clamp snapped values so they never exceed the container limits
+    const snappedX = Math.max(LEFT_MARGIN, Math.min(maxX, rawSnappedX));
+    const snappedY = Math.max(TOP_MARGIN, Math.min(maxY, rawSnappedY));
+
+    // Short transition so the icon “flies” to its snapped spot
     iconRef.current.style.transition = 'left 0.2s ease, top 0.2s ease';
-    // Force reflow.
+    // Force a reflow so the transition actually happens
+    // (reading offsetWidth does that)
+    // eslint-disable-next-line no-unused-expressions
     iconRef.current.offsetWidth;
 
-    // Set new (snapped) positions.
+    // Move to the clamped/snap position
     iconRef.current.style.left = `${snappedX}px`;
     iconRef.current.style.top = `${snappedY}px`;
 
-    // If the icon is already at the snapped position,
-    // the transition event may not fire so we finalize immediately.
-    if (
-      Math.abs(relativeLeft - snappedX) < 1 &&
-      Math.abs(relativeTop - snappedY) < 1
-    ) {
+    // If already basically there, finalize state immediately
+    const dx = Math.abs(relativeLeft - snappedX);
+    const dy = Math.abs(relativeTop - snappedY);
+    if (dx < 1 && dy < 1) {
       setPosition({ x: snappedX, y: snappedY });
       setIsDragging(false);
       iconRef.current.style.transition = 'none';
     } else {
-      // Once the transition finishes, finalize position in state.
+      // Otherwise, wait for the transition to end, then commit
       const onTransitionEnd = () => {
         iconRef.current.removeEventListener('transitionend', onTransitionEnd);
         setPosition({ x: snappedX, y: snappedY });

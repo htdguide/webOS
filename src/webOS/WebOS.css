@@ -25,3 +25,11 @@
     bottom: auto;
   }
 }
+
+div {
+  /* 
+    If you’d rather not affect layout (borders add to width/height), 
+    you can use outline instead:
+    outline: 1px solid blue !important;
+  */
+}
