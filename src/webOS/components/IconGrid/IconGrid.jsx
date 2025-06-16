@@ -39,7 +39,7 @@ function IconGrid({ onOpenApp }) {
     }, {})
   );
 
-  // compute pixel positions
+  // compute pixel positions from grid coords
   const computePositions = () => {
     const p = {};
     for (const [id, { col, row }] of Object.entries(primaryGridRef.current)) {
@@ -65,8 +65,31 @@ function IconGrid({ onOpenApp }) {
 
   // group-drag snapshots
   const groupOriginalPositionsRef = useRef({});
+  const groupOriginalGridCoordsRef = useRef({});
 
   const containerRef = useRef(null);
+
+  // Helper: BFS to find nearest free grid cell
+  const findNearestFreeCell = (startCol, startRow, occupied, maxCols, maxRows) => {
+    const queue = [{ col: startCol, row: startRow }];
+    const seen = new Set();
+    while (queue.length) {
+      const { col, row } = queue.shift();
+      const key = `${col},${row}`;
+      if (col < 0 || col > maxCols || row < 0 || row > maxRows) continue;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      if (!occupied.has(key)) {
+        return { col, row };
+      }
+      queue.push({ col: col + 1, row });
+      queue.push({ col: col - 1, row });
+      queue.push({ col, row: row + 1 });
+      queue.push({ col, row: row - 1 });
+    }
+    // fallback
+    return { col: 0, row: 0 };
+  };
 
   // ── Handlers ─────────────────────────────────────────────────────
 
@@ -91,7 +114,7 @@ function IconGrid({ onOpenApp }) {
     const startX = e.clientX, startY = e.clientY;
     setSelectionBox({ x: startX, y: startY, width: 0, height: 0 });
 
-    const handleMouseMove = (mv) => {
+    const onMouseMove = (mv) => {
       const cx = mv.clientX, cy = mv.clientY;
       setSelectionBox({
         x: Math.min(startX, cx),
@@ -101,9 +124,9 @@ function IconGrid({ onOpenApp }) {
       });
     };
 
-    const handleMouseUp = (up) => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+    const onMouseUp = (up) => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
 
       const endX = up.clientX, endY = up.clientY;
       const rectX = Math.min(startX, endX),
@@ -129,43 +152,66 @@ function IconGrid({ onOpenApp }) {
       suppressNextClickRef.current = true;
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
   };
 
-  // single-icon drag → snaps grid coords
+  // single-icon drag → snaps grid coords, prevents overlap
   const handlePositionChange = (id, pos) => {
-    const col = Math.round((pos.x - leftMargin) / cellSize);
-    const row = Math.round((pos.y - topMargin)  / cellSize);
-    primaryGridRef.current[id] = { col, row };
-    const newPos = {
-      x: leftMargin + col * cellSize,
-      y: topMargin  + row * cellSize
-    };
-    setIconPositions((prev) => ({ ...prev, [id]: newPos }));
+    const orig = primaryGridRef.current[id];
+    const targetCol = Math.round((pos.x - leftMargin) / cellSize);
+    const targetRow = Math.round((pos.y - topMargin)  / cellSize);
+
+    const collision = Object.entries(primaryGridRef.current).some(
+      ([otherId, { col, row }]) =>
+        otherId !== id && col === targetCol && row === targetRow
+    );
+
+    if (collision) {
+      // revert
+      setIconPositions((prev) => ({
+        ...prev,
+        [id]: {
+          x: leftMargin + orig.col * cellSize,
+          y: topMargin  + orig.row * cellSize
+        }
+      }));
+    } else {
+      // commit
+      primaryGridRef.current[id] = { col: targetCol, row: targetRow };
+      setIconPositions((prev) => ({
+        ...prev,
+        [id]: {
+          x: leftMargin + targetCol * cellSize,
+          y: topMargin  + targetRow * cellSize
+        }
+      }));
+    }
   };
 
-  // group-drag logic → starts immediately for multiple selection
+  // group-drag logic → snaps, prevents overlap
   const handleGroupMouseDown = (e, id) => {
     if (selectedIcons.length <= 1) return;
     e.preventDefault();
 
-    // snapshot start positions
     const startX = e.clientX, startY = e.clientY;
     groupOriginalPositionsRef.current = {};
+    groupOriginalGridCoordsRef.current = {};
+
     selectedIcons.forEach((sid) => {
       groupOriginalPositionsRef.current[sid] = {
         ...iconPositionsRef.current[sid]
       };
+      groupOriginalGridCoordsRef.current[sid] = {
+        ...primaryGridRef.current[sid]
+      };
     });
 
-    // container bounds
     const { width, height } = containerRef.current.getBoundingClientRect();
     const maxX = width  - rightMargin  - gridSize;
     const maxY = height - bottomMargin - gridSize;
 
-    // drag handler
-    const handleMove = (mv) => {
+    const onMove = (mv) => {
       mv.preventDefault();
       const cx = mv.touches ? mv.touches[0].clientX : mv.clientX;
       const cy = mv.touches ? mv.touches[0].clientY : mv.clientY;
@@ -185,13 +231,12 @@ function IconGrid({ onOpenApp }) {
       });
     };
 
-    // drop/snapping
-    const handleEnd = (upEvt) => {
+    const onEnd = (upEvt) => {
       setSuppressIconClick(true);
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleEnd);
-      window.removeEventListener('touchmove', handleMove);
-      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onEnd);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onEnd);
 
       const cx = upEvt.changedTouches
         ? upEvt.changedTouches[0].clientX
@@ -201,36 +246,52 @@ function IconGrid({ onOpenApp }) {
         : upEvt.clientY;
       const dx = cx - startX, dy = cy - startY;
 
+      // occupancy of non-selected icons
+      const occupied = new Set();
+      desktopApps.forEach((cfg) => {
+        if (!selectedIcons.includes(cfg.id)) {
+          const { col, row } = primaryGridRef.current[cfg.id];
+          occupied.add(`${col},${row}`);
+        }
+      });
+
+      const { clientWidth: cw, clientHeight: ch } = containerRef.current;
+      const maxCols = Math.floor((cw - leftMargin - rightMargin) / cellSize);
+      const maxRows = Math.floor((ch - topMargin - bottomMargin) / cellSize);
+
       selectedIcons.forEach((sid) => {
-        const orig = groupOriginalPositionsRef.current[sid];
-        const movedX = orig.x + dx;
-        const movedY = orig.y + dy;
-        const col = Math.round((movedX - leftMargin) / cellSize);
-        const row = Math.round((movedY - topMargin)  / cellSize);
+        const origPos  = groupOriginalPositionsRef.current[sid];
+        const origGrid = groupOriginalGridCoordsRef.current[sid];
+        const movedX = origPos.x + dx;
+        const movedY = origPos.y + dy;
+        let col = Math.round((movedX - leftMargin) / cellSize);
+        let row = Math.round((movedY - topMargin)  / cellSize);
 
-        const maxCols = Math.floor(
-          (containerRef.current.clientWidth  - leftMargin - rightMargin)  / cellSize
-        );
-        const maxRows = Math.floor(
-          (containerRef.current.clientHeight - topMargin  - bottomMargin) / cellSize
-        );
+        // clamp
+        col = Math.max(0, Math.min(col, maxCols));
+        row = Math.max(0, Math.min(row, maxRows));
 
-        const fx = leftMargin + Math.max(0, Math.min(col, maxCols)) * cellSize;
-        const fy = topMargin  + Math.max(0, Math.min(row, maxRows)) * cellSize;
+        // collision
+        let key = `${col},${row}`;
+        if (occupied.has(key)) {
+          const free = findNearestFreeCell(col, row, occupied, maxCols, maxRows);
+          col = free.col;
+          row = free.row;
+          key = `${col},${row}`;
+        }
+        occupied.add(key);
 
+        primaryGridRef.current[sid] = { col, row };
+        const fx = leftMargin + col * cellSize;
+        const fy = topMargin  + row * cellSize;
         const el = document.getElementById(`desktop-icon-${wrapId}-${sid}`);
         if (el) {
           el.style.transition = 'left 0.2s ease, top 0.2s ease';
           void el.offsetWidth;
           el.style.left = `${fx}px`;
           el.style.top  = `${fy}px`;
-
           const onTrans = () => {
             el.removeEventListener('transitionend', onTrans);
-            primaryGridRef.current[sid] = {
-              col: Math.round((fx - leftMargin) / cellSize),
-              row: Math.round((fy - topMargin)  / cellSize)
-            };
             setIconPositions((prev) => ({
               ...prev,
               [sid]: { x: fx, y: fy }
@@ -241,21 +302,65 @@ function IconGrid({ onOpenApp }) {
       });
     };
 
-    window.addEventListener('mousemove',    handleMove);
-    window.addEventListener('mouseup',      handleEnd);
-    window.addEventListener('touchmove',    handleMove, { passive: false });
-    window.addEventListener('touchend',     handleEnd);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onEnd);
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onEnd);
   };
 
-  // ── Recompute on resize ───────────────────────────────────────────
+  // ── Recompute on resize: clamp only OOB icons, keep in-bounds stable ──
   useEffect(() => {
     const handleResize = () => {
-      setIconPositions(computePositions());
+      if (!containerRef.current) return;
+      const { clientWidth: width, clientHeight: height } = containerRef.current;
+      const maxCols = Math.floor((width - leftMargin - rightMargin) / cellSize);
+      const maxRows = Math.floor((height - topMargin - bottomMargin) / cellSize);
+
+      // build occupied set of cells for in-bounds icons
+      const occupied = new Set();
+      const outOfBounds = [];
+      Object.entries(primaryGridRef.current).forEach(([id, { col, row }]) => {
+        if (col >= 0 && col <= maxCols && row >= 0 && row <= maxRows) {
+          occupied.add(`${col},${row}`);
+        } else {
+          outOfBounds.push([id, { col, row }]);
+        }
+      });
+
+      const newPositions = {};
+      // place in-bounds icons at their grid spots
+      Object.entries(primaryGridRef.current).forEach(([id, { col, row }]) => {
+        if (occupied.has(`${col},${row}`)) {
+          newPositions[id] = {
+            x: leftMargin + col * cellSize,
+            y: topMargin  + row * cellSize
+          };
+        }
+      });
+
+      // clamp out-of-bounds icons to nearest free cells
+      outOfBounds.forEach(([id, { col, row }]) => {
+        const clampCol = Math.max(0, Math.min(col, maxCols));
+        const clampRow = Math.max(0, Math.min(row, maxRows));
+        const free = findNearestFreeCell(clampCol, clampRow, occupied, maxCols, maxRows);
+        occupied.add(`${free.col},${free.row}`);
+        newPositions[id] = {
+          x: leftMargin + free.col * cellSize,
+          y: topMargin  + free.row * cellSize
+        };
+      });
+
+      setIconPositions(newPositions);
     };
+
     window.addEventListener('resize', handleResize);
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
-  }, [gridGap, gridSize, topMargin, leftMargin, wrapId]);
+  }, [
+    gridGap, gridSize,
+    topMargin, leftMargin, rightMargin, bottomMargin,
+    wrapId
+  ]);
 
   if (enabled) log('render', `Rendering ${desktopApps.length} icons in wrap ${wrapId}`);
 
