@@ -1,6 +1,6 @@
 // src/components/Dock/Dock.jsx
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDock } from '../../interactions/useDock/useDock.jsx';
 import { AppsContext } from '../../contexts/AppsContext/AppsContext';
 import DOCK_CONFIG from '../../configs/DockConfig/DockConfig';
@@ -66,10 +66,31 @@ export default function Dock() {
     useLogger,
   });
 
+  // keep the frosting (opacity) true until after slide finishes
+  const [fadeVisible, setFadeVisible] = useState(isDockVisible);
+
+  useEffect(() => {
+    let timer;
+    if (isDockVisible) {
+      // when showing: immediately restore opacity
+      setFadeVisible(true);
+    } else {
+      // when hiding: wait 300ms (slide duration) then hide
+      timer = setTimeout(() => setFadeVisible(false), 300);
+    }
+    return () => clearTimeout(timer);
+  }, [isDockVisible]);
+
+  // merge slide-only style with our fade flag
+  const outerStyle = {
+    ...getOuterContainerStyle(DOCK_POSITION, DOCK_MARGIN, isDockVisible),
+    opacity: fadeVisible ? 1 : 0,
+  };
+
   return (
     <div
       ref={outerRef}
-      style={getOuterContainerStyle(DOCK_POSITION, DOCK_MARGIN, isDockVisible)}
+      style={outerStyle}
       onTouchStart={paginationEnabled ? handleTouchStart : null}
       onTouchEnd={paginationEnabled ? handleTouchEnd : null}
     >
