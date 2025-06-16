@@ -7,7 +7,7 @@
   background: rgba(255, 255, 255, 0.8);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
   backdrop-filter: blur(12px);
-  z-index: 1000;
+  z-index: 100;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -36,7 +36,7 @@
   background: rgb(242, 242, 242);
   color: #000;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  z-index: 10;
+  z-index: 110;
 }
 
 .draggable-window:not(.focused) .window-header {
@@ -63,6 +63,7 @@
   line-height: 0;
   appearance: none;
   cursor: default;
+  z-index: 110;
   background: transparent; /* background comes from focused/unfocused rules below */
 }
 
@@ -77,7 +78,7 @@
   height: calc(100% + 1px);
   border-radius: 50%;
   pointer-events: none;  /* unclickable */
-  z-index: -1;           /* behind the real button */
+  z-index: 100;           /* behind the real button */
 }
 
 /* darker “shadow” colors for each pseudo-element -30 for all rgb colors comparing originals*/
@@ -149,14 +150,14 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1;
+  z-index: 198;
 }
 
 .content-inner {
   position: relative;
   width: 100%;
   height: 100%;
-  z-index: 0;
+  z-index: 100;
 }
 
 /* Loading Overlay */
@@ -172,7 +173,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10;
+  z-index: 199;
 }
 
 .loading-overlay.fade-out {
@@ -195,7 +196,7 @@
 .resize-tl {
   width: 15px;
   height: 15px;
-  z-index: 20;
+  z-index: 199;
 }
 .resize-br {
   bottom: 0;
@@ -231,7 +232,7 @@
 .resize-bottom,
 .resize-left,
 .resize-right {
-  z-index: 10;
+  z-index: 199;
 }
 .resize-top {
   top: 0;
@@ -281,5 +282,5 @@
     height 0.4s cubic-bezier(0.215, 0.61, 0.355, 1),
     transform 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
 
-  z-index: 10000;
+  z-index: 100;
 }

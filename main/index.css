@@ -9,7 +9,6 @@ body, html {
   background-color: black; /* Outside the monitor: black */
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  z-index: 0;
 }
 
 /* Hide React error overlay */

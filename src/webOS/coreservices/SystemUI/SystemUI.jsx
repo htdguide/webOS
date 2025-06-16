@@ -20,17 +20,17 @@ const SystemUIContent = () => {
     isFullscreen && fullscreenWindowId === contextWrapId;
 
   return (
+    <MiniWindowProvider>
     <DraggableWindowWrap wrapId={contextWrapId}>
       <div
         className={`desktop-monitor${
           isThisFullscreen ? ' slide-left' : ''
         }`}
       >
-        <MiniWindowProvider>
           <DesktopAssembler />
-        </MiniWindowProvider>
       </div>
     </DraggableWindowWrap>
+    </MiniWindowProvider>
   );
 };
 

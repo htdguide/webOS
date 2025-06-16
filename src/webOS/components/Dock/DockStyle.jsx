@@ -7,7 +7,7 @@ import '../../configs/CSSConfigs/animations.css';
 export const getOuterContainerStyle = (DOCK_POSITION, DOCK_MARGIN, isDockVisible) => {
   const style = {
     position: 'absolute',
-    zIndex: 9998,
+    zIndex: 200,
     transition: 'transform 0.3s var(--easing-flattened)',
   };
 
@@ -165,7 +165,7 @@ export const getIconContainerStyle = ({
     transform: `scale(${scale})`,
     cursor: 'pointer',
     position: 'relative',
-    zIndex: 1,
+    zIndex: 210,
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
@@ -199,7 +199,7 @@ export const getTooltipWrapperStyle = (DOCK_POSITION, APP_NAME_TOOLTIP_OFFSET) =
   const style = {
     position: 'absolute',
     pointerEvents: 'none',
-    zIndex: 2,
+    zIndex: 220,
   };
 
   switch (DOCK_POSITION) {
