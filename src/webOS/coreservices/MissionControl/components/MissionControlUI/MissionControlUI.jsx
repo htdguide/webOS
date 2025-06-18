@@ -1,4 +1,5 @@
-// src/components/MissionControl/MissionControlUI.jsx
+// src/components/MissionControl/components/MissionControlUI/MissionControlUI.jsx
+
 import React, {
   useContext,
   useState,
@@ -20,7 +21,8 @@ const OPEN_DELAY = 200;      // new delay before fade (ms)
 
 const MissionControlUI = () => {
   const {
-    createDesktop,
+    createDesktop,       // original: adds & switches
+    addDesktop,          // new: adds only
     switchDesktop,
     deleteDesktop,
     reorderDesktops,
@@ -54,12 +56,6 @@ const MissionControlUI = () => {
     if (currLen > prevLen) {
       const diffCount = currLen - prevLen;
       newReady = [...prevReady, ...Array(diffCount).fill(false)];
-    } else if (currLen < prevLen) {
-      const idToReady = {};
-      prevDesktops.forEach((d, idx) => {
-        idToReady[d.id] = prevReady[idx];
-      });
-      newReady = desktops.map(d => idToReady[d.id] || false);
     } else {
       const idToReady = {};
       prevDesktops.forEach((d, idx) => {
@@ -253,6 +249,7 @@ const MissionControlUI = () => {
 
       {overlayVisible && (
         <div className="mc-overlay" style={{ display: 'flex', gap: 8 }}>
+          {/* overlay toolbar still uses the original createDesktop (which switches) */}
           <button onClick={createDesktop}>+ New</button>
           <button
             onClick={() => switchDesktop(activeIndex - 1)}
@@ -288,14 +285,14 @@ const MissionControlUI = () => {
         instantSwitchDesktop={instantSwitchDesktop}
         exitOverview={exitOverview}
         setBarExpanded={setBarExpanded}
-        portalReady={portalReady}
-        scaleRefs={scaleRefs}
         wrapperStyle={wrapperStyle}
         overviewOpen={overviewOpen}
         onDragStart={onDragStart}
         onDragOver={onDragOver}
         onDrop={onDrop}
         viewport={viewport}
+        // NEW: bar’s +New uses addDesktop (no switch)
+        createDesktop={addDesktop}
       />
     </div>
   );

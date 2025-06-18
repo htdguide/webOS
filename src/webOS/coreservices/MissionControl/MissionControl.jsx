@@ -1,10 +1,12 @@
 // src/components/MissionControl/MissionControl.jsx
+
 import React, { createContext, useState, useCallback } from 'react';
 import SystemUI from '../SystemUI/SystemUI.jsx';
 import MissionControlUI from './components/MissionControlUI/MissionControlUI.jsx';
 
 export const MissionControlContext = createContext({
   createDesktop: () => {},
+  addDesktop: () => {},
   switchDesktop: (_i) => {},
   deleteDesktop: (_i) => {},
   reorderDesktops: (_from, _to) => {},
@@ -27,6 +29,7 @@ const MissionControl = () => {
   });
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // Original createDesktop: adds AND switches
   const createDesktop = useCallback(() => {
     setDesktops(d => {
       const newId = Date.now();
@@ -40,7 +43,25 @@ const MissionControl = () => {
         }
       ];
     });
+    // switch into the new desktop
     setActiveIndex(idx => idx + 1);
+  }, []);
+
+  // NEW: just adds a desktop, without switching
+  const addDesktop = useCallback(() => {
+    setDesktops(d => {
+      const newId = Date.now();
+      const defaultName = `Desktop ${d.length + 1}`;
+      return [
+        ...d,
+        {
+          id: newId,
+          ui: <SystemUI key={newId} wrapId={newId} />,
+          name: defaultName
+        }
+      ];
+    });
+    // no change to activeIndex
   }, []);
 
   const switchDesktop = useCallback(
@@ -89,6 +110,7 @@ const MissionControl = () => {
     <MissionControlContext.Provider
       value={{
         createDesktop,
+        addDesktop,
         switchDesktop,
         deleteDesktop,
         reorderDesktops,

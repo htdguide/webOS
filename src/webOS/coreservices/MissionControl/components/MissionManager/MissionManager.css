@@ -1,197 +1,166 @@
 /* src/components/MissionControl/MissionBar/MissionManager.css */
 
-@import "../../../../configs/CSSConfigs/animations.css"; /* Importing --easing-flattened
+@import "../../../../configs/CSSConfigs/animations.css"; /* brings in --easing-flattened */
 
-/* ---------- Slide timing variables ---------- */
+/* timing vars & defaults */
 :root {
-  /* Bar slides */
-  --bar-slide-duration: 0.3s;
-  /* Names row slides */
-  --names-slide-duration: 0.3s;
-  /* Desktop panels and wrapper slide more slowly */
-  --desktop-slide-duration: 0.55s;
-  --desktopheight: 90px;
+  --bar-slide-duration:    0.3s;
+  --names-slide-duration:  0.3s;
+  --desktop-slide-duration:0.55s;
+  --desktopheight:         90px;
+
+  /* panel defaults if inline vars missing */
+  --desktop-panel-duration: 2s;
+  --desktop-panel-easing:   var(--easing-flattened);
+  --desktop-panel-animation:slideFromRight;
 }
 
-/* ---------- --screenratio variable comes from jsx ---------- */
-
-/* ---------- Animations used by the bar ---------- */
+/* ---------- Keyframes ---------- */
 @keyframes slideBarShort {
   from { transform: translateY(-145px); opacity: 0; }
   to   { transform: translateY(-105px); opacity: 1; }
 }
-
 @keyframes slideBarFull {
   from { transform: translateY(-105px); }
   to   { transform: translateY(0); }
 }
-
-/* reverse slide-up animation for closing the bar */
 @keyframes slideBarUp {
   from { transform: translateY(0); opacity: 1; }
   to   { transform: translateY(-145px); opacity: 0; }
 }
 
-/* Panels flying in from center when opening */
 @keyframes slideFromCenter {
-  from {
-    transform: translate(var(--tx), var(--ty));
-    opacity: 0;
-  }
-  to {
-    transform: translate(0, 0);
-    opacity: 1;
-  }
+  from { transform: translate(var(--tx), var(--ty)); opacity: 0; }
+  to   { transform: translate(0, 0);               opacity: 1; }
+}
+@keyframes slideFromRight {
+  from { transform: translateX(100vw); opacity: 0; }
+  to   { transform: translateX(0);      opacity: 1; }
 }
 
-/* slide wrapper (and all panels) back up when closing */
 @keyframes slideWrapperUp {
-  from {
-    transform: translateY(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateY(-145px);
-    opacity: 0;
-  }
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(-145px); opacity: 0; }
 }
 
-
-/* ---------- The top bar ---------- */
+/* ---------- MC Bar ---------- */
 .mc-bar {
-  position: absolute;
-  top: 0; left: 0; right: 0;
+  position: absolute; top: 0; left: 0; right: 0;
   height: 145px;
   backdrop-filter: blur(10px);
-  background: rgba(230, 230, 230, 0.7);
+  background: rgba(230,230,230,0.7);
   z-index: 150;
 
   transform: translateY(-145px);
-  /* slide down using bar timing */
   animation: slideBarShort var(--bar-slide-duration) var(--easing-flattened) forwards;
-  transition: none;
 }
-
-/* slide down when fully opened */
 .mission-control-container.overview-open.bar-expanded .mc-bar {
   animation: slideBarFull var(--bar-slide-duration) var(--easing-flattened) forwards;
 }
-
-/* slide up when closing */
 .mission-control-container.overview-open.bar-expanded .mc-bar.closing {
   animation: slideBarUp var(--bar-slide-duration) var(--easing-flattened) forwards;
 }
 
-
 /* ---------- Bar names row ---------- */
 .mc-bar-names {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
+  position: absolute; bottom: 0; left: 0; right: 0;
   height: 40px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: flex; justify-content: center; align-items: center;
   gap: 43px;
-  transform: translateY(0);
-  /* slide names row using names timing */
   transition:
     gap var(--names-slide-duration) var(--easing-flattened),
     transform var(--names-slide-duration) var(--easing-flattened);
 }
-
 .mc-bar-name {
-  display: flex;
-  box-sizing: border-box;
   width: 48px;
-  text-align: center;
-  justify-content: center;
-  color: rgb(33, 35, 36);
   margin-top: 2px;
+  text-align: center;
   font-size: 12px;
-  cursor: pointer;
+  color: rgb(33,35,36);
   opacity: 0.7;
+  cursor: pointer;
   transition: opacity 0.2s;
   white-space: nowrap;
 }
-
 .mc-bar-name:hover,
 .mc-bar-name.active {
   opacity: 1;
 }
-
+.mission-control-container.overview-open.bar-expanded .mc-bar-names {
+  gap: 30px;
+}
 .mission-control-container.overview-open.bar-expanded .mc-bar-name {
-  width: var(--thumb-w);        /* expand to this */
+  width: var(--thumb-w);
   margin-top: 12px;
-  transition: 
-    width 0.2s ease-in-out,  /* sliding animation on expand */
+  transition:
+    width 0.2s ease-in-out,
     margin-top var(--bar-slide-duration) var(--easing-flattened);
 }
 
-.mission-control-container.overview-open.bar-expanded .mc-bar-names {
-  gap: 30px;
+/* ---------- + New button ---------- */
+.mc-bar-new {
+  position: absolute;
+  right: 20px;
+  bottom: 12px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: rgb(33,35,36);
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(33,35,36,0.2);
+  border-radius: 2px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s, background 0.2s;
+  z-index: 160;
+}
+.mc-bar-new:hover {
+  opacity: 1;
+  background: rgba(255,255,255,1);
 }
 
 /* ---------- Exit overlay ---------- */
 .mc-exit-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 140;
+  position: absolute; inset: 0; z-index: 140;
 }
-
 
 /* ---------- Desktops Wrapper ---------- */
 .desktops-wrapper {
-  display: flex;
-  gap: 60px;
-  height: 100%;
-  position: relative;
-  /* slide wrapper using desktop timing */
+  display: flex; gap: 60px; height: 100%; position: relative;
   transition:
     transform var(--desktop-slide-duration) var(--easing-flattened),
-    opacity var(--desktop-slide-duration) var(--easing-flattened);
+    opacity   var(--desktop-slide-duration) var(--easing-flattened);
 }
 
-/* position panels behind bar when opening (hidden state) */
+/* hidden until bar-expanded */
 .mission-control-container.overview-open .desktops-wrapper {
-  position: absolute;
-  top: 30px; left: 0; right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 30px;
-  padding: 0 20px;
-  z-index: 200;
-  flex-wrap: nowrap;
+  position: absolute; top: 30px; left: 0; right: 0;
+  display: flex; align-items: center; justify-content: center;
+  gap: 30px; padding: 0 20px; z-index: 200; flex-wrap: nowrap;
   transform: translateY(-120px);
   opacity: 0;
   transition: none;
 }
 
-/* fly panels in when bar is expanded (slow desktop timing) */
+/* show & slide-down when bar-expanded */
 .mission-control-container.overview-open.bar-expanded .desktops-wrapper {
   transform: translateY(5px);
   opacity: 1;
   transition:
     transform var(--bar-slide-duration) var(--easing-flattened),
-    opacity var(--bar-slide-duration) var(--easing-flattened);
+    opacity   var(--bar-slide-duration) var(--easing-flattened);
 }
 
-/* fly wrapper (and its panels) back up when closing */
+/* slide wrapper up when closing */
 .mission-control-container.overview-open.bar-expanded .desktops-wrapper.closing {
-  transition: none;
   animation: slideWrapperUp var(--bar-slide-duration) var(--easing-flattened) forwards;
 }
 
-
-/* ---------- Desktop Panel (full-screen) ---------- */
+/* ---------- Desktop Panel ---------- */
 .desktop-panel {
-  flex-shrink: 0;
-  width: 100vw;
-  height: 100%;
-  /* make it a stacking context for our overlay */
-  position: relative;
+  flex-shrink: 0; width: 100vw; height: 100%; position: relative;
 }
 
+/* hidden until bar-expanded */
 .mission-control-container.overview-open .desktop-panel {
   overflow: hidden;
   background: transparent;
@@ -201,26 +170,22 @@
   opacity: 0;
 }
 
-/* panels fly in from center using desktop timing */
+/* animate each panel once when bar-expanded */
 .mission-control-container.overview-open.bar-expanded .desktop-panel {
-  animation: slideFromCenter var(--bar-slide-duration) var(--easing-flattened) forwards;
+  animation:
+    var(--panel-animation, var(--desktop-panel-animation))
+    var(--panel-duration,  var(--desktop-panel-duration))
+    var(--panel-easing,    var(--desktop-panel-easing))
+    forwards;
 }
-
 
 /* ---------- Scale Wrapper Inside Each Panel ---------- */
 .desktop-scale-wrapper {
-  width: 100%;
-  height: 100%;
-  /* ensure it sits below the overlay */
-  position: relative;
-  z-index: 1;
+  width: 100%; height: 100%; position: relative; z-index: 1;
 }
-
 
 /* ---------- Invisible blocker overlay ---------- */
 .desktop-panel-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 2;
-  background: transparent;
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 2; background: transparent;
 }
