@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import defaultInitialStates from './initialStates.json';
+import defaultInitialStates from './initialstates.json';
 
 const LOCAL_STORAGE_KEY = 'stateManagerCache';
 
