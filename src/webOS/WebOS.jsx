@@ -2,7 +2,7 @@
 import React from 'react';
 import System from './coreservices/System/System.jsx';
 import MissionControl from './coreservices/MissionControl/MissionControl.jsx';
-import "./webOS.css";
+import "./WebOS.css";
 
 const WebOS = () => {
 
