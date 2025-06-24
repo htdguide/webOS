@@ -4,15 +4,14 @@
 
 /* timing vars & defaults */
 :root {
-  --bar-slide-duration:    0.3s;
-  --names-slide-duration:  0.3s;
-  --desktop-slide-duration:0.55s;
-  --desktopheight:         90px;
+  --bar-slide-duration:      0.3s;
+  --names-slide-duration:    0.3s;
+  --desktop-slide-duration:  0.55s;
+  --desktop-panel-duration:  2s;
+  --desktop-panel-easing:    var(--easing-flattened);
 
-  /* panel defaults if inline vars missing */
-  --desktop-panel-duration: 2s;
-  --desktop-panel-easing:   var(--easing-flattened);
-  --desktop-panel-animation:slideFromRight;
+  /* new var, if you want to reference in CSS */
+  --delete-slide-duration:   0.3s;
 }
 
 /* ---------- Keyframes ---------- */
@@ -69,7 +68,8 @@
   gap: 43px;
   transition:
     gap var(--names-slide-duration) var(--easing-flattened),
-    transform var(--names-slide-duration) var(--easing-flattened);
+    transform var(--names-slide-duration) var(--easing-flattened),
+    margin-left var(--names-slide-duration) var(--easing-flattened);
 }
 .mc-bar-name {
   width: 48px;
