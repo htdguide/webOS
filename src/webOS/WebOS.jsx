@@ -11,7 +11,7 @@ const WebOS = () => {
     <System>
       <MissionControl/>
       <div className='version'>
-        v{webOSver} alpha
+        v{webOSver} alpha test
       </div>
     </System>
   );
