@@ -3,9 +3,8 @@
 import React, { useRef, useEffect, useLayoutEffect, useState } from 'react';
 import './MissionManager.css';
 
-const FADE_DURATION = 300;   // match CSS fade timing (ms)
-const SLIDE_DURATION = 300;  // match wrapper transition (ms)
-// Must match your CSS --desktop-panel-duration (default 2s)
+const SLIDE_DURATION = 300;   // match wrapper transition (ms)
+// should match your CSS --desktop-panel-duration (default 2s)
 const NEW_DESKTOP_ANIMATION_DURATION = 2000;
 
 const MissionManager = ({
@@ -30,20 +29,20 @@ const MissionManager = ({
   const [isShifted, setIsShifted] = useState(false);
   const [isAnimatingBack, setIsAnimatingBack] = useState(false);
 
-  // for name‐fade
-  const [newNamePhase, setNewNamePhase] = useState('idle');
+  // for new-name fade
+  const [newNamePhase, setNewNamePhase] = useState('idle'); // 'idle' | 'init' | 'animating'
   const [newNameIndex, setNewNameIndex] = useState(null);
 
   const panelRefs = useRef([]);
 
-  // 1) baseline IDs when overview opens
+  // capture baseline IDs when overview opens
   useLayoutEffect(() => {
     if (overviewOpen) {
       setBaselineDesktopIds(desktops.map(d => d.id));
     }
   }, [overviewOpen]);
 
-  // 2) screen ratio var
+  // sync screenratio var
   useEffect(() => {
     const update = () => {
       document.documentElement.style.setProperty(
@@ -56,7 +55,7 @@ const MissionManager = ({
     return () => window.removeEventListener('resize', update);
   }, []);
 
-  // 3) scroll active into view
+  // scroll active into view
   useEffect(() => {
     if (overviewOpen && panelRefs.current[activeIndex]) {
       panelRefs.current[activeIndex].scrollIntoView({
@@ -65,7 +64,7 @@ const MissionManager = ({
     }
   }, [overviewOpen, activeIndex]);
 
-  // 4) when shifted, schedule animate-back
+  // when shifted, schedule animate-back
   useEffect(() => {
     if (!isShifted) return;
     const frame = setTimeout(() => {
@@ -79,10 +78,9 @@ const MissionManager = ({
     return () => clearTimeout(frame);
   }, [isShifted]);
 
-  // 5) kick off name‐fade when new desktop appears
+  // kick off name-fade when new desktop appears
   useEffect(() => {
     if (newNamePhase !== 'init' || newNameIndex === null) return;
-    // wait until desktops array has grown
     if (desktops.length <= newNameIndex) return;
 
     let fadeFrame, resetTimer;
@@ -121,21 +119,20 @@ const MissionManager = ({
 
   const handleNewClick = () => {
     if (isClosing) return;
-    // trigger both shift & name fade
     setIsShifted(true);
     setNewNamePhase('init');
     setNewNameIndex(desktops.length);
     createDesktop(false);
   };
 
-  // sizing math
+  // sizing
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
   const THUMB_W = viewport.width * scale;
   const shiftX = THUMB_W + 30;
   const centerIndex = (desktops.length - 1) / 2;
 
-  // panel animation tags
+  // decide animations
   const animations =
     Array.isArray(panelAnimations) && panelAnimations.length === desktops.length
       ? panelAnimations
@@ -148,7 +145,7 @@ const MissionManager = ({
   const barClass = `mc-bar${isClosing ? ' closing' : ''}`;
   const wrapClass = `desktops-wrapper${isClosing ? ' closing' : ''}`;
 
-  // —— WRAPPER style merge ——
+  // —— wrapper style —— 
   const originalWrapperMargin = wrapperStyle.marginLeft ?? '0px';
   const mergedWrapperStyle = { ...wrapperStyle };
   if (isShifted && !isAnimatingBack) {
@@ -160,16 +157,13 @@ const MissionManager = ({
       'margin-left var(--desktop-panel-duration) var(--easing-flattened)';
   }
 
-  // —— NAMES row style merge ——
-  const originalNamesMargin = '0px';
-  const mergedNamesStyle = {
-    '--thumb-w': `${THUMB_W}px`
-  };
+  // —— names row style —— 
+  const mergedNamesStyle = { '--thumb-w': `${THUMB_W}px` };
   if (isShifted && !isAnimatingBack) {
     mergedNamesStyle.marginLeft = `${shiftX}px`;
     mergedNamesStyle.transition = 'none';
   } else if (isAnimatingBack) {
-    mergedNamesStyle.marginLeft = originalNamesMargin;
+    mergedNamesStyle.marginLeft = '0px';
     mergedNamesStyle.transition =
       'margin-left var(--desktop-panel-duration) var(--easing-flattened)';
   }
@@ -181,7 +175,6 @@ const MissionManager = ({
           <div className={barClass} onMouseEnter={() => setBarExpanded(true)}>
             <div className="mc-bar-names" style={mergedNamesStyle}>
               {desktops.map((desk, i) => {
-                // name‐fade override on the brand new one
                 let nameStyle;
                 if (i === newNameIndex && newNamePhase !== 'idle') {
                   if (newNamePhase === 'init') {
@@ -189,8 +182,8 @@ const MissionManager = ({
                   } else if (newNamePhase === 'animating') {
                     nameStyle = {
                       opacity: 1,
-                      transition:
-                        'opacity var(--desktop-panel-duration) var(--easing-flattened)'
+                      // fade *only* over the last 100ms
+                      transition: 'opacity 0.1s var(--easing-flattened) calc(var(--desktop-panel-duration) - 0.1s)'
                     };
                   }
                 }
