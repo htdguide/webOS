@@ -201,6 +201,7 @@ const MissionControlUI = () => {
     ? {
         top: 30,
         height: THUMB_H,
+        marginleft: 0,
         transform: 'none',
         transition: `top ${SLIDE_DURATION}ms ease, height ${SLIDE_DURATION}ms ease, transform ${SLIDE_DURATION}ms ease`
       }

@@ -9,9 +9,9 @@ import React, {
 } from 'react';
 import './MissionManager.css';
 
-const SLIDE_DURATION = 300;                   // overview open/close timing (ms)
-const NEW_DESKTOP_ANIMATION_DURATION = 2000; // your original new‐desktop timing (ms)
-const DELETE_ANIMATION_DURATION = 200;       // <— new deletion timing (ms)
+const SLIDE_DURATION = 300;                    // overview open/close timing (ms)
+const NEW_DESKTOP_ANIMATION_DURATION = 2000;   // new‐desktop timing (ms)
+const DELETE_ANIMATION_DURATION = 200;         // delete timing (ms)
 
 const MissionManager = ({
   desktops,
@@ -32,27 +32,36 @@ const MissionManager = ({
   const [isClosing, setIsClosing] = useState(false);
   const [baselineDesktopIds, setBaselineDesktopIds] = useState([]);
 
-  // for “new desktop” shift/back
+  // new‐desktop shift/back
   const [isShifted, setIsShifted] = useState(false);
   const [isAnimatingBack, setIsAnimatingBack] = useState(false);
 
-  // for “delete desktop” shift/back
+  // wrapper‐level delete shift/back (first or last)
   const [isDeleteShifted, setIsDeleteShifted] = useState(false);
   const [isAnimatingDeleteBack, setIsAnimatingDeleteBack] = useState(false);
-  // amount (px) to shift when deleting; positive for right, negative for left
   const [deleteShiftAmount, setDeleteShiftAmount] = useState(0);
 
-  // for new‐desktop name fade
+  // individual‐panel delete shift/back (for “middle” deletes)
+  const [isPanelShifted, setIsPanelShifted] = useState(false);
+  const [isAnimatingPanelBack, setIsAnimatingPanelBack] = useState(false);
+  const [panelShiftId, setPanelShiftId] = useState(null);
+
+  // individual‐name delete shift/back (for “middle” deletes in the names row)
+  const [isNameShifted, setIsNameShifted] = useState(false);
+  const [isAnimatingNameBack, setIsAnimatingNameBack] = useState(false);
+  const [nameShiftId, setNameShiftId] = useState(null);
+
+  // new‐desktop name fade
   const [newNamePhase, setNewNamePhase] = useState('idle');
   const [newNameIndex, setNewNameIndex] = useState(null);
 
-  // for showing the delete “×” on hover
+  // hover to show delete “×”
   const [showDeleteIndex, setShowDeleteIndex] = useState(null);
   const hoverTimeoutRef = useRef(null);
 
   const panelRefs = useRef([]);
 
-  // capture baseline IDs only when overview first opens
+  // capture baseline IDs when overview first opens
   useLayoutEffect(() => {
     if (overviewOpen) {
       setBaselineDesktopIds(desktops.map(d => d.id));
@@ -72,7 +81,7 @@ const MissionManager = ({
     return () => window.removeEventListener('resize', update);
   }, []);
 
-  // scroll the active thumbnail into center view
+  // center active thumbnail
   useEffect(() => {
     if (overviewOpen && panelRefs.current[activeIndex]) {
       panelRefs.current[activeIndex].scrollIntoView({
@@ -81,7 +90,7 @@ const MissionManager = ({
     }
   }, [overviewOpen, activeIndex]);
 
-  // animate-back for “new desktop”
+  // animate-back for new desktop
   useEffect(() => {
     if (!isShifted) return;
     const frame = setTimeout(() => {
@@ -95,7 +104,7 @@ const MissionManager = ({
     return () => clearTimeout(frame);
   }, [isShifted]);
 
-  // animate-back for “delete desktop”
+  // animate-back for wrapper‐level delete
   useEffect(() => {
     if (!isDeleteShifted) return;
     const frame = setTimeout(() => {
@@ -109,11 +118,40 @@ const MissionManager = ({
     return () => clearTimeout(frame);
   }, [isDeleteShifted]);
 
-  // kick off name-fade when new desktop appears
+  // animate-back for individual‐panel delete
+  useEffect(() => {
+    if (!isPanelShifted) return;
+    const frame = setTimeout(() => {
+      setIsAnimatingPanelBack(true);
+      const timeout = setTimeout(() => {
+        setIsAnimatingPanelBack(false);
+        setIsPanelShifted(false);
+        setPanelShiftId(null);
+      }, DELETE_ANIMATION_DURATION);
+      return () => clearTimeout(timeout);
+    }, 0);
+    return () => clearTimeout(frame);
+  }, [isPanelShifted]);
+
+  // animate-back for individual‐name delete
+  useEffect(() => {
+    if (!isNameShifted) return;
+    const frame = setTimeout(() => {
+      setIsAnimatingNameBack(true);
+      const timeout = setTimeout(() => {
+        setIsAnimatingNameBack(false);
+        setIsNameShifted(false);
+        setNameShiftId(null);
+      }, DELETE_ANIMATION_DURATION);
+      return () => clearTimeout(timeout);
+    }, 0);
+    return () => clearTimeout(frame);
+  }, [isNameShifted]);
+
+  // name‐fade when new desktop appears
   useEffect(() => {
     if (newNamePhase !== 'init' || newNameIndex === null) return;
     if (desktops.length <= newNameIndex) return;
-
     let fadeFrame, resetTimer;
     fadeFrame = setTimeout(() => {
       setNewNamePhase('animating');
@@ -122,7 +160,6 @@ const MissionManager = ({
         setNewNameIndex(null);
       }, NEW_DESKTOP_ANIMATION_DURATION);
     }, 0);
-
     return () => {
       clearTimeout(fadeFrame);
       clearTimeout(resetTimer);
@@ -156,7 +193,7 @@ const MissionManager = ({
     createDesktop();
   };
 
-  const handleMouseEnterPanel = useCallback((i) => {
+  const handleMouseEnterPanel = useCallback(i => {
     hoverTimeoutRef.current = setTimeout(() => {
       setShowDeleteIndex(i);
     }, 1000);
@@ -175,16 +212,35 @@ const MissionManager = ({
   const shiftX = THUMB_W + 30;
   const centerIndex = (desktops.length - 1) / 2;
 
-  // Allow delete of first desktop to shift right, others to shift left
+  // unified delete handler: first, middle, last
   const handleDelete = (e, i) => {
     e.stopPropagation();
-    // first desktop → right shift, others → left shift
-    setDeleteShiftAmount(i === 0 ? shiftX : -shiftX);
-    setIsDeleteShifted(true);
-    deleteDesktop(i);
+    const lastIdx = desktops.length - 1;
+
+    if (i === 0) {
+      // first → shift wrapper right (names & panels)
+      setDeleteShiftAmount(shiftX);
+      setIsDeleteShifted(true);
+      deleteDesktop(i);
+
+    } else if (i === lastIdx) {
+      // last → shift wrapper left (names & panels)
+      setDeleteShiftAmount(-shiftX);
+      setIsDeleteShifted(true);
+      deleteDesktop(i);
+
+    } else {
+      // middle → shift only next panel and next name
+      const next = desktops[i + 1];
+      setPanelShiftId(next.id);
+      setIsPanelShifted(true);
+      setNameShiftId(next.id);
+      setIsNameShifted(true);
+      deleteDesktop(i);
+    }
   };
 
-  // panel entrance animation type
+  // determine panel entrance animation
   const animations =
     Array.isArray(panelAnimations) && panelAnimations.length === desktops.length
       ? panelAnimations
@@ -197,7 +253,7 @@ const MissionManager = ({
   const barClass = `mc-bar${isClosing ? ' closing' : ''}`;
   const wrapClass = `desktops-wrapper${isClosing ? ' closing' : ''}`;
 
-  // —— wrapper style: new shift / new animate-back / delete shift / delete animate-back —— 
+  // —— wrapper style (panels) —— 
   const originalWrapperMargin = wrapperStyle.marginLeft ?? '0px';
   const mergedWrapperStyle = { ...wrapperStyle };
   if (isShifted && !isAnimatingBack) {
@@ -216,7 +272,7 @@ const MissionManager = ({
       `margin-left ${DELETE_ANIMATION_DURATION}ms var(--easing-flattened)`;
   }
 
-  // —— names‐row style mirror —— 
+  // —— names‐row style mirror (entire row) —— 
   const mergedNamesStyle = { '--thumb-w': `${THUMB_W}px` };
   if (isShifted && !isAnimatingBack) {
     mergedNamesStyle.marginLeft = `${shiftX}px`;
@@ -241,7 +297,8 @@ const MissionManager = ({
           <div className={barClass} onMouseEnter={() => setBarExpanded(true)}>
             <div className="mc-bar-names" style={mergedNamesStyle}>
               {desktops.map((desk, i) => {
-                let nameStyle;
+                // base fade/new‐name style
+                let nameStyle = {};
                 if (i === newNameIndex && newNamePhase !== 'idle') {
                   nameStyle =
                     newNamePhase === 'init'
@@ -252,6 +309,29 @@ const MissionManager = ({
                             'opacity 0.1s var(--easing-flattened) calc(var(--desktop-panel-duration) - 0.1s)'
                         };
                 }
+
+                // apply individual‐name delete shift/back
+                if (
+                  desk.id === nameShiftId &&
+                  isNameShifted &&
+                  !isAnimatingNameBack
+                ) {
+                  nameStyle = {
+                    ...nameStyle,
+                    marginLeft: `${shiftX}px`,
+                    transition: 'none'
+                  };
+                } else if (
+                  desk.id === nameShiftId &&
+                  isAnimatingNameBack
+                ) {
+                  nameStyle = {
+                    ...nameStyle,
+                    marginLeft: '0px',
+                    transition: `margin-left ${DELETE_ANIMATION_DURATION}ms var(--easing-flattened)`
+                  };
+                }
+
                 return (
                   <span
                     key={desk.id}
@@ -276,61 +356,82 @@ const MissionManager = ({
       )}
 
       <div className={wrapClass} style={mergedWrapperStyle}>
-        {desktops.map((desk, i) => (
-          <div
-            ref={el => (panelRefs.current[i] = el)}
-            key={desk.id}
-            className="desktop-panel"
-            draggable={overviewOpen}
-            onDragStart={overviewOpen ? e => onDragStart(e, i) : undefined}
-            onDragOver={overviewOpen ? onDragOver : undefined}
-            onDrop={overviewOpen ? e => onDrop(e, i) : undefined}
-            onClick={overviewOpen ? () => handleClick(i) : undefined}
-            onMouseEnter={overviewOpen ? () => handleMouseEnterPanel(i) : undefined}
-            onMouseLeave={overviewOpen ? handleMouseLeavePanel : undefined}
-            style={
-              overviewOpen
-                ? {
-                    width: `${THUMB_W}px`,
-                    height: `${THUMB_H}px`,
-                    '--tx': `${-(i - centerIndex) * (THUMB_W + 30)}px`,
-                    '--ty': `-120px`,
-                    '--panel-animation': animations[i],
-                    '--panel-duration':
-                      animations[i] === 'slideFromCenter'
-                        ? 'var(--bar-slide-duration)'
-                        : '2s',
-                    '--panel-easing': 'var(--easing-flattened)'
-                  }
-                : undefined
-            }
-          >
-            {overviewOpen && showDeleteIndex === i && (
-              <div
-                className="delete-icon"
-                onClick={e => handleDelete(e, i)}
-              >
-                ×
-              </div>
-            )}
-            {overviewOpen && <div className="desktop-panel-overlay" />}
-            <div
-              className="desktop-scale-wrapper"
-              style={
-                overviewOpen
-                  ? {
-                      width: viewport.width,
-                      height: viewport.height,
-                      transform: `scale(${scale})`,
-                      transformOrigin: 'top left'
-                    }
-                  : {}
+        {desktops.map((desk, i) => {
+          // base style for each panel
+          const baseStyle = overviewOpen
+            ? {
+                width: `${THUMB_W}px`,
+                height: `${THUMB_H}px`,
+                '--tx': `${-(i - centerIndex) * (THUMB_W + 30)}px`,
+                '--ty': `-120px`,
+                '--panel-animation': animations[i],
+                '--panel-duration':
+                  animations[i] === 'slideFromCenter'
+                    ? 'var(--bar-slide-duration)'
+                    : '2s',
+                '--panel-easing': 'var(--easing-flattened)'
               }
+            : {};
+
+          // apply individual‐panel delete shift/back
+          const panelStyle = { ...baseStyle };
+          if (
+            desk.id === panelShiftId &&
+            isPanelShifted &&
+            !isAnimatingPanelBack
+          ) {
+            panelStyle.marginLeft = `${shiftX}px`;
+            panelStyle.transition = 'none';
+          } else if (
+            desk.id === panelShiftId &&
+            isAnimatingPanelBack
+          ) {
+            panelStyle.marginLeft = '0px';
+            panelStyle.transition =
+              `margin-left ${DELETE_ANIMATION_DURATION}ms var(--easing-flattened)`;
+          }
+
+          return (
+            <div
+              ref={el => (panelRefs.current[i] = el)}
+              key={desk.id}
+              className="desktop-panel"
+              draggable={overviewOpen}
+              onDragStart={overviewOpen ? e => onDragStart(e, i) : undefined}
+              onDragOver={overviewOpen ? onDragOver : undefined}
+              onDrop={overviewOpen ? e => onDrop(e, i) : undefined}
+              onClick={overviewOpen ? () => handleClick(i) : undefined}
+              onMouseEnter={overviewOpen ? () => handleMouseEnterPanel(i) : undefined}
+              onMouseLeave={overviewOpen ? handleMouseLeavePanel : undefined}
+              style={panelStyle}
             >
-              {desk.ui}
+              {overviewOpen && showDeleteIndex === i && (
+                <div
+                  className="delete-icon"
+                  onClick={e => handleDelete(e, i)}
+                >
+                  ×
+                </div>
+              )}
+              {overviewOpen && <div className="desktop-panel-overlay" />}
+              <div
+                className="desktop-scale-wrapper"
+                style={
+                  overviewOpen
+                    ? {
+                        width: viewport.width,
+                        height: viewport.height,
+                        transform: `scale(${scale})`,
+                        transformOrigin: 'top left'
+                      }
+                    : {}
+                }
+              >
+                {desk.ui}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );
