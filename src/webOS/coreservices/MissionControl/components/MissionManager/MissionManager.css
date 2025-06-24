@@ -1,6 +1,6 @@
 /* src/components/MissionControl/MissionBar/MissionManager.css */
 
-@import "../../../../configs/CSSConfigs/animations.css"; /* brings in --easing-flattened */
+@import "../../../../configs/CSSConfigs/animations.css";
 
 /* timing vars & defaults */
 :root {
@@ -131,7 +131,6 @@
     opacity   var(--desktop-slide-duration) var(--easing-flattened);
 }
 
-/* hidden until bar-expanded */
 .mission-control-container.overview-open .desktops-wrapper {
   position: absolute; top: 30px; left: 0; right: 0;
   display: flex; align-items: center; justify-content: center;
@@ -141,7 +140,6 @@
   transition: none;
 }
 
-/* show & slide-down when bar-expanded */
 .mission-control-container.overview-open.bar-expanded .desktops-wrapper {
   transform: translateY(5px);
   opacity: 1;
@@ -150,7 +148,6 @@
     opacity   var(--bar-slide-duration) var(--easing-flattened);
 }
 
-/* slide wrapper up when closing */
 .mission-control-container.overview-open.bar-expanded .desktops-wrapper.closing {
   animation: slideWrapperUp var(--bar-slide-duration) var(--easing-flattened) forwards;
 }
@@ -160,7 +157,6 @@
   flex-shrink: 0; width: 100vw; height: 100%; position: relative;
 }
 
-/* hidden until bar-expanded */
 .mission-control-container.overview-open .desktop-panel {
   overflow: hidden;
   background: transparent;
@@ -170,7 +166,6 @@
   opacity: 0;
 }
 
-/* animate each panel once when bar-expanded */
 .mission-control-container.overview-open.bar-expanded .desktop-panel {
   animation:
     var(--panel-animation, var(--desktop-panel-animation))
@@ -188,4 +183,26 @@
 .desktop-panel-overlay {
   position: absolute; top: 0; left: 0; right: 0; bottom: 0;
   z-index: 2; background: transparent;
+}
+
+/* ---------- Delete Icon on Hover ---------- */
+.delete-icon {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #333;
+  cursor: pointer;
+  z-index: 3;
+  transition: background 0.2s;
+}
+.delete-icon:hover {
+  background: rgba(255,255,255,1);
 }

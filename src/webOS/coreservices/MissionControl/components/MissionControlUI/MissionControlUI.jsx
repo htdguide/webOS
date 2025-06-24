@@ -24,7 +24,7 @@ const MissionControlUI = () => {
     createDesktop,       // original: adds & switches
     addDesktop,          // new: adds only
     switchDesktop,
-    deleteDesktop,
+    deleteDesktop,       // newly passed through
     reorderDesktops,
     activeIndex,
     desktops
@@ -41,17 +41,14 @@ const MissionControlUI = () => {
     desktops.map(() => false)
   );
 
-  // Refs to keep track of previous values without triggering re-renders
   const prevDesktopsRef = useRef(desktops);
   const prevPortalReadyRef = useRef(portalReady);
 
-  // Whenever `desktops` changes (add/remove/reorder), compute a new portalReady array
   useEffect(() => {
     const prevDesktops = prevDesktopsRef.current;
     const prevReady = prevPortalReadyRef.current;
     const prevLen = prevDesktops.length;
     const currLen = desktops.length;
-
     let newReady;
     if (currLen > prevLen) {
       const diffCount = currLen - prevLen;
@@ -63,25 +60,21 @@ const MissionControlUI = () => {
       });
       newReady = desktops.map(d => idToReady[d.id] || false);
     }
-
     setPortalReady(newReady);
     prevDesktopsRef.current = desktops;
     prevPortalReadyRef.current = newReady;
   }, [desktops]);
 
-  // After each render, check for any newly mounted portal containers and mark them ready
   const scaleRefs = useRef([]);
   useLayoutEffect(() => {
     let changed = false;
     const latestReady = prevPortalReadyRef.current.slice();
-
     desktops.forEach((_, i) => {
       if (!latestReady[i] && scaleRefs.current[i]) {
         latestReady[i] = true;
         changed = true;
       }
     });
-
     if (changed) {
       setPortalReady(latestReady);
       prevPortalReadyRef.current = latestReady;
@@ -98,14 +91,12 @@ const MissionControlUI = () => {
   });
   const [disableSlideTransition, setDisableSlideTransition] = useState(false);
 
-  // 1) Ensure missionControl.opened exists
   useEffect(() => {
     if (!state.groups.missionControl.hasOwnProperty('opened')) {
       addState('missionControl', 'opened', 'false');
     }
   }, [addState, state.groups.missionControl]);
 
-  // 2) On initial mount: if we were left “opened”, reset icon & menubar
   const initialMount = useRef(true);
   useEffect(() => {
     if (!initialMount.current) return;
@@ -118,7 +109,6 @@ const MissionControlUI = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 3) Track window size
   useEffect(() => {
     const onResize = () =>
       setViewport({ width: window.innerWidth, height: window.innerHeight });
@@ -126,12 +116,10 @@ const MissionControlUI = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // 4) Lock background scroll while fading/open
   useEffect(() => {
     document.body.style.overflow = (overviewOpen || isFading) ? 'hidden' : '';
   }, [overviewOpen, isFading]);
 
-  // 5) After fade finishes, actually enter “overview”
   useEffect(() => {
     if (isFading) {
       const timer = setTimeout(() => {
@@ -142,27 +130,19 @@ const MissionControlUI = () => {
     }
   }, [isFading]);
 
-  // 7) Open overview with initial wallpaper placeholder + delay
   const openOverview = useCallback(() => {
     setPrevIndex(activeIndex);
     setBarExpanded(false);
-
-    // 1) immediately render wallpaper at opacity:0
     setShowWallpaperPlaceholder(true);
-
-    // 2) after 200ms, perform the original hide/fade actions
     const t = setTimeout(() => {
       editStateValue('desktop', 'iconVisible', 'false');
       editStateValue('desktop', 'menubarVisible', 'false');
       editStateValue('missionControl', 'opened', 'true');
       setIsFading(true);
     }, OPEN_DELAY);
-
-    // cleanup if unmounted early
     return () => clearTimeout(t);
   }, [activeIndex, editStateValue]);
 
-  // instant switch desktop
   const instantSwitchDesktop = useCallback(
     index => {
       setDisableSlideTransition(true);
@@ -177,16 +157,12 @@ const MissionControlUI = () => {
     }
   }, [disableSlideTransition]);
 
-  // 8) Exit overview
   const exitOverview = useCallback(
     (restore = true) => {
-      // hide the wallpaper placeholder immediately
       setShowWallpaperPlaceholder(false);
-
       setOverviewOpen(false);
       setIsFading(false);
       setBarExpanded(false);
-
       if (state.groups.missionControl.opened === 'true') {
         editStateValue('desktop', 'iconVisible', 'true');
         editStateValue('desktop', 'menubarVisible', 'true');
@@ -202,7 +178,6 @@ const MissionControlUI = () => {
     ]
   );
 
-  // drag & drop handlers
   const onDragStart = useCallback((e, i) => {
     e.dataTransfer.setData('text/plain', String(i));
   }, []);
@@ -219,11 +194,9 @@ const MissionControlUI = () => {
     [reorderDesktops]
   );
 
-  // layout calculations for the desktop panels
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
   const THUMB_W = viewport.width * scale;
-  const centerIndex = (desktops.length - 1) / 2;
   const wrapperStyle = overviewOpen
     ? {
         top: 30,
@@ -249,7 +222,6 @@ const MissionControlUI = () => {
 
       {overlayVisible && (
         <div className="mc-overlay" style={{ display: 'flex', gap: 8 }}>
-          {/* overlay toolbar still uses the original createDesktop (which switches) */}
           <button onClick={createDesktop}>+ New</button>
           <button
             onClick={() => switchDesktop(activeIndex - 1)}
@@ -273,12 +245,10 @@ const MissionControlUI = () => {
         </div>
       )}
 
-      {/* render wallpaper as soon as placeholder is set, then fade when isFading */}
       {(showWallpaperPlaceholder || isFading || overviewOpen) && (
         <WallpaperPlain className="mc-wallpaper" />
       )}
 
-      {/* Always render MissionManager (formerly MissionBar) */}
       <MissionManager
         desktops={desktops}
         activeIndex={activeIndex}
@@ -291,8 +261,8 @@ const MissionControlUI = () => {
         onDragOver={onDragOver}
         onDrop={onDrop}
         viewport={viewport}
-        // NEW: bar’s +New uses addDesktop (no switch)
-        createDesktop={addDesktop}
+        createDesktop={addDesktop}    // +New from bar
+        deleteDesktop={deleteDesktop}  // allow deletion per-panel
       />
     </div>
   );
