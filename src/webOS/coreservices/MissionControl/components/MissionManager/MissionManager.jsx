@@ -5,6 +5,8 @@ import './MissionManager.css';
 
 const FADE_DURATION = 300;   // match CSS fade timing (ms)
 const SLIDE_DURATION = 300;  // match wrapper transition (ms)
+// panel slideFromRight duration is pulled from CSS var --desktop-panel-duration (default 2s)
+const NEW_DESKTOP_ANIMATION_DURATION = 2000;
 
 const MissionManager = ({
   desktops,
@@ -12,37 +14,32 @@ const MissionManager = ({
   instantSwitchDesktop,
   exitOverview,
   setBarExpanded,
-  wrapperStyle,
+  wrapperStyle = {},
   overviewOpen,
   onDragStart,
   onDragOver,
   onDrop,
   viewport,
   panelAnimations,   // optional override array
-  /**
-   * NEW: createDesktop now accepts an optional boolean:
-   *   createDesktop(shouldSwitch: boolean = true)
-   */
+  /** createDesktop(shouldSwitch: boolean = true) **/
   createDesktop
 }) => {
   const [isClosing, setIsClosing] = useState(false);
-
-  // **baselineDesktopIds** holds the list of desktop IDs
-  // that are “existing” at the moment the overview opens.
   const [baselineDesktopIds, setBaselineDesktopIds] = useState([]);
+  // NEW: manage wrapper shift animation state
+  const [isShifted, setIsShifted] = useState(false);
+  const [isAnimatingBack, setIsAnimatingBack] = useState(false);
 
   const panelRefs = useRef([]);
 
-  // Capture the current desktops as “existing” exactly when
-  // overviewOpen flips to true. Using useLayoutEffect prevents a
-  // one-frame mismatch on the first render.
+  // Capture baseline desktop IDs as soon as overview opens
   useLayoutEffect(() => {
     if (overviewOpen) {
       setBaselineDesktopIds(desktops.map(d => d.id));
     }
   }, [overviewOpen]);
 
-  // --screenratio var
+  // Keep --screenratio in sync
   useEffect(() => {
     const update = () => {
       document.documentElement.style.setProperty(
@@ -55,7 +52,7 @@ const MissionManager = ({
     return () => window.removeEventListener('resize', update);
   }, []);
 
-  // scroll into view
+  // Scroll active panel into view
   useEffect(() => {
     if (overviewOpen && panelRefs.current[activeIndex]) {
       panelRefs.current[activeIndex].scrollIntoView({
@@ -63,6 +60,22 @@ const MissionManager = ({
       });
     }
   }, [overviewOpen, activeIndex]);
+
+  // When isShifted flips on, schedule the “animate back” on next tick,
+  // then clear both flags after the panel animation duration.
+  useEffect(() => {
+    if (!isShifted) return;
+    // next tick
+    const frame = setTimeout(() => {
+      setIsAnimatingBack(true);
+      const timeout = setTimeout(() => {
+        setIsAnimatingBack(false);
+        setIsShifted(false);
+      }, NEW_DESKTOP_ANIMATION_DURATION);
+      return () => clearTimeout(timeout);
+    }, 0);
+    return () => clearTimeout(frame);
+  }, [isShifted]);
 
   const handleExit = () => {
     if (isClosing) return;
@@ -83,22 +96,21 @@ const MissionManager = ({
     }, SLIDE_DURATION);
   };
 
-  // **NEW**: don’t switch when clicking “+ New”
+  // NEW: trigger a shift and then create the desktop
   const handleNewClick = () => {
+    if (isClosing) return;
+    setIsShifted(true);
     createDesktop(false);
   };
 
-  // thumbnail sizing
+  // Thumbnail sizing math
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
   const THUMB_W = viewport.width * scale;
+  const shiftX = THUMB_W + 30;              // amount to shift wrapper
   const centerIndex = (desktops.length - 1) / 2;
 
-  // Determine animations:
-  // - If panelAnimations prop is provided and matches, use that
-  // - Otherwise, for each desk:
-  //     • if its ID is in baselineDesktopIds ⇒ ‘slideFromCenter’
-  //     • else (i.e. newly added since open) ⇒ ‘slideFromRight’
+  // Decide per-panel animation
   const animations = Array.isArray(panelAnimations) && panelAnimations.length === desktops.length
     ? panelAnimations
     : desktops.map(desk =>
@@ -109,6 +121,22 @@ const MissionManager = ({
 
   const barClass = `mc-bar${isClosing ? ' closing' : ''}`;
   const wrapClass = `desktops-wrapper${isClosing ? ' closing' : ''}`;
+
+  // figure out original marginLeft (fallback to zero)
+  const originalMarginLeft = wrapperStyle.marginLeft ?? '0px';
+
+  // Merge wrapperStyle prop with our margin-left shift/return logic
+  const mergedWrapperStyle = { ...wrapperStyle };
+
+  if (isShifted && !isAnimatingBack) {
+    // Instant shift to the right
+    mergedWrapperStyle.marginLeft = `${shiftX}px`;
+    mergedWrapperStyle.transition = 'none';
+  } else if (isAnimatingBack) {
+    // Smooth return over panel duration & easing
+    mergedWrapperStyle.marginLeft = originalMarginLeft;
+    mergedWrapperStyle.transition = 'margin-left var(--desktop-panel-duration) var(--easing-flattened)';
+  }
 
   return (
     <>
@@ -125,11 +153,7 @@ const MissionManager = ({
               {desktops.map((desk, i) => (
                 <span
                   key={desk.id}
-                  className={
-                    i === activeIndex
-                      ? 'mc-bar-name active'
-                      : 'mc-bar-name'
-                  }
+                  className={i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'}
                   onClick={() => handleClick(i)}
                 >
                   {desk.name || `Desktop ${i + 1}`}
@@ -137,7 +161,7 @@ const MissionManager = ({
               ))}
             </div>
 
-            {/* + New button on the right edge */}
+            {/* + New button */}
             <button
               className="mc-bar-new"
               onClick={handleNewClick}
@@ -149,7 +173,7 @@ const MissionManager = ({
         </>
       )}
 
-      <div className={wrapClass} style={wrapperStyle}>
+      <div className={wrapClass} style={mergedWrapperStyle}>
         {desktops.map((desk, i) => (
           <div
             ref={el => (panelRefs.current[i] = el)}

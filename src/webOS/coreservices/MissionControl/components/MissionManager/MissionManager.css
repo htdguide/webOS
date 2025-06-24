@@ -125,6 +125,7 @@
 
 /* ---------- Desktops Wrapper ---------- */
 .desktops-wrapper {
+  marg
   display: flex; gap: 60px; height: 100%; position: relative;
   transition:
     transform var(--desktop-slide-duration) var(--easing-flattened),
