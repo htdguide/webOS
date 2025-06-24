@@ -5,7 +5,7 @@ import './MissionManager.css';
 
 const FADE_DURATION = 300;   // match CSS fade timing (ms)
 const SLIDE_DURATION = 300;  // match wrapper transition (ms)
-// panel slideFromRight duration is pulled from CSS var --desktop-panel-duration (default 2s)
+// Must match your CSS --desktop-panel-duration (default 2s)
 const NEW_DESKTOP_ANIMATION_DURATION = 2000;
 
 const MissionManager = ({
@@ -20,26 +20,30 @@ const MissionManager = ({
   onDragOver,
   onDrop,
   viewport,
-  panelAnimations,   // optional override array
-  /** createDesktop(shouldSwitch: boolean = true) **/
+  panelAnimations,
   createDesktop
 }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [baselineDesktopIds, setBaselineDesktopIds] = useState([]);
-  // NEW: manage wrapper shift animation state
+
+  // for wrapper shift
   const [isShifted, setIsShifted] = useState(false);
   const [isAnimatingBack, setIsAnimatingBack] = useState(false);
 
+  // for name‐fade
+  const [newNamePhase, setNewNamePhase] = useState('idle');
+  const [newNameIndex, setNewNameIndex] = useState(null);
+
   const panelRefs = useRef([]);
 
-  // Capture baseline desktop IDs as soon as overview opens
+  // 1) baseline IDs when overview opens
   useLayoutEffect(() => {
     if (overviewOpen) {
       setBaselineDesktopIds(desktops.map(d => d.id));
     }
   }, [overviewOpen]);
 
-  // Keep --screenratio in sync
+  // 2) screen ratio var
   useEffect(() => {
     const update = () => {
       document.documentElement.style.setProperty(
@@ -52,7 +56,7 @@ const MissionManager = ({
     return () => window.removeEventListener('resize', update);
   }, []);
 
-  // Scroll active panel into view
+  // 3) scroll active into view
   useEffect(() => {
     if (overviewOpen && panelRefs.current[activeIndex]) {
       panelRefs.current[activeIndex].scrollIntoView({
@@ -61,11 +65,9 @@ const MissionManager = ({
     }
   }, [overviewOpen, activeIndex]);
 
-  // When isShifted flips on, schedule the “animate back” on next tick,
-  // then clear both flags after the panel animation duration.
+  // 4) when shifted, schedule animate-back
   useEffect(() => {
     if (!isShifted) return;
-    // next tick
     const frame = setTimeout(() => {
       setIsAnimatingBack(true);
       const timeout = setTimeout(() => {
@@ -76,6 +78,27 @@ const MissionManager = ({
     }, 0);
     return () => clearTimeout(frame);
   }, [isShifted]);
+
+  // 5) kick off name‐fade when new desktop appears
+  useEffect(() => {
+    if (newNamePhase !== 'init' || newNameIndex === null) return;
+    // wait until desktops array has grown
+    if (desktops.length <= newNameIndex) return;
+
+    let fadeFrame, resetTimer;
+    fadeFrame = setTimeout(() => {
+      setNewNamePhase('animating');
+      resetTimer = setTimeout(() => {
+        setNewNamePhase('idle');
+        setNewNameIndex(null);
+      }, NEW_DESKTOP_ANIMATION_DURATION);
+    }, 0);
+
+    return () => {
+      clearTimeout(fadeFrame);
+      clearTimeout(resetTimer);
+    };
+  }, [desktops.length, newNamePhase, newNameIndex]);
 
   const handleExit = () => {
     if (isClosing) return;
@@ -96,76 +119,96 @@ const MissionManager = ({
     }, SLIDE_DURATION);
   };
 
-  // NEW: trigger a shift and then create the desktop
   const handleNewClick = () => {
     if (isClosing) return;
+    // trigger both shift & name fade
     setIsShifted(true);
+    setNewNamePhase('init');
+    setNewNameIndex(desktops.length);
     createDesktop(false);
   };
 
-  // Thumbnail sizing math
+  // sizing math
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
   const THUMB_W = viewport.width * scale;
-  const shiftX = THUMB_W + 30;              // amount to shift wrapper
+  const shiftX = THUMB_W + 30;
   const centerIndex = (desktops.length - 1) / 2;
 
-  // Decide per-panel animation
-  const animations = Array.isArray(panelAnimations) && panelAnimations.length === desktops.length
-    ? panelAnimations
-    : desktops.map(desk =>
-        baselineDesktopIds.includes(desk.id)
-          ? 'slideFromCenter'
-          : 'slideFromRight'
-      );
+  // panel animation tags
+  const animations =
+    Array.isArray(panelAnimations) && panelAnimations.length === desktops.length
+      ? panelAnimations
+      : desktops.map(d =>
+          baselineDesktopIds.includes(d.id)
+            ? 'slideFromCenter'
+            : 'slideFromRight'
+        );
 
   const barClass = `mc-bar${isClosing ? ' closing' : ''}`;
   const wrapClass = `desktops-wrapper${isClosing ? ' closing' : ''}`;
 
-  // figure out original marginLeft (fallback to zero)
-  const originalMarginLeft = wrapperStyle.marginLeft ?? '0px';
-
-  // Merge wrapperStyle prop with our margin-left shift/return logic
+  // —— WRAPPER style merge ——
+  const originalWrapperMargin = wrapperStyle.marginLeft ?? '0px';
   const mergedWrapperStyle = { ...wrapperStyle };
-
   if (isShifted && !isAnimatingBack) {
-    // Instant shift to the right
     mergedWrapperStyle.marginLeft = `${shiftX}px`;
     mergedWrapperStyle.transition = 'none';
   } else if (isAnimatingBack) {
-    // Smooth return over panel duration & easing
-    mergedWrapperStyle.marginLeft = originalMarginLeft;
-    mergedWrapperStyle.transition = 'margin-left var(--desktop-panel-duration) var(--easing-flattened)';
+    mergedWrapperStyle.marginLeft = originalWrapperMargin;
+    mergedWrapperStyle.transition =
+      'margin-left var(--desktop-panel-duration) var(--easing-flattened)';
+  }
+
+  // —— NAMES row style merge ——
+  const originalNamesMargin = '0px';
+  const mergedNamesStyle = {
+    '--thumb-w': `${THUMB_W}px`
+  };
+  if (isShifted && !isAnimatingBack) {
+    mergedNamesStyle.marginLeft = `${shiftX}px`;
+    mergedNamesStyle.transition = 'none';
+  } else if (isAnimatingBack) {
+    mergedNamesStyle.marginLeft = originalNamesMargin;
+    mergedNamesStyle.transition =
+      'margin-left var(--desktop-panel-duration) var(--easing-flattened)';
   }
 
   return (
     <>
       {overviewOpen && (
         <>
-          <div
-            className={barClass}
-            onMouseEnter={() => setBarExpanded(true)}
-          >
-            <div
-              className="mc-bar-names"
-              style={{ '--thumb-w': `${THUMB_W}px` }}
-            >
-              {desktops.map((desk, i) => (
-                <span
-                  key={desk.id}
-                  className={i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'}
-                  onClick={() => handleClick(i)}
-                >
-                  {desk.name || `Desktop ${i + 1}`}
-                </span>
-              ))}
+          <div className={barClass} onMouseEnter={() => setBarExpanded(true)}>
+            <div className="mc-bar-names" style={mergedNamesStyle}>
+              {desktops.map((desk, i) => {
+                // name‐fade override on the brand new one
+                let nameStyle;
+                if (i === newNameIndex && newNamePhase !== 'idle') {
+                  if (newNamePhase === 'init') {
+                    nameStyle = { opacity: 0, transition: 'none' };
+                  } else if (newNamePhase === 'animating') {
+                    nameStyle = {
+                      opacity: 1,
+                      transition:
+                        'opacity var(--desktop-panel-duration) var(--easing-flattened)'
+                    };
+                  }
+                }
+
+                return (
+                  <span
+                    key={desk.id}
+                    className={i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'}
+                    onClick={() => handleClick(i)}
+                    style={nameStyle}
+                  >
+                    {desk.name || `Desktop ${i + 1}`}
+                  </span>
+                );
+              })}
             </div>
 
-            {/* + New button */}
-            <button
-              className="mc-bar-new"
-              onClick={handleNewClick}
-            >
+            <button className="mc-bar-new" onClick={handleNewClick}>
               + New
             </button>
           </div>
