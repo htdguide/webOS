@@ -7,19 +7,22 @@ import BIOS from '../src/BIOS/BIOS';
 
 const Main = () => {
   useEffect(() => {
-    // Prevent wheel-based scrolling
-    const preventScroll = (e) => {
+    // Prevent all scrolling
+    const preventDefault = (e) => {
       e.preventDefault();
     };
 
-    // Add listeners for both mouse wheel and touch moves
-    document.addEventListener('wheel', preventScroll, { passive: false });
-    document.addEventListener('touchmove', preventScroll, { passive: false });
+    // Block wheel, touchmove, text selection start, and context menu (long-press)
+    document.addEventListener('wheel', preventDefault, { passive: false });
+    document.addEventListener('touchmove', preventDefault, { passive: false });
+    document.addEventListener('selectstart', preventDefault);
+    document.addEventListener('contextmenu', preventDefault);
 
-    // Clean up on unmount
     return () => {
-      document.removeEventListener('wheel', preventScroll);
-      document.removeEventListener('touchmove', preventScroll);
+      document.removeEventListener('wheel', preventDefault);
+      document.removeEventListener('touchmove', preventDefault);
+      document.removeEventListener('selectstart', preventDefault);
+      document.removeEventListener('contextmenu', preventDefault);
     };
   }, []);
 

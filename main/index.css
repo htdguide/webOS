@@ -6,10 +6,15 @@ html, body, #root {
   padding: 0;
   width: 100%;
   height: 100%;
-  background-color: black;          /* Outside the monitor: black */
-  overflow: hidden !important;      /* Disable all scrolling */
-  touch-action: none !important;    /* Disable touch scrolling */
-  overscroll-behavior: none !important; /* Prevent scroll chaining */
+  background-color: black;                /* Outside the monitor: black */
+  overflow: hidden !important;            /* Disable scrolling */
+  touch-action: none !important;          /* Disable touch gestures */
+  overscroll-behavior: none !important;   /* Prevent scroll chaining */
+  -webkit-user-select: none !important;   /* Disable text selection in WebKit */
+  -moz-user-select: none !important;      /* Disable text selection in Firefox */
+  -ms-user-select: none !important;       /* Disable text selection in IE10+ */
+  user-select: none !important;           /* Standard property */
+  -webkit-tap-highlight-color: transparent !important; /* Remove tap highlight flash */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
@@ -30,10 +35,18 @@ body > iframe {
   overflow: hidden !important;
   touch-action: none !important;
   overscroll-behavior: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
 }
 
-/* Block any remaining overscroll on all elements */
+/* Apply to all elements, to be sure no child can be selected */
 * {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
   touch-action: none !important;
   overscroll-behavior: none !important;
 }
