@@ -1,13 +1,15 @@
 /* index.css */
 
 /* Global styles */
-body, html {
+html, body, #root {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
-  background-color: black; /* Outside the monitor: black */
-  overflow: hidden;
+  background-color: black;          /* Outside the monitor: black */
+  overflow: hidden !important;      /* Disable all scrolling */
+  touch-action: none !important;    /* Disable touch scrolling */
+  overscroll-behavior: none !important; /* Prevent scroll chaining */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
@@ -16,19 +18,22 @@ body, html {
   display: none !important;
 }
 
-/* App.css */
-
 /* Hide any iframes that might be embedded inadvertently */
 body > iframe {
   display: none;
 }
 
-/* Prevent scrolling on the global document.
-   Note: The .desktop container is our new full-size "screen" */
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+/* If you have a full-screen container like .desktop, lock it too */
+.desktop {
+  width: 100%;
   height: 100%;
+  overflow: hidden !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
 }
 
+/* Block any remaining overscroll on all elements */
+* {
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+}
