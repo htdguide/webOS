@@ -13,12 +13,14 @@ import Noterminal from '../../initialapps/Noterminal/Noterminal.jsx';
 import terminalIcon from '../../media/icons/terminal.png';
 import Mario64 from '../../initialapps/Mario64/Mario64.jsx';
 import marioIcon from '../../media/icons/mario64.png';
-import quakeIcon from '../../media/icons/quake3.png'
+import quakeIcon from '../../media/icons/quake3.png';
 import Quake3 from '../../initialapps/Quake3/Quake3.jsx';
 import missioncontrolicon from '../../media/icons/missioncontrol.png';
+
 /**
  * The initial list of apps.
  * The `indock` field determines if the icon should be rendered on the desktop.
+ * The new `available` field determines if the app is enabled (true) or disabled (false).
  */
 const initialAppsList = [
   {
@@ -28,6 +30,7 @@ const initialAppsList = [
     component: Noterminal,
     priority: 4,
     indock: false,
+    available: true,
   },
   {
     id: 'mario',
@@ -36,6 +39,7 @@ const initialAppsList = [
     component: Mario64,
     priority: 5,
     indock: false,
+    available: true,
   },
   {
     id: 'quake3',
@@ -44,6 +48,7 @@ const initialAppsList = [
     component: Quake3,
     priority: 6,
     indock: false,
+    available: true,
   },
   {
     id: 'linkedin',
@@ -53,6 +58,7 @@ const initialAppsList = [
     component: null,
     priority: 2,
     indock: false,
+    available: true,
   },
   {
     id: 'github',
@@ -62,6 +68,7 @@ const initialAppsList = [
     component: null,
     priority: 1,
     indock: false,
+    available: true,
   },
   {
     id: 'awai',
@@ -71,6 +78,7 @@ const initialAppsList = [
     component: null,
     priority: 3,
     indock: false,
+    available: true,
   },
   {
     id: 'finder',
@@ -79,6 +87,7 @@ const initialAppsList = [
     component: null,
     priority: 1,
     indock: true,
+    available: false,
   },
   {
     id: 'launchpad',
@@ -87,6 +96,7 @@ const initialAppsList = [
     component: null,
     priority: 2,
     indock: true,
+    available: false,
   },
   {
     id: 'missioncontrol',
@@ -95,6 +105,7 @@ const initialAppsList = [
     component: null,
     priority: 3,
     indock: true,
+    available: true,
   },
   {
     id: 'settings',
@@ -103,6 +114,16 @@ const initialAppsList = [
     component: null,
     priority: 5,
     indock: true,
+    available: false,
+  },
+  {
+    id: 'psx',
+    name: 'PSX',
+    icon: psxIcon,
+    component: null,
+    priority: 6,
+    indock: true,
+    available: false,
   },
 ];
 
@@ -121,13 +142,9 @@ export const AppsProvider = ({ children }) => {
   /**
    * Adds a new app to the apps list if it doesn't already exist.
    * Optionally, if open is true, also adds the app to the openedApps list.
-   *
-   * @param {Object} app - The app object to add.
-   * @param {boolean} [open=false] - Whether to add the app to the openedApps list.
    */
   const addApp = (app, open = false) => {
     setApps((prevApps) => {
-      // Only add the app if it doesn't exist yet.
       if (!prevApps.find((a) => a.id === app.id)) {
         return [...prevApps, app];
       }
@@ -136,7 +153,6 @@ export const AppsProvider = ({ children }) => {
 
     if (open) {
       setOpenedApps((prevOpened) => {
-        // Only add the app if it's not already opened.
         if (!prevOpened.find((a) => a.id === app.id)) {
           return [...prevOpened, app];
         }

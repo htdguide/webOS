@@ -1,8 +1,6 @@
-// src/components/Dock/Dock.jsx
-
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useDock } from '../../interactions/useDock/useDock.jsx';
-import { AppsContext } from '../../contexts/AppsContext/AppsContext';
+import { AppsContext } from '../../contexts/AppsContext/AppsContext.jsx';
 import DOCK_CONFIG from '../../configs/DockConfig/DockConfig';
 import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvider';
 import { useStateManager } from '../../stores/StateManager/StateManager';
@@ -18,6 +16,7 @@ import {
   getTooltipArrowStyle,
   getOpenIndicatorStyle,
 } from './DockStyle';
+import disabledOverlay from '../../media/icons/disable.png'; // <- your 30%-opacity overlay image
 
 export default function Dock() {
   const {
@@ -66,15 +65,12 @@ export default function Dock() {
     useLogger,
   });
 
-  // keep opacity true until after slide finishes
   const [fadeVisible, setFadeVisible] = useState(isDockVisible);
-
-  // measure Safari’s bottom toolbar on iPhone BEFORE paint
   const [toolbarOffset, setToolbarOffset] = useState(0);
+
   useLayoutEffect(() => {
     const updateOffset = () => {
       if (window.visualViewport) {
-        // never go below zero
         const diff = window.innerHeight - window.visualViewport.height;
         setToolbarOffset(diff > 0 ? diff : 0);
       }
@@ -98,14 +94,11 @@ export default function Dock() {
     return () => clearTimeout(timer);
   }, [isDockVisible]);
 
-  // base style (incl. your existing safe-area handling)
   const outerStyle = {
     ...getOuterContainerStyle(DOCK_POSITION, DOCK_MARGIN, isDockVisible),
     opacity: fadeVisible ? 1 : 0,
-    top: 'auto', // ensure we don't accidentally get pushed to the top
+    top: 'auto',
   };
-
-  // if bottom‐docked, include the clamped toolbarOffset
   if (DOCK_POSITION === 'bottom') {
     outerStyle.bottom = `calc(${toolbarOffset + DOCK_MARGIN}px + env(safe-area-inset-bottom))`;
   }
@@ -130,20 +123,23 @@ export default function Dock() {
           {appsToRender.map((app, index) => (
             <div
               key={app.id}
-              style={getIconContainerStyle({
-                index,
-                paginationEnabled,
-                scales,
-                currentPage,
-                iconsPerPage,
-                ICON_SIZE,
-                ICON_MARGIN,
-                ADDITIONAL_MARGIN,
-                shouldTransition,
-                INITIAL_TRANSITION,
-                NO_TRANSITION,
-                DOCK_POSITION,
-              })}
+              style={{
+                ...getIconContainerStyle({
+                  index,
+                  paginationEnabled,
+                  scales,
+                  currentPage,
+                  iconsPerPage,
+                  ICON_SIZE,
+                  ICON_MARGIN,
+                  ADDITIONAL_MARGIN,
+                  shouldTransition,
+                  INITIAL_TRANSITION,
+                  NO_TRANSITION,
+                  DOCK_POSITION,
+                }),
+                position: 'relative', // allow overlay
+              }}
               onClick={() => openApp(app)}
               onMouseEnter={() => handleIconMouseEnter(app.id)}
               onMouseLeave={handleIconMouseLeave}
@@ -164,9 +160,26 @@ export default function Dock() {
                 </div>
               )}
 
+              {/* App icon */}
               <img src={app.icon} alt={app.name} style={iconImageStyle} />
 
-              {/* Open-indicator dot disabled */}
+              {/* Disabled-overlay */}
+              {!app.available && (
+                <img
+                  src={disabledOverlay}
+                  alt={`${app.name} disabled`}
+                  style={{
+                    ...iconImageStyle,
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    opacity: 0.9,
+                    pointerEvents: 'none',
+                  }}
+                />
+              )}
+
+              {/* Open-indicator dot (disabled by default) */}
               {/*
                 {openedApps.includes(app.id) && (
                   <div style={getOpenIndicatorStyle(DOCK_POSITION)} />

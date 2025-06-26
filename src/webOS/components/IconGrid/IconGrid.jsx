@@ -1,4 +1,3 @@
-// src/components/IconGrid/IconGrid.jsx
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowWrap.jsx';
 import { AppsContext } from '../../contexts/AppsContext/AppsContext.jsx';
@@ -308,7 +307,7 @@ function IconGrid({ onOpenApp }) {
     window.addEventListener('touchend', onEnd);
   };
 
-  // ── Recompute on resize: clamp only OOB icons, keep in-bounds stable ──
+  // ── Recompute on resize ──────────────────────────────────────────
   useEffect(() => {
     const handleResize = () => {
       if (!containerRef.current) return;
@@ -316,7 +315,7 @@ function IconGrid({ onOpenApp }) {
       const maxCols = Math.floor((width - leftMargin - rightMargin) / cellSize);
       const maxRows = Math.floor((height - topMargin - bottomMargin) / cellSize);
 
-      // build occupied set of cells for in-bounds icons
+      // occupied set for in-bounds
       const occupied = new Set();
       const outOfBounds = [];
       Object.entries(primaryGridRef.current).forEach(([id, { col, row }]) => {
@@ -328,7 +327,7 @@ function IconGrid({ onOpenApp }) {
       });
 
       const newPositions = {};
-      // place in-bounds icons at their grid spots
+      // in-bounds
       Object.entries(primaryGridRef.current).forEach(([id, { col, row }]) => {
         if (occupied.has(`${col},${row}`)) {
           newPositions[id] = {
@@ -338,7 +337,7 @@ function IconGrid({ onOpenApp }) {
         }
       });
 
-      // clamp out-of-bounds icons to nearest free cells
+      // clamp OOB
       outOfBounds.forEach(([id, { col, row }]) => {
         const clampCol = Math.max(0, Math.min(col, maxCols));
         const clampRow = Math.max(0, Math.min(row, maxRows));
@@ -390,6 +389,7 @@ function IconGrid({ onOpenApp }) {
             id={cfg.id}
             name={cfg.name}
             icon={cfg.icon}
+            available={cfg.available}              
             isSelected={selectedIcons.includes(cfg.id)}
             selectedCount={selectedIcons.length}
             onClick={() => handleIconClick(cfg.id)}

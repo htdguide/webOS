@@ -1,5 +1,3 @@
-// src/components/DesktopIcon/DesktopIcon.jsx
-
 import React, { useState, useRef, useEffect } from 'react';
 import './DesktopIcon.css';
 
@@ -17,6 +15,9 @@ import {
   DOUBLE_TAP_DELAY
 } from '../../configs/DesktopIconConfig/DesktopIconConfig.jsx';
 
+// 30%-opacity overlay PNG
+import disabledOverlay from '../../media/icons/disable.png';
+
 function DesktopIcon({
   wrapId,
   id,
@@ -29,6 +30,7 @@ function DesktopIcon({
   disableClick,
   clearDisableClick,
   icon,
+  available = true,             // ← new prop
   position: controlledPosition,
   onPositionChange
 }) {
@@ -81,30 +83,19 @@ function DesktopIcon({
     );
   }
 
+  // Hold/drag/tap interactions (unchanged)…
   const handleMouseDown = (e) => {
     if (isSelected && selectedCount > 1 && onGroupMouseDown) {
       onGroupMouseDown(e);
       return;
     }
     e.preventDefault();
-    if (enabled) {
-      log(
-        'userInteraction',
-        `Mouse down on "${name}" at clientX=${e.clientX},clientY=${e.clientY}`
-      );
-    }
     startHold(
       e.clientX,
       e.clientY,
       iconRef,
       setHoldTimer,
       (x, y, offsetX, offsetY) => {
-        if (enabled) {
-          log(
-            'userInteraction',
-            `Start dragging "${name}" at x=${x},y=${y}`
-          );
-        }
         startDragging(
           x,
           y,
@@ -137,24 +128,12 @@ function DesktopIcon({
       });
       return;
     }
-    if (enabled) {
-      log(
-        'userInteraction',
-        `Touch start on "${name}" at x=${touch.clientX},y=${touch.clientY}`
-      );
-    }
     startHold(
       touch.clientX,
       touch.clientY,
       iconRef,
       setHoldTimer,
       (x, y, offsetX, offsetY) => {
-        if (enabled) {
-          log(
-            'userInteraction',
-            `Start drag (touch) "${name}" at x=${x},y=${y}`
-          );
-        }
         startDragging(
           x,
           y,
@@ -177,15 +156,8 @@ function DesktopIcon({
     );
   };
 
-  const wrapperOnClick = () => {
-    if (enabled) log('userInteraction', `Single-click "${name}"`);
-    onClick();
-  };
-
-  const wrapperOnDoubleClick = () => {
-    if (enabled) log('userInteraction', `Double-click "${name}"`);
-    onDoubleClick();
-  };
+  const wrapperOnClick = () => onClick();
+  const wrapperOnDoubleClick = () => onDoubleClick();
 
   const iconStyle = {
     '--icon-width': `${iconWidth}px`,
@@ -210,12 +182,8 @@ function DesktopIcon({
       style={iconStyle}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
-      onMouseUp={() => {
-        if (enabled) log('userInteraction', `Mouse up "${name}"`);
-        cancelHold(holdTimer, setHoldTimer);
-      }}
+      onMouseUp={() => cancelHold(holdTimer, setHoldTimer)}
       onTouchEnd={(e) => {
-        if (enabled) log('userInteraction', `Touch end "${name}"`);
         cancelHold(holdTimer, setHoldTimer);
         if (disableClick) {
           clearDisableClick();
@@ -229,10 +197,7 @@ function DesktopIcon({
           DOUBLE_TAP_DELAY
         );
       }}
-      onMouseLeave={() => {
-        if (enabled) log('userInteraction', `Mouse leave "${name}"`);
-        cancelHold(holdTimer, setHoldTimer);
-      }}
+      onMouseLeave={() => cancelHold(holdTimer, setHoldTimer)}
       onClick={(e) => {
         e.stopPropagation();
         if (disableClick) {
@@ -248,12 +213,29 @@ function DesktopIcon({
         );
       }}
     >
-      <div className="icon-frame">
+      <div className="icon-frame" style={{ position: 'relative' }}>
         <div className="icon-highlight" />
         <div
           className="icon-image"
           style={{ backgroundImage: `url(${icon})` }}
         />
+        {/* Disabled-overlay */}
+        {!available && (
+          <img
+            src={disabledOverlay}
+            alt={`${name} disabled`}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              opacity: 0.9,
+              pointerEvents: 'none',
+              zIndex: 2
+            }}
+          />
+        )}
       </div>
       <div className="icon-label">{name}</div>
     </div>
