@@ -15,16 +15,22 @@ import { useStateManager } from '../../../../stores/StateManager/StateManager.js
 import './MissionControlUI.css';
 import MissionManager from '../MissionManager/MissionManager.jsx';
 
-const FADE_DURATION = 300;   // match CSS fade timing (ms)
-const SLIDE_DURATION = 300;  // match wrapper transition (ms)
-const OPEN_DELAY = 200;      // new delay before fade (ms)
+const FADE_DURATION = 300;   // CSS fade timing (ms)
+const SLIDE_DURATION = 300;  // overview slide timing (ms)
+const OPEN_DELAY = 200;      // delay before fade (ms)
+
+// Hint configuration
+const EDGE_THRESHOLD = 20;        // px from either edge to trigger hint
+const HOVER_DELAY = 300;         // ms to wait before showing hint (1 s)
+const HINT_OFFSET = 10;           // px to slide as a hint
+const HINT_SLIDE_DURATION = 200;  // ms for hint animation
 
 const MissionControlUI = () => {
   const {
-    createDesktop,       // original: adds & switches
-    addDesktop,          // new: adds only
+    createDesktop,  // original: adds & switches
+    addDesktop,     // new: adds only
     switchDesktop,
-    deleteDesktop,       // newly passed through
+    deleteDesktop,
     reorderDesktops,
     activeIndex,
     desktops
@@ -34,69 +40,78 @@ const MissionControlUI = () => {
   const overlayVisible =
     state.groups.missionControl?.overlayVisible === 'true';
 
-  // New flag: render wallpaper at opacity 0 immediately when opening
+  // Basic UI state
   const [showWallpaperPlaceholder, setShowWallpaperPlaceholder] = useState(false);
-  // track when each portal can mount (initially all false)
   const [portalReady, setPortalReady] = useState(() =>
     desktops.map(() => false)
   );
 
-  const prevDesktopsRef = useRef(desktops);
-  const prevPortalReadyRef = useRef(portalReady);
+  // Hint state
+  const [showRightHint, setShowRightHint] = useState(false);
+  const [showLeftHint, setShowLeftHint] = useState(false);
+  const hintTimerRef = useRef(null);
+  const hoverSideRef = useRef(null);       // 'left' | 'right' | null
+  const isMouseDownRef = useRef(false);    // track if a button is held
 
-  useEffect(() => {
-    const prevDesktops = prevDesktopsRef.current;
-    const prevReady = prevPortalReadyRef.current;
-    const prevLen = prevDesktops.length;
-    const currLen = desktops.length;
-    let newReady;
-    if (currLen > prevLen) {
-      const diffCount = currLen - prevLen;
-      newReady = [...prevReady, ...Array(diffCount).fill(false)];
-    } else {
-      const idToReady = {};
-      prevDesktops.forEach((d, idx) => {
-        idToReady[d.id] = prevReady[idx];
-      });
-      newReady = desktops.map(d => idToReady[d.id] || false);
-    }
-    setPortalReady(newReady);
-    prevDesktopsRef.current = desktops;
-    prevPortalReadyRef.current = newReady;
-  }, [desktops]);
-
-  const scaleRefs = useRef([]);
-  useLayoutEffect(() => {
-    let changed = false;
-    const latestReady = prevPortalReadyRef.current.slice();
-    desktops.forEach((_, i) => {
-      if (!latestReady[i] && scaleRefs.current[i]) {
-        latestReady[i] = true;
-        changed = true;
-      }
-    });
-    if (changed) {
-      setPortalReady(latestReady);
-      prevPortalReadyRef.current = latestReady;
-    }
-  });
-
-  const [overviewOpen, setOverviewOpen] = useState(false);
-  const [isFading, setIsFading] = useState(false);
-  const [barExpanded, setBarExpanded] = useState(false);
-  const [prevIndex, setPrevIndex] = useState(0);
+  // Window size for edge detection
   const [viewport, setViewport] = useState({
     width: window.innerWidth,
     height: window.innerHeight
   });
-  const [disableSlideTransition, setDisableSlideTransition] = useState(false);
 
+  // Mission‐Control state
+  const [overviewOpen, setOverviewOpen] = useState(false);
+  const [isFading, setIsFading] = useState(false);
+  const [disableSlideTransition, setDisableSlideTransition] = useState(false);
+  const [barExpanded, setBarExpanded] = useState(false);
+  const [prevIndex, setPrevIndex] = useState(0);
+
+  // Refs for tracking portal readiness
+  const prevDesktopsRef = useRef(desktops);
+  const prevPortalReadyRef = useRef(portalReady);
+  const scaleRefs = useRef([]);
+
+  // Sync portalReady when desktops array changes
+  useEffect(() => {
+    const prev = prevDesktopsRef.current;
+    const prevReady = prevPortalReadyRef.current;
+    const delta = desktops.length - prev.length;
+    let nextReady;
+    if (delta > 0) {
+      nextReady = [...prevReady, ...Array(delta).fill(false)];
+    } else {
+      const byId = Object.fromEntries(prev.map((d,i) => [d.id, prevReady[i]]));
+      nextReady = desktops.map(d => !!byId[d.id]);
+    }
+    setPortalReady(nextReady);
+    prevDesktopsRef.current = desktops;
+    prevPortalReadyRef.current = nextReady;
+  }, [desktops]);
+
+  // Mark portals ready as soon as their DOM node mounts
+  useLayoutEffect(() => {
+    let changed = false;
+    const arr = prevPortalReadyRef.current.slice();
+    desktops.forEach((_, i) => {
+      if (!arr[i] && scaleRefs.current[i]) {
+        arr[i] = true;
+        changed = true;
+      }
+    });
+    if (changed) {
+      setPortalReady(arr);
+      prevPortalReadyRef.current = arr;
+    }
+  });
+
+  // Initialize 'opened' flag
   useEffect(() => {
     if (!state.groups.missionControl.hasOwnProperty('opened')) {
       addState('missionControl', 'opened', 'false');
     }
   }, [addState, state.groups.missionControl]);
 
+  // Clear lingering 'opened' on first mount
   const initialMount = useRef(true);
   useEffect(() => {
     if (!initialMount.current) return;
@@ -109,6 +124,7 @@ const MissionControlUI = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Track viewport size
   useEffect(() => {
     const onResize = () =>
       setViewport({ width: window.innerWidth, height: window.innerHeight });
@@ -116,18 +132,105 @@ const MissionControlUI = () => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  // —— Edge‐hover hint (both sides), ignores when mouse is down —— 
   useEffect(() => {
-    document.body.style.overflow = (overviewOpen || isFading) ? 'hidden' : '';
+    if (overviewOpen) return;
+
+    const canRight = desktops.length > activeIndex + 1;
+    const canLeft = activeIndex > 0;
+
+    const onMouseDown = () => { isMouseDownRef.current = true; };
+    const onMouseUp = () => { isMouseDownRef.current = false; };
+
+    const onMouseMove = e => {
+      if (isMouseDownRef.current) return; // ignore while dragging/clicking
+
+      const x = e.clientX;
+      const atRight = canRight && x >= viewport.width - EDGE_THRESHOLD;
+      const atLeft = canLeft && x <= EDGE_THRESHOLD;
+
+      if (atRight && hoverSideRef.current !== 'right') {
+        clearTimeout(hintTimerRef.current);
+        setShowLeftHint(false);
+        setShowRightHint(false);
+        hoverSideRef.current = 'right';
+        hintTimerRef.current = setTimeout(() => {
+          setShowRightHint(true);
+        }, HOVER_DELAY);
+      } else if (atLeft && hoverSideRef.current !== 'left') {
+        clearTimeout(hintTimerRef.current);
+        setShowRightHint(false);
+        setShowLeftHint(false);
+        hoverSideRef.current = 'left';
+        hintTimerRef.current = setTimeout(() => {
+          setShowLeftHint(true);
+        }, HOVER_DELAY);
+      } else if (!atRight && !atLeft && hoverSideRef.current) {
+        clearTimeout(hintTimerRef.current);
+        hintTimerRef.current = null;
+        hoverSideRef.current = null;
+        setShowRightHint(false);
+        setShowLeftHint(false);
+      }
+    };
+
+    window.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('mousemove', onMouseMove);
+    return () => {
+      window.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('mousemove', onMouseMove);
+      clearTimeout(hintTimerRef.current);
+      hintTimerRef.current = null;
+      hoverSideRef.current = null;
+      isMouseDownRef.current = false;
+    };
+  }, [
+    overviewOpen,
+    viewport.width,
+    activeIndex,
+    desktops.length
+  ]);
+
+  // —— Click to complete switch when hint is visible —— 
+  useEffect(() => {
+    if (!showRightHint && !showLeftHint) return;
+
+    const onClick = e => {
+      const x = e.clientX;
+      if (showRightHint && x >= viewport.width - EDGE_THRESHOLD) {
+        switchDesktop(activeIndex + 1);
+        setShowRightHint(false);
+      } else if (showLeftHint && x <= EDGE_THRESHOLD) {
+        switchDesktop(activeIndex - 1);
+        setShowLeftHint(false);
+      }
+    };
+
+    window.addEventListener('click', onClick);
+    return () => window.removeEventListener('click', onClick);
+  }, [
+    showRightHint,
+    showLeftHint,
+    viewport.width,
+    activeIndex,
+    switchDesktop
+  ]);
+
+  // Prevent body scroll during overview/fade
+  useEffect(() => {
+    document.body.style.overflow = overviewOpen || isFading ? 'hidden' : '';
   }, [overviewOpen, isFading]);
 
+  // Fade → open overview
   useEffect(() => {
-    if (isFading) {
-      const timer = setTimeout(() => {
-        setOverviewOpen(true);
-        setIsFading(false);
-      }, FADE_DURATION);
-      return () => clearTimeout(timer);
-    }
+    if (!isFading) return;
+    const t = setTimeout(() => {
+      setOverviewOpen(true);
+      setIsFading(false);
+    }, FADE_DURATION);
+    return () => clearTimeout(t);
   }, [isFading]);
 
   const openOverview = useCallback(() => {
@@ -144,17 +247,16 @@ const MissionControlUI = () => {
   }, [activeIndex, editStateValue]);
 
   const instantSwitchDesktop = useCallback(
-    index => {
+    i => {
       setDisableSlideTransition(true);
-      switchDesktop(index);
+      switchDesktop(i);
     },
     [switchDesktop]
   );
   useEffect(() => {
-    if (disableSlideTransition) {
-      const t = setTimeout(() => setDisableSlideTransition(false), 0);
-      return () => clearTimeout(t);
-    }
+    if (!disableSlideTransition) return;
+    const t = setTimeout(() => setDisableSlideTransition(false), 0);
+    return () => clearTimeout(t);
   }, [disableSlideTransition]);
 
   const exitOverview = useCallback(
@@ -194,20 +296,30 @@ const MissionControlUI = () => {
     [reorderDesktops]
   );
 
-  const THUMB_H = 90;
-  const scale = THUMB_H / viewport.height;
-  const THUMB_W = viewport.width * scale;
+  // Compute transform & transition
+  const baseX = `calc(-${activeIndex} * (100vw + 60px))`;
+  const rightHintX = `calc(${baseX} - ${HINT_OFFSET}px)`;
+  const leftHintX  = `calc(${baseX} + ${HINT_OFFSET}px)`;
+  const wrapperTransform = showRightHint
+    ? `translateX(${rightHintX})`
+    : showLeftHint
+    ? `translateX(${leftHintX})`
+    : `translateX(${baseX})`;
   const wrapperStyle = overviewOpen
     ? {
         top: 30,
-        height: THUMB_H,
-        marginleft: 0,
+        height: 90,
+        marginLeft: 0,
         transform: 'none',
         transition: `top ${SLIDE_DURATION}ms ease, height ${SLIDE_DURATION}ms ease, transform ${SLIDE_DURATION}ms ease`
       }
     : {
-        transform: `translateX(calc(-${activeIndex} * (100vw + 60px)))`,
-        transition: disableSlideTransition ? 'none' : undefined
+        transform: wrapperTransform,
+        ...(disableSlideTransition
+          ? { transition: 'none' }
+          : (showRightHint || showLeftHint)
+          ? { transition: `transform ${HINT_SLIDE_DURATION}ms ease` }
+          : {})
       };
 
   return (
@@ -262,8 +374,8 @@ const MissionControlUI = () => {
         onDragOver={onDragOver}
         onDrop={onDrop}
         viewport={viewport}
-        createDesktop={addDesktop}    // +New from bar
-        deleteDesktop={deleteDesktop}  // allow deletion per-panel
+        createDesktop={addDesktop}
+        deleteDesktop={deleteDesktop}
       />
     </div>
   );
