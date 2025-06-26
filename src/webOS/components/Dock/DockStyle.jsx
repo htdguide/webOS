@@ -1,7 +1,7 @@
 // src/components/Dock/DockStyle/DockStyle.jsx
 
-// make sure the CSS variables are loaded
-import '../../configs/CSSConfigs/animations.css';
+// flattened cubic-bezier easing used everywhere
+const FLATTENED_EASING = 'cubic-bezier(0.4, 0.0, 0.2, 1.0)';
 
 /**
  * Safely include both modern and legacy iOS bottom safe-area insets.
@@ -12,41 +12,43 @@ const SAFE_BOTTOM_CONSTANT = 'constant(safe-area-inset-bottom)';
 const withSafeBottom = (marginPx) =>
   `calc(${marginPx}px + ${SAFE_BOTTOM_CONSTANT} + ${SAFE_BOTTOM_ENV})`;
 
-// slide-only transition, no opacity here
+/**
+ * Returns the outer container style, including only positioning—
+ * all animations now come exclusively from useDock's INITIAL_TRANSITION.
+ */
 export const getOuterContainerStyle = (
   DOCK_POSITION,
   DOCK_MARGIN,
   isDockVisible
 ) => {
   const style = {
-    // 🔑 fixed to viewport so Safari toolbar doesn’t cover it
     position: 'fixed',
     zIndex: 200,
-    transition: 'transform 0.3s var(--easing-flattened)',
+    // no transition here—use only useDock’s INITIAL_TRANSITION
   };
 
   if (DOCK_POSITION === 'bottom') {
-    style.bottom = withSafeBottom(DOCK_MARGIN);
-    style.left   = '50%';
+    style.bottom    = withSafeBottom(DOCK_MARGIN);
+    style.left      = '50%';
     style.transform = isDockVisible
       ? 'translateX(-50%)'
       : 'translateX(-50%) translateY(calc(150% + 10px))';
   } else if (DOCK_POSITION === 'left') {
-    style.left   = `${DOCK_MARGIN}px`;
-    style.top    = '50%';
+    style.left      = `${DOCK_MARGIN}px`;
+    style.top       = '50%';
     style.transform = isDockVisible
       ? 'translateY(-50%)'
       : 'translateX(calc(-150% - 10px)) translateY(-50%)';
   } else if (DOCK_POSITION === 'right') {
-    style.right  = `${DOCK_MARGIN}px`;
-    style.top    = '50%';
+    style.right     = `${DOCK_MARGIN}px`;
+    style.top       = '50%';
     style.transform = isDockVisible
       ? 'translateY(-50%)'
       : 'translateX(calc(150% + 10px)) translateY(-50%)';
   } else {
-    // fallback: bottom
-    style.bottom = withSafeBottom(DOCK_MARGIN);
-    style.left   = '50%';
+    // fallback to bottom
+    style.bottom    = withSafeBottom(DOCK_MARGIN);
+    style.left      = '50%';
     style.transform = isDockVisible
       ? 'translateX(-50%)'
       : 'translateX(-50%) translateY(calc(150% + 10px))';
@@ -55,6 +57,10 @@ export const getOuterContainerStyle = (
   return style;
 };
 
+/**
+ * Returns the icons container style. We add a width transition here
+ * so horizontal docks animate their width smoothly.
+ */
 export const getIconsContainerStyle = (
   isVerticalDock,
   DOCK_POSITION,
@@ -62,45 +68,25 @@ export const getIconsContainerStyle = (
   containerDimension
 ) => {
   if (isVerticalDock) {
-    switch (DOCK_POSITION) {
-      case 'left':
-        return {
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-          width: `${ICON_SIZE}px`,
-          height: `${containerDimension}px`,
-          transition:
-            'width 0.3s var(--easing-flattened), height 0.3s var(--easing-flattened)',
-        };
-      case 'right':
-        return {
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'flex-end',
-          width: `${ICON_SIZE}px`,
-          height: `${containerDimension}px`,
-          transition:
-            'width 0.3s var(--easing-flattened), height 0.3s var(--easing-flattened)',
-        };
-      default:
-        return {
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          width: `${ICON_SIZE}px`,
-          height: `${containerDimension}px`,
-          transition:
-            'width 0.3s var(--easing-flattened), height 0.3s var(--easing-flattened)',
-        };
+    // vertical docks still resize height instantly, but width is fixed
+    const base = {
+      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      width: `${ICON_SIZE}px`,
+      height: `${containerDimension}px`,
+      // no width transition needed in vertical mode
+    };
+    if (DOCK_POSITION === 'left') {
+      return { ...base, alignItems: 'flex-start' };
+    } else if (DOCK_POSITION === 'right') {
+      return { ...base, alignItems: 'flex-end' };
+    } else {
+      return { ...base, alignItems: 'center' };
     }
   } else {
+    // horizontal dock: width changes as containerDimension updates
     return {
       position: 'relative',
       display: 'flex',
@@ -108,8 +94,7 @@ export const getIconsContainerStyle = (
       alignItems: 'flex-end',
       width: `${containerDimension}px`,
       height: `${ICON_SIZE}px`,
-      transition:
-        'width 0.3s var(--easing-flattened), height 0.3s var(--easing-flattened)',
+      transition: `width 0.3s ${FLATTENED_EASING}`,
     };
   }
 };
@@ -190,7 +175,7 @@ export const getIconContainerStyle = ({
     width: `${ICON_SIZE}px`,
     height: `${ICON_SIZE}px`,
     transition: shouldTransition
-      ? `${INITIAL_TRANSITION}, opacity 0.3s var(--easing-flattened)`
+      ? `${INITIAL_TRANSITION}, opacity 0.3s ${FLATTENED_EASING}`
       : NO_TRANSITION,
     transform: `scale(${scale})`,
     cursor: 'pointer',

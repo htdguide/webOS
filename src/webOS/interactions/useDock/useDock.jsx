@@ -55,15 +55,13 @@ export function useDock({
     config = { ...config, ...config.right };
   }
 
+  // --- Destructure everything except the raw transitions
   const {
     ICON_SIZE,
     ICON_MARGIN,
     ADDITIONAL_MARGIN,
     DOCK_SPREAD,
     MAX_SCALE,
-    INITIAL_TRANSITION,
-    NO_TRANSITION,
-    ENABLE_MAGNIFICATION,
     DOCK_POSITION,
     DOCK_MARGIN,
     DOTS_MARGIN_BOTTOM,
@@ -71,12 +69,31 @@ export function useDock({
     APP_NAME_BACKGROUND_PADDING,
     APP_NAME_FONT_SIZE,
     ICONS_PER_PAGE,
+    // grab the original transition strings
+    INITIAL_TRANSITION: originalInitTransition,
+    NO_TRANSITION,
   } = config;
+
+  // --- Override the easing on your initial transition to be "flattened"
+  const FLATTENED_EASING = 'cubic-bezier(0.645, 0.1, 0.455, 1)';
+  let INITIAL_TRANSITION = originalInitTransition;
+  // if original is like "transform 150ms ease-out", extract the duration
+  const durMatch = originalInitTransition.match(/(\d+ms)/);
+  if (durMatch) {
+    INITIAL_TRANSITION = `transform ${durMatch[1]} ${FLATTENED_EASING}`;
+  }
 
   if (enabled) {
     log(
       'config',
-      `Dock config: POSITION=${DOCK_POSITION}, ICON_SIZE=${ICON_SIZE}, ENABLE_MAGNIFICATION=${ENABLE_MAGNIFICATION}`
+      `Dock config: POSITION=${DOCK_POSITION}, ICON_SIZE=${ICON_SIZE}, ENABLE_MAGNIFICATION=${config.ENABLE_MAGNIFICATION}`
+    );
+    log(
+      'config',
+      `Using flattened easing: ${INITIAL_TRANSITION.replace(
+        /transform\s+\d+ms\s*/,
+        ''
+      )}`
     );
   }
 
@@ -108,7 +125,9 @@ export function useDock({
   const totalPages = paginationEnabled
     ? Math.ceil(dockApps.length / iconsPerPage)
     : 1;
-  const [currentPage, setCurrentPage] = useState(0);
+
+  // Use an internal setter so we can wrap it
+  const [currentPage, _setCurrentPage] = useState(0);
 
   useEffect(() => {
     if (enabled && paginationEnabled) {
@@ -136,6 +155,47 @@ export function useDock({
   const [activeApp, setActiveApp] = useState(null);
   const [touchStartX, setTouchStartX] = useState(null);
 
+  // -----------------------------------------------------
+  // NEW: paged transition helper: shrink old → switch → grow new
+  // -----------------------------------------------------
+  const changePage = (newPage) => {
+    if (!paginationEnabled || newPage === currentPage) return;
+    if (enabled) log('layout', `Animating page change to ${newPage}`);
+
+    setShouldTransition(true);
+
+    // 1) Shrink outgoing icons to 0
+    const shrinkScales = [...scales];
+    const startIdx = currentPage * iconsPerPage;
+    const count = Math.min(iconsPerPage, dockApps.length - startIdx);
+    for (let i = 0; i < count; i++) {
+      shrinkScales[startIdx + i] = 0;
+    }
+    setScales(shrinkScales);
+
+    // 2) After shrink (~150ms), switch pages & prep incoming icons at 0
+    setTimeout(() => {
+      _setCurrentPage(newPage);
+
+      const prepScales = [...shrinkScales];
+      const newStart = newPage * iconsPerPage;
+      const newCount = Math.min(iconsPerPage, dockApps.length - newStart);
+      for (let i = 0; i < newCount; i++) {
+        prepScales[newStart + i] = 0;
+      }
+      setScales(prepScales);
+
+      // 3) After a brief pause, grow incoming icons to 1
+      setTimeout(() => {
+        const growScales = [...prepScales];
+        for (let i = 0; i < newCount; i++) {
+          growScales[newStart + i] = 1;
+        }
+        setScales(growScales);
+      }, 50);
+    }, parseInt(durMatch ? durMatch[1] : '150', 10));
+  };
+
   // --- Touch handlers
   const handleTouchStart = (e) => {
     const x = e.touches[0].clientX;
@@ -149,29 +209,11 @@ export function useDock({
     const threshold = 50;
 
     if (delta < -threshold && currentPage < totalPages - 1) {
-      if (enabled) log('userInteraction', `Swipe left → page ${currentPage + 1}`);
-      setCurrentPage(currentPage + 1);
+      changePage(currentPage + 1);
     } else if (delta > threshold && currentPage > 0) {
-      if (enabled) log('userInteraction', `Swipe right → page ${currentPage - 1}`);
-      setCurrentPage(currentPage - 1);
+      changePage(currentPage - 1);
     }
     setTouchStartX(null);
-
-    // reset scales after swipe
-    if (paginationEnabled) {
-      const reset = [...scales];
-      const start = currentPage * iconsPerPage;
-      for (let i = 0; i < appsToRender.length; i++) {
-        reset[start + i] = 1;
-      }
-      setScales(reset);
-      if (enabled) {
-        log(
-          'layout',
-          `Reset scales after swipe for indices ${start}–${start + appsToRender.length - 1}`
-        );
-      }
-    }
   };
 
   // --- Mouse handlers
@@ -183,7 +225,7 @@ export function useDock({
     initialTransitionTimeoutRef.current = setTimeout(() => {
       setShouldTransition(false);
       if (enabled) log('layout', 'Initial transition end; disabling transition');
-    }, 300);
+    }, parseInt(durMatch ? durMatch[1] : '150', 10));
     if (enabled) log('userInteraction', 'Mouse entered dock area');
   };
   const handleMouseMove = (e) => {
@@ -194,7 +236,7 @@ export function useDock({
       : e.clientX - rect.left;
     if (enabled) log('userInteraction', `Mouse move pos=${pos}`);
 
-    if (!ENABLE_MAGNIFICATION) {
+    if (!config.ENABLE_MAGNIFICATION) {
       // reset scales
       if (paginationEnabled) {
         const reset = [...scales];
@@ -246,7 +288,10 @@ export function useDock({
       });
       setScales(updated);
       if (enabled) {
-        log('layout', `Updated all scales [${updated.map((s) => s.toFixed(2)).join(', ')}]`);
+        log(
+          'layout',
+          `Updated all scales [${updated.map((s) => s.toFixed(2)).join(', ')}]`
+        );
       }
     }
   };
@@ -310,7 +355,7 @@ export function useDock({
     const { centers } = computeIconPositions();
     let min = Infinity, max = -Infinity;
     const visScales = paginationEnabled
-      ? scales.slice(currentPage * iconsPerPage, currentPage * ICONS_PER_PAGE + appsToRender.length)
+      ? scales.slice(currentPage * iconsPerPage, currentPage * iconsPerPage + appsToRender.length)
       : scales;
 
     appsToRender.forEach((_, i) => {
@@ -383,7 +428,7 @@ export function useDock({
     ICON_SIZE,
     ICON_MARGIN,
     ADDITIONAL_MARGIN,
-    INITIAL_TRANSITION,
+    INITIAL_TRANSITION, // now with flattened easing
     NO_TRANSITION,
     handleTouchStart,
     handleTouchEnd,
@@ -393,6 +438,7 @@ export function useDock({
     openApp,
     handleIconMouseEnter,
     handleIconMouseLeave,
-    setCurrentPage,
+    // expose our paged transition changer
+    setCurrentPage: changePage,
   };
 }

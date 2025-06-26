@@ -34,7 +34,7 @@ const DOCK_CONFIG = {
     INITIAL_TRANSITION: 'all 0.15s ease',
     NO_TRANSITION: 'none',
     DOCK_POSITION: 'bottom',
-    DOCK_MARGIN: 20,        // ← was 5, bumped to 20 to avoid shift
+    DOCK_MARGIN: 30,        // ← was 5, bumped to 20 to avoid shift
     DOTS_MARGIN_BOTTOM: 20,
     APP_NAME_TOOLTIP_OFFSET: 25,
     APP_NAME_BACKGROUND_PADDING: '5px 15px',
