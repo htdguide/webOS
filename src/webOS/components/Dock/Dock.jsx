@@ -1,6 +1,6 @@
 // src/components/Dock/Dock.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useDock } from '../../interactions/useDock/useDock.jsx';
 import { AppsContext } from '../../contexts/AppsContext/AppsContext';
 import DOCK_CONFIG from '../../configs/DockConfig/DockConfig';
@@ -69,6 +69,25 @@ export default function Dock() {
   // keep opacity true until after slide finishes
   const [fadeVisible, setFadeVisible] = useState(isDockVisible);
 
+  // measure Safari’s bottom toolbar on iPhone BEFORE paint
+  const [toolbarOffset, setToolbarOffset] = useState(0);
+  useLayoutEffect(() => {
+    const updateOffset = () => {
+      if (window.visualViewport) {
+        // never go below zero
+        const diff = window.innerHeight - window.visualViewport.height;
+        setToolbarOffset(diff > 0 ? diff : 0);
+      }
+    };
+    updateOffset();
+    window.visualViewport?.addEventListener('resize', updateOffset);
+    window.addEventListener('resize', updateOffset);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', updateOffset);
+      window.removeEventListener('resize', updateOffset);
+    };
+  }, []);
+
   useEffect(() => {
     let timer;
     if (isDockVisible) {
@@ -79,10 +98,17 @@ export default function Dock() {
     return () => clearTimeout(timer);
   }, [isDockVisible]);
 
+  // base style (incl. your existing safe-area handling)
   const outerStyle = {
     ...getOuterContainerStyle(DOCK_POSITION, DOCK_MARGIN, isDockVisible),
     opacity: fadeVisible ? 1 : 0,
+    top: 'auto', // ensure we don't accidentally get pushed to the top
   };
+
+  // if bottom‐docked, include the clamped toolbarOffset
+  if (DOCK_POSITION === 'bottom') {
+    outerStyle.bottom = `calc(${toolbarOffset + DOCK_MARGIN}px + env(safe-area-inset-bottom))`;
+  }
 
   return (
     <div
@@ -118,7 +144,7 @@ export default function Dock() {
                 NO_TRANSITION,
                 DOCK_POSITION,
               })}
-              onClick={() => openApp(app)}  // ← click-to-open restored
+              onClick={() => openApp(app)}
               onMouseEnter={() => handleIconMouseEnter(app.id)}
               onMouseLeave={handleIconMouseLeave}
             >
@@ -127,7 +153,6 @@ export default function Dock() {
                   <div
                     style={{
                       ...getTooltipBubbleStyle(APP_NAME_BACKGROUND_PADDING, APP_NAME_FONT_SIZE),
-                      // always show tooltip on hover, even if app is open
                       opacity: hoveredApp === app.id ? 1 : 0,
                       transition: hoveredApp === null ? 'opacity 0.3s ease' : 'none',
                       pointerEvents: 'none',

@@ -3,16 +3,30 @@
 // make sure the CSS variables are loaded
 import '../../configs/CSSConfigs/animations.css';
 
+/**
+ * Safely include both modern and legacy iOS bottom safe-area insets.
+ * env() is the new syntax; constant() is for older WebKit.
+ */
+const SAFE_BOTTOM_ENV      = 'env(safe-area-inset-bottom)';
+const SAFE_BOTTOM_CONSTANT = 'constant(safe-area-inset-bottom)';
+const withSafeBottom = (marginPx) =>
+  `calc(${marginPx}px + ${SAFE_BOTTOM_CONSTANT} + ${SAFE_BOTTOM_ENV})`;
+
 // slide-only transition, no opacity here
-export const getOuterContainerStyle = (DOCK_POSITION, DOCK_MARGIN, isDockVisible) => {
+export const getOuterContainerStyle = (
+  DOCK_POSITION,
+  DOCK_MARGIN,
+  isDockVisible
+) => {
   const style = {
-    position: 'absolute',
+    // 🔑 fixed to viewport so Safari toolbar doesn’t cover it
+    position: 'fixed',
     zIndex: 200,
     transition: 'transform 0.3s var(--easing-flattened)',
   };
 
   if (DOCK_POSITION === 'bottom') {
-    style.bottom = `${DOCK_MARGIN}px`;
+    style.bottom = withSafeBottom(DOCK_MARGIN);
     style.left   = '50%';
     style.transform = isDockVisible
       ? 'translateX(-50%)'
@@ -31,7 +45,7 @@ export const getOuterContainerStyle = (DOCK_POSITION, DOCK_MARGIN, isDockVisible
       : 'translateX(calc(150% + 10px)) translateY(-50%)';
   } else {
     // fallback: bottom
-    style.bottom = `${DOCK_MARGIN}px`;
+    style.bottom = withSafeBottom(DOCK_MARGIN);
     style.left   = '50%';
     style.transform = isDockVisible
       ? 'translateX(-50%)'
@@ -41,7 +55,12 @@ export const getOuterContainerStyle = (DOCK_POSITION, DOCK_MARGIN, isDockVisible
   return style;
 };
 
-export const getIconsContainerStyle = (isVerticalDock, DOCK_POSITION, ICON_SIZE, containerDimension) => {
+export const getIconsContainerStyle = (
+  isVerticalDock,
+  DOCK_POSITION,
+  ICON_SIZE,
+  containerDimension
+) => {
   if (isVerticalDock) {
     switch (DOCK_POSITION) {
       case 'left':
@@ -53,7 +72,8 @@ export const getIconsContainerStyle = (isVerticalDock, DOCK_POSITION, ICON_SIZE,
           alignItems: 'flex-start',
           width: `${ICON_SIZE}px`,
           height: `${containerDimension}px`,
-          transition: 'width 0.3s var(--easing-flattened), height 0.3s var(--easing-flattened)',
+          transition:
+            'width 0.3s var(--easing-flattened), height 0.3s var(--easing-flattened)',
         };
       case 'right':
         return {
@@ -64,7 +84,8 @@ export const getIconsContainerStyle = (isVerticalDock, DOCK_POSITION, ICON_SIZE,
           alignItems: 'flex-end',
           width: `${ICON_SIZE}px`,
           height: `${containerDimension}px`,
-          transition: 'width 0.3s var(--easing-flattened), height 0.3s var(--easing-flattened)',
+          transition:
+            'width 0.3s var(--easing-flattened), height 0.3s var(--easing-flattened)',
         };
       default:
         return {
@@ -75,7 +96,8 @@ export const getIconsContainerStyle = (isVerticalDock, DOCK_POSITION, ICON_SIZE,
           alignItems: 'center',
           width: `${ICON_SIZE}px`,
           height: `${containerDimension}px`,
-          transition: 'width 0.3s var(--easing-flattened), height 0.3s var(--easing-flattened)',
+          transition:
+            'width 0.3s var(--easing-flattened), height 0.3s var(--easing-flattened)',
         };
     }
   } else {
@@ -86,12 +108,18 @@ export const getIconsContainerStyle = (isVerticalDock, DOCK_POSITION, ICON_SIZE,
       alignItems: 'flex-end',
       width: `${containerDimension}px`,
       height: `${ICON_SIZE}px`,
-      transition: 'width 0.3s var(--easing-flattened), height 0.3s var(--easing-flattened)',
+      transition:
+        'width 0.3s var(--easing-flattened), height 0.3s var(--easing-flattened)',
     };
   }
 };
 
-export const getBackgroundStyle = (isVerticalDock, bgStart, bgSize, DOCK_POSITION) => {
+export const getBackgroundStyle = (
+  isVerticalDock,
+  bgStart,
+  bgSize,
+  DOCK_POSITION
+) => {
   const commonStyle = {
     position: 'absolute',
     borderRadius: '16px',
@@ -152,8 +180,10 @@ export const getIconContainerStyle = ({
   NO_TRANSITION,
   DOCK_POSITION,
 }) => {
-  const scaleIndex = paginationEnabled ? currentPage * iconsPerPage + index : index;
-  const scale      = scales[scaleIndex];
+  const scaleIndex = paginationEnabled
+    ? currentPage * iconsPerPage + index
+    : index;
+  const scale = scales[scaleIndex];
   const dynamicMargin = ICON_MARGIN + (scale - 1) * ADDITIONAL_MARGIN;
 
   const baseStyle = {
@@ -176,7 +206,8 @@ export const getIconContainerStyle = ({
     return {
       ...baseStyle,
       margin: `${dynamicMargin}px 0`,
-      transformOrigin: DOCK_POSITION === 'left' ? 'left center' : 'right center',
+      transformOrigin:
+        DOCK_POSITION === 'left' ? 'left center' : 'right center',
     };
   } else {
     return {
@@ -195,7 +226,10 @@ export const iconImageStyle = {
   borderRadius: '10%',
 };
 
-export const getTooltipWrapperStyle = (DOCK_POSITION, APP_NAME_TOOLTIP_OFFSET) => {
+export const getTooltipWrapperStyle = (
+  DOCK_POSITION,
+  APP_NAME_TOOLTIP_OFFSET
+) => {
   const style = {
     position: 'absolute',
     pointerEvents: 'none',
@@ -204,23 +238,23 @@ export const getTooltipWrapperStyle = (DOCK_POSITION, APP_NAME_TOOLTIP_OFFSET) =
 
   switch (DOCK_POSITION) {
     case 'bottom':
-      style.bottom    = `calc(100% + ${APP_NAME_TOOLTIP_OFFSET}px)`;
-      style.left      = '50%';
+      style.bottom = `calc(100% + ${APP_NAME_TOOLTIP_OFFSET}px)`;
+      style.left = '50%';
       style.transform = 'translateX(-50%)';
       break;
     case 'left':
-      style.left      = `calc(100% + ${APP_NAME_TOOLTIP_OFFSET}px)`;
-      style.top       = '50%';
+      style.left = `calc(100% + ${APP_NAME_TOOLTIP_OFFSET}px)`;
+      style.top = '50%';
       style.transform = 'translateY(-50%)';
       break;
     case 'right':
-      style.right     = `calc(100% + ${APP_NAME_TOOLTIP_OFFSET}px)`;
-      style.top       = '50%';
+      style.right = `calc(100% + ${APP_NAME_TOOLTIP_OFFSET}px)`;
+      style.top = '50%';
       style.transform = 'translateY(-50%)';
       break;
     default:
-      style.bottom    = `calc(100% + ${APP_NAME_TOOLTIP_OFFSET}px)`;
-      style.left      = '50%';
+      style.bottom = `calc(100% + ${APP_NAME_TOOLTIP_OFFSET}px)`;
+      style.left = '50%';
       style.transform = 'translateX(-50%)';
       break;
   }
@@ -228,7 +262,10 @@ export const getTooltipWrapperStyle = (DOCK_POSITION, APP_NAME_TOOLTIP_OFFSET) =
   return style;
 };
 
-export const getTooltipBubbleStyle = (APP_NAME_BACKGROUND_PADDING, APP_NAME_FONT_SIZE) => ({
+export const getTooltipBubbleStyle = (
+  APP_NAME_BACKGROUND_PADDING,
+  APP_NAME_FONT_SIZE
+) => ({
   position: 'relative',
   background: 'rgba(200, 200, 200, 0.6)',
   backdropFilter: 'blur(10px)',
@@ -253,26 +290,26 @@ export const getTooltipArrowStyle = (DOCK_POSITION) => {
 
   switch (DOCK_POSITION) {
     case 'bottom':
-      style.top       = '100%';
-      style.left      = '50%';
+      style.top = '100%';
+      style.left = '50%';
       style.transform = 'translateX(-50%)';
       style.borderTop = `6px solid ${arrowColor}`;
       break;
     case 'left':
-      style.right     = '100%';
-      style.top       = '50%';
+      style.right = '100%';
+      style.top = '50%';
       style.transform = 'translateY(-50%)';
       style.borderRight = `6px solid ${arrowColor}`;
       break;
     case 'right':
-      style.left      = '100%';
-      style.top       = '50%';
+      style.left = '100%';
+      style.top = '50%';
       style.transform = 'translateY(-50%)';
       style.borderLeft = `6px solid ${arrowColor}`;
       break;
     default:
-      style.top       = '100%';
-      style.left      = '50%';
+      style.top = '100%';
+      style.left = '50%';
       style.transform = 'translateX(-50%)';
       style.borderTop = `6px solid ${arrowColor}`;
       break;
@@ -297,6 +334,11 @@ export const getOpenIndicatorStyle = (DOCK_POSITION) => {
       return { ...commonStyle, right: -10, top: '50%', transform: 'translateY(-50%)' };
     case 'bottom':
     default:
-      return { ...commonStyle, bottom: -10, left: '50%', transform: 'translateX(-50%)' };
+      return {
+        ...commonStyle,
+        bottom: -10,
+        left: '50%',
+        transform: 'translateX(-50%)',
+      };
   }
 };

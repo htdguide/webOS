@@ -16,7 +16,7 @@ const DOCK_CONFIG = {
 
   // Feature: Dock position. Options: 'bottom'(default), 'left', 'right'.
   DOCK_POSITION: 'bottom',
-  DOCK_MARGIN: 20,
+  DOCK_MARGIN: 20,          // default bottom margin
 
   // Adjustments for dots: margin from the bottom of the screen.
   DOTS_MARGIN_BOTTOM: 10,
@@ -26,7 +26,7 @@ const DOCK_CONFIG = {
   APP_NAME_BACKGROUND_PADDING: '5px 15px',
   APP_NAME_FONT_SIZE: 14,
 
-  // Portrait mode (vertical layout) — falls back to top-level values where not defined.
+  // Portrait mode (vertical layout) — now matches default
   vertical: {
     ICON_MARGIN: 8,
     ADDITIONAL_MARGIN: 12,
@@ -34,7 +34,7 @@ const DOCK_CONFIG = {
     INITIAL_TRANSITION: 'all 0.15s ease',
     NO_TRANSITION: 'none',
     DOCK_POSITION: 'bottom',
-    DOCK_MARGIN: 5,
+    DOCK_MARGIN: 20,        // ← was 5, bumped to 20 to avoid shift
     DOTS_MARGIN_BOTTOM: 20,
     APP_NAME_TOOLTIP_OFFSET: 25,
     APP_NAME_BACKGROUND_PADDING: '5px 15px',
