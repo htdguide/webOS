@@ -8,6 +8,7 @@ import MenuBar from '../../components/MenuBar/MenuBar.jsx';
 import Wallpaper from '../../components/Wallpaper/Wallpaper.jsx';
 import WelcomeWrap from '../../components/WelcomeWrap/WelcomeWrap.jsx';
 import IconGrid from '../../components/IconGrid/IconGrid.jsx';
+import icon from '../../media/icons/finder.png';
 
 /**
  * desktopId: unique string for this instance
@@ -18,7 +19,7 @@ function DesktopAssembler({ desktopId = 'default' }) {
   const { notify } = useNotification();
 
   useEffect(() => {
-    notify('Test Notification: App has loaded!', 3000, '');
+    notify('Test Notification: App has loaded!', 3000, icon);
   }, [notify]);
 
   const handleOpenApp = (appId) => {

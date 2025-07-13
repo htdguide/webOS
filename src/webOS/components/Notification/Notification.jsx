@@ -1,77 +1,81 @@
 // Notification.jsx
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import './Notification.css';
 
-const Notification = () => {
-  const [notifications, setNotifications] = useState([]);
+// 300px maxWidth + 20px container right offset + 50px extra
+const OFFSCREEN_X = 370;
 
-  useEffect(() => {
-    const handleNotification = (event) => {
-      const { message, duration, icon } = event.detail;
-      const id = Date.now();
-
-      setNotifications((prev) => {
-        if (prev.some((n) => n.message === message && Math.abs(n.id - id) < 1000)) {
-          return prev;
-        }
-        const iconSrc = typeof icon === 'string' ? icon : icon?.default;
-        return [...prev, { id, message, icon: iconSrc }];
-      });
-
-      setTimeout(() => {
-        handleSwipe(id);
-      }, duration || 3000);
-    };
-
-    window.addEventListener('show-notification', handleNotification);
-    return () => {
-      window.removeEventListener('show-notification', handleNotification);
-    };
-  }, []);
-
-  const handleSwipe = (id) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, closing: true } : n)));
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 500);
-  };
-
-  return (
-    <div className="notification-container">
-      <AnimatePresence>
-        {notifications.map(({ id, message, icon, closing }) => (
-          <motion.div
-            key={id}
-            className="notification"
-            initial={{ x: 300, opacity: 0 }}
-            animate={closing ? { x: 300, opacity: 0 } : { x: 0, opacity: 1 }}
-            exit={{ x: 300, opacity: 0 }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 300 }}
-            onDragEnd={(event, info) => {
-              if (info.offset.x > 150) {
-                handleSwipe(id);
-              }
-            }}
-            transition={{ duration: 0.5 }}
-          >
-            {icon && <img src={icon} alt="icon" className="notification-icon" />}
-            <span className="notification-message">{message}</span>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  );
+const containerStyle = {
+  position: 'absolute',
+  top: 40,
+  right: 20,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '10px',
+  zIndex: 300,
+  pointerEvents: 'none',
 };
+
+const notificationStyle = {
+  background: 'rgba(255, 255, 255, 0.7)',
+  backdropFilter: 'blur(10px)',
+  borderRadius: '12px',
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+  padding: '16px 20px',
+  maxWidth: '300px',
+  display: 'flex',
+  alignItems: 'center',
+  fontFamily:
+    "-apple-system, BlinkMacSystemFont, 'San Francisco', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+  pointerEvents: 'auto',
+  cursor: 'pointer',
+  userSelect: 'none',
+};
+
+const iconStyle = {
+  width: '40px',
+  height: '40px',
+  marginRight: '20px',
+  borderRadius: '8px',
+  objectFit: 'cover',
+};
+
+const messageStyle = {
+  fontSize: '14px',
+  color: '#333',
+};
+
+const Notification = ({ notifications, handleSwipe }) => (
+  <div style={containerStyle}>
+    <AnimatePresence>
+      {notifications.map(({ id, message, icon, closing }) => (
+        <motion.div
+          key={id}
+          style={notificationStyle}
+          initial={{ x: OFFSCREEN_X, opacity: 0 }}
+          animate={
+            closing
+              ? { x: OFFSCREEN_X, opacity: 1 } // slide out fully
+              : { x: 0, opacity: 1 }           // slide in
+          }
+          exit={{ x: OFFSCREEN_X, opacity: 1 }} // keep full opacity
+          drag="x"
+          dragConstraints={{ left: 0, right: OFFSCREEN_X }}
+          dragMomentum={false}
+          onDragEnd={(e, info) => {
+            // if dragged at all to the right, trigger full swipe
+            if (info.offset.x > 0) {
+              handleSwipe(id);
+            }
+          }}
+          transition={{ duration: 0.5 }}
+        >
+          {icon && <img src={icon} alt="icon" style={iconStyle} />}
+          <span style={messageStyle}>{message}</span>
+        </motion.div>
+      ))}
+    </AnimatePresence>
+  </div>
+);
 
 export default Notification;
-
-export const notify = (message, duration = 3000, icon = '') => {
-  const iconSrc = typeof icon === 'string' ? icon : icon?.default;
-  const event = new CustomEvent('show-notification', {
-    detail: { message, duration, icon: iconSrc }
-  });
-  window.dispatchEvent(event);
-};
