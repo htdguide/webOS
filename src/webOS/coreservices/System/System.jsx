@@ -8,6 +8,7 @@ import { NotificationProvider } from '../../components/Notification/Notification
 import { WallpaperSrc } from '../../components/Wallpaper/WallpaperSrc.jsx';
 import { DraggableWindowProvider } from '../../contexts/DraggableWindowProvider/DraggableWindowProvider.jsx';
 import { FocusProvider } from '../../contexts/FocusControl/FocusControl.jsx';
+import { AppsProvider } from '../../contexts/AppsContext/AppsContext.jsx';
 
 const System = ({ children }) => {
   return (
@@ -18,10 +19,12 @@ const System = ({ children }) => {
             <DisplayController>
               <NotificationProvider>
                 <FocusProvider>
-                  <DraggableWindowProvider>
-                    {children}
-                  </DraggableWindowProvider>
-                  </FocusProvider>
+                  <AppsProvider>
+                    <DraggableWindowProvider>
+                      {children}
+                    </DraggableWindowProvider>
+                    </AppsProvider>
+                </FocusProvider>
               </NotificationProvider>
             </DisplayController>
           </MusicServiceProvider>

@@ -1,42 +1,32 @@
-// App.jsx
-import React, { useState, useContext, useEffect } from 'react';
+// src/components/DesktopAssembler/DesktopAssembler.jsx
+
+import React, { useContext, useEffect } from 'react';
 import './DesktopAssembler.css';
-import { AppsContext, AppsProvider } from '../../contexts/AppsContext/AppsContext.jsx';
-// Import the notification hook from the NotificationProvider wrapper.
+import { AppsContext } from '../../contexts/AppsContext/AppsContext.jsx';
 import { useNotification } from '../../components/Notification/NotificationProvider.jsx';
 import MenuBar from '../../components/MenuBar/MenuBar.jsx';
 import Wallpaper from '../../components/Wallpaper/Wallpaper.jsx';
 import WelcomeWrap from '../../components/WelcomeWrap/WelcomeWrap.jsx';
 import IconGrid from '../../components/IconGrid/IconGrid.jsx';
 
-function AppContent() {
-  const { apps } = useContext(AppsContext);
-  const [openApps, setOpenApps] = useState([]);
-  // Get the notify function from our NotificationProvider context.
+/**
+ * desktopId: unique string for this instance
+ */
+function DesktopAssembler({ desktopId = 'default' }) {
+  const { apps, getOpenApps, openApp, closeApp } = useContext(AppsContext);
+  const openApps = getOpenApps(desktopId);
   const { notify } = useNotification();
 
   useEffect(() => {
-    // Send a test notification when AppContent loads.
-    notify("Test Notification: App has loaded!", 3000, '');
+    notify('Test Notification: App has loaded!', 3000, '');
   }, [notify]);
 
   const handleOpenApp = (appId) => {
-    const appConfig = apps.find((app) => app.id === appId);
-
-    // If the app configuration has a link, open it in a new tab and do not add to openApps.
-    if (appConfig?.link) {
-      window.open(appConfig.link, '_blank');
-      return;
-    }
-
-    // Otherwise, if the app is not already open, add it to the open apps list.
-    if (!openApps.includes(appId)) {
-      setOpenApps([...openApps, appId]);
-    }
+    openApp(desktopId, appId);
   };
 
   const handleCloseApp = (appId) => {
-    setOpenApps(openApps.filter((id) => id !== appId));
+    closeApp(desktopId, appId);
   };
 
   return (
@@ -63,12 +53,4 @@ function AppContent() {
   );
 }
 
-function App() {
-  return (
-    <AppsProvider>
-      <AppContent />
-    </AppsProvider>
-  );
-}
-
-export default App;
+export default DesktopAssembler;

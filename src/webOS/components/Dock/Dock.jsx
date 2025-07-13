@@ -18,57 +18,51 @@ import {
   getTooltipArrowStyle,
   getOpenIndicatorStyle,
 } from './DockStyle';
-import disabledOverlay from '../../media/icons/disable.png'; // your 30%-opacity overlay image
+import disabledOverlay from '../../media/icons/disable.png';
 
 export default function Dock() {
-  // 1) Synchronously detect portrait-mobile on first render:
+  // 1) Portrait-mobile detection
   const [isMobilePortrait, setIsMobilePortrait] = useState(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) {
-      return false;
-    }
-    return window.matchMedia(
-      '(max-width: 768px) and (orientation: portrait)'
-    ).matches;
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    return window
+      .matchMedia('(max-width: 768px) and (orientation: portrait)')
+      .matches;
   });
-
-  // 2) Keep it up-to-date on resize/orientation changes:
   useEffect(() => {
     if (!window.matchMedia) return;
-    const mql = window.matchMedia('(max-width: 768px) and (orientation: portrait)');
+    const mql = window.matchMedia(
+      '(max-width: 768px) and (orientation: portrait)'
+    );
     const handler = (e) => setIsMobilePortrait(e.matches);
-
-    if (mql.addEventListener) {
-      mql.addEventListener('change', handler);
-    } else {
-      mql.addListener(handler);
-    }
+    mql.addEventListener
+      ? mql.addEventListener('change', handler)
+      : mql.addListener(handler);
     return () => {
-      if (mql.removeEventListener) {
-        mql.removeEventListener('change', handler);
-      } else {
-        mql.removeListener(handler);
-      }
+      mql.removeEventListener
+        ? mql.removeEventListener('change', handler)
+        : mql.removeListener(handler);
     };
   }, []);
 
-  // 3) Choose the effective config each render:
+  // 2) Pick config
   const effectiveConfig = isMobilePortrait
     ? { ...DOCK_CONFIG, ...DOCK_CONFIG.vertical }
     : DOCK_CONFIG;
 
-  // 4) Always call the hook in the same place:
+  // 3) Call our updated hook (no desktopId needed; dock is global)
   const {
     outerRef,
     iconsContainerRef,
     isDockVisible,
     paginationEnabled,
     isVerticalDock,
-    appsToRender,
+    dockApps,         // pinned + open
+    appsToRender,     // page slice or full
     scales,
     shouldTransition,
     hoveredApp,
     activeApp,
-    openedApps,
+    openedApps,       // array of open app IDs
     currentPage,
     totalPages,
     iconsPerPage,
@@ -91,10 +85,10 @@ export default function Dock() {
     handleMouseEnter,
     handleMouseMove,
     handleMouseLeave,
-    openApp,
+    openApp,          // opens via context
     handleIconMouseEnter,
     handleIconMouseLeave,
-    setCurrentPage, // now our animated changer
+    setCurrentPage,   // for pagination
   } = useDock({
     AppsContext,
     DOCK_CONFIG: effectiveConfig,
@@ -103,12 +97,8 @@ export default function Dock() {
     useLogger,
   });
 
-  // rest of your state+effects unchanged:
-
-  const [fadeVisible, setFadeVisible] = useState(isDockVisible);
+  // 4) Keyboard offset
   const [toolbarOffset, setToolbarOffset] = useState(0);
-
-  // adjust for on-screen keyboard
   useLayoutEffect(() => {
     const updateOffset = () => {
       if (window.visualViewport) {
@@ -125,26 +115,24 @@ export default function Dock() {
     };
   }, []);
 
-  // fade in/out
+  // 5) Fade in/out
+  const [fadeVisible, setFadeVisible] = useState(isDockVisible);
   useEffect(() => {
-    let timer;
-    if (isDockVisible) {
-      setFadeVisible(true);
-    } else {
-      timer = setTimeout(() => setFadeVisible(false), 300);
-    }
-    return () => clearTimeout(timer);
+    let id;
+    if (isDockVisible) setFadeVisible(true);
+    else id = setTimeout(() => setFadeVisible(false), 300);
+    return () => clearTimeout(id);
   }, [isDockVisible]);
 
-  // compute outer style
+  // 6) Compute outer style
   const outerStyle = {
     ...getOuterContainerStyle(DOCK_POSITION, DOCK_MARGIN, isDockVisible),
     opacity: fadeVisible ? 1 : 0,
     top: 'auto',
+    ...(DOCK_POSITION === 'bottom' && {
+      bottom: `calc(${toolbarOffset + DOCK_MARGIN}px + env(safe-area-inset-bottom))`,
+    }),
   };
-  if (DOCK_POSITION === 'bottom') {
-    outerStyle.bottom = `calc(${toolbarOffset + DOCK_MARGIN}px + env(safe-area-inset-bottom))`;
-  }
 
   const DOT_SIZE = 8;
 
@@ -152,17 +140,10 @@ export default function Dock() {
     <div
       ref={outerRef}
       style={outerStyle}
-      onTouchStart={paginationEnabled ? handleTouchStart : null}
-      onTouchEnd={paginationEnabled ? handleTouchEnd : null}
+      onTouchStart={paginationEnabled ? handleTouchStart : undefined}
+      onTouchEnd={paginationEnabled ? handleTouchEnd : undefined}
     >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          position: 'relative',
-        }}
-      >
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
         <div
           ref={iconsContainerRef}
           style={getIconsContainerStyle(isVerticalDock, DOCK_POSITION, ICON_SIZE, containerDimension)}
@@ -172,68 +153,62 @@ export default function Dock() {
         >
           <div style={getBackgroundStyle(isVerticalDock, bgStart, bgSize, DOCK_POSITION)} />
 
-          {appsToRender.map((app, index) => (
-            <div
-              key={app.id}
-              style={{
-                ...getIconContainerStyle({
-                  index,
-                  paginationEnabled,
-                  scales,
-                  currentPage,
-                  iconsPerPage,
-                  ICON_SIZE,
-                  ICON_MARGIN,
-                  ADDITIONAL_MARGIN,
-                  shouldTransition,
-                  INITIAL_TRANSITION,
-                  NO_TRANSITION,
-                  DOCK_POSITION,
-                }),
-                position: 'relative',
-              }}
-              onClick={() => openApp(app)}
-              onMouseEnter={() => handleIconMouseEnter(app.id)}
-              onMouseLeave={handleIconMouseLeave}
-            >
-              {!paginationEnabled && (
-                <div style={getTooltipWrapperStyle(DOCK_POSITION, APP_NAME_TOOLTIP_OFFSET)}>
-                  <div
-                    style={{
-                      ...getTooltipBubbleStyle(APP_NAME_BACKGROUND_PADDING, APP_NAME_FONT_SIZE),
-                      opacity: hoveredApp === app.id ? 1 : 0,
-                      transition: hoveredApp === null ? 'opacity 0.3s ease' : 'none',
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    {app.name}
-                    <div style={getTooltipArrowStyle(DOCK_POSITION)} />
+          {appsToRender.map((app, idx) => {
+            const isOpen = openedApps.includes(app.id);
+            return (
+              <div
+                key={app.id}
+                style={{
+                  ...getIconContainerStyle({
+                    index: idx,
+                    paginationEnabled,
+                    scales,
+                    currentPage,
+                    iconsPerPage,
+                    ICON_SIZE,
+                    ICON_MARGIN,
+                    ADDITIONAL_MARGIN,
+                    shouldTransition,
+                    INITIAL_TRANSITION,
+                    NO_TRANSITION,
+                    DOCK_POSITION,
+                  }),
+                  position: 'relative',
+                }}
+                onClick={() => openApp(app.id)}
+                onMouseEnter={() => handleIconMouseEnter(app.id)}
+                onMouseLeave={handleIconMouseLeave}
+              >
+                {!paginationEnabled && (
+                  <div style={getTooltipWrapperStyle(DOCK_POSITION, APP_NAME_TOOLTIP_OFFSET)}>
+                    <div
+                      style={{
+                        ...getTooltipBubbleStyle(APP_NAME_BACKGROUND_PADDING, APP_NAME_FONT_SIZE),
+                        opacity: hoveredApp === app.id ? 1 : 0,
+                        transition: hoveredApp === null ? 'opacity 0.3s ease' : 'none',
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      {app.name}
+                      <div style={getTooltipArrowStyle(DOCK_POSITION)} />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              <img src={app.icon} alt={app.name} style={iconImageStyle} />
+                <img src={app.icon} alt={app.name} style={iconImageStyle} />
 
-              {!app.available && (
-                <img
-                  src={disabledOverlay}
-                  alt={`${app.name} disabled`}
-                  style={{
-                    ...iconImageStyle,
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    opacity: 0.9,
-                    pointerEvents: 'none',
-                  }}
-                />
-              )}
+                {!app.available && (
+                  <img
+                    src={disabledOverlay}
+                    alt={`${app.name} disabled`}
+                    style={{ ...iconImageStyle, position: 'absolute', top: 0, left: 0, opacity: 0.9, pointerEvents: 'none' }}
+                  />
+                )}
 
-              {activeApp === app.id && (
-                <div style={getOpenIndicatorStyle(DOCK_POSITION)} />
-              )}
-            </div>
-          ))}
+                {isOpen && <div style={getOpenIndicatorStyle(DOCK_POSITION)} />}
+              </div>
+            );
+          })}
         </div>
 
         {paginationEnabled && totalPages > 1 && (
@@ -247,16 +222,16 @@ export default function Dock() {
               justifyContent: 'center',
             }}
           >
-            {Array.from({ length: totalPages }).map((_, idx) => (
+            {Array.from({ length: totalPages }).map((_, i) => (
               <div
-                key={idx}
-                onClick={() => setCurrentPage(idx)}
+                key={i}
+                onClick={() => setCurrentPage(i)}
                 style={{
                   width: `${DOT_SIZE}px`,
                   height: `${DOT_SIZE}px`,
                   borderRadius: '50%',
                   margin: '0 4px',
-                  background: idx === currentPage ? 'white' : 'black',
+                  background: i === currentPage ? 'white' : 'black',
                   cursor: 'pointer',
                 }}
               />

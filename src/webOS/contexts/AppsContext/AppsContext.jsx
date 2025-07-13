@@ -1,3 +1,5 @@
+// src/contexts/AppsContext/AppsContext.jsx
+
 import React, { createContext, useState } from 'react';
 import defaultIcon from '../../media/icons/defaultapp.png';
 import folderIcon from '../../media/icons/folder.png';
@@ -15,12 +17,12 @@ import Mario64 from '../../initialapps/Mario64/Mario64.jsx';
 import marioIcon from '../../media/icons/mario64.png';
 import quakeIcon from '../../media/icons/quake3.png';
 import Quake3 from '../../initialapps/Quake3/Quake3.jsx';
-import missioncontrolicon from '../../media/icons/missioncontrol.png';
+import missionControlIcon from '../../media/icons/missioncontrol.png';
 
 /**
  * The initial list of apps.
- * The `indock` field determines if the icon should be rendered on the desktop.
- * The new `available` field determines if the app is enabled (true) or disabled (false).
+ * `indock` → should show on dock by default.
+ * `available` → whether the app can be opened.
  */
 const initialAppsList = [
   {
@@ -101,7 +103,7 @@ const initialAppsList = [
   {
     id: 'missioncontrol',
     name: 'Mission Control',
-    icon: missioncontrolicon,
+    icon: missionControlIcon,
     component: null,
     priority: 3,
     indock: true,
@@ -128,41 +130,86 @@ const initialAppsList = [
 ];
 
 export const AppsContext = createContext({
-  apps: initialAppsList,
+  apps: [],
   setApps: () => {},
-  openedApps: [],
-  setOpenedApps: () => {},
   addApp: () => {},
+  getOpenApps: (desktopId) => [],
+  openApp: (desktopId, appId) => {},
+  closeApp: (desktopId, appId) => {},
 });
 
-export const AppsProvider = ({ children }) => {
-  const [apps, setApps] = useState(initialAppsList);
-  const [openedApps, setOpenedApps] = useState([]);
+export const AppsProvider = ({ children, initialApps = initialAppsList }) => {
+  // Static list of all available apps
+  const [apps, setApps] = useState(initialApps);
+
+  // Map from desktopId → array of open app IDs
+  const [openAppsByDesktop, setOpenAppsByDesktop] = useState({});
 
   /**
-   * Adds a new app to the apps list if it doesn't already exist.
-   * Optionally, if open is true, also adds the app to the openedApps list.
+   * Add a new app to the global apps list.
+   * Does nothing if the app ID already exists.
    */
-  const addApp = (app, open = false) => {
-    setApps((prevApps) => {
-      if (!prevApps.find((a) => a.id === app.id)) {
-        return [...prevApps, app];
-      }
-      return prevApps;
-    });
+  const addApp = (app) => {
+    setApps((prev) =>
+      prev.some((a) => a.id === app.id) ? prev : [...prev, app]
+    );
+  };
 
-    if (open) {
-      setOpenedApps((prevOpened) => {
-        if (!prevOpened.find((a) => a.id === app.id)) {
-          return [...prevOpened, app];
-        }
-        return prevOpened;
-      });
+  /**
+   * Get the list of open app IDs for a given desktop.
+   */
+  const getOpenApps = (desktopId) => {
+    return openAppsByDesktop[desktopId] || [];
+  };
+
+  /**
+   * Open an app on the specified desktop.
+   * If the app has a `link`, opens in new tab and does not track in state.
+   * Otherwise adds the app ID to that desktop's openApps array.
+   */
+  const openApp = (desktopId, appId) => {
+    const app = apps.find((a) => a.id === appId);
+    if (!app) return;
+
+    if (app.link) {
+      window.open(app.link, '_blank', 'noopener,noreferrer');
+      return;
     }
+
+    setOpenAppsByDesktop((prev) => {
+      const current = prev[desktopId] || [];
+      if (current.includes(appId)) return prev;
+      return {
+        ...prev,
+        [desktopId]: [...current, appId],
+      };
+    });
+  };
+
+  /**
+   * Close an open app on the specified desktop.
+   */
+  const closeApp = (desktopId, appId) => {
+    setOpenAppsByDesktop((prev) => {
+      const current = prev[desktopId] || [];
+      return {
+        ...prev,
+        [desktopId]: current.filter((id) => id !== appId),
+      };
+    });
   };
 
   return (
-    <AppsContext.Provider value={{ apps, setApps, openedApps, setOpenedApps, addApp }}>
+    <AppsContext.Provider
+      value={{
+        apps,
+        setApps,
+        addApp,
+        getOpenApps,
+        openApp,
+        closeApp,
+      }}
+    >
       {children}
     </AppsContext.Provider>
   );

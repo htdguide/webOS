@@ -27,7 +27,7 @@ const SystemUIContent = () => {
           isThisFullscreen ? ' slide-left' : ''
         }`}
       >
-          <DesktopAssembler />
+          <DesktopAssembler desktopId={contextWrapId} />
       </div>
     </DraggableWindowWrap>
     </MiniWindowProvider>

@@ -65,16 +65,16 @@ const MissionControlUI = () => {
   const [releaseDirection, setReleaseDirection] = useState(null);
   const [targetIndex, setTargetIndex] = useState(null);
 
-  // —— Viewport ——
+  // —— Viewport & transition disabling ——
   const [viewport, setViewport] = useState({
     width: window.innerWidth,
     height: window.innerHeight
   });
+  const [disableSlideTransition, setDisableSlideTransition] = useState(false);
 
   // —— Overview / fade state ——
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [isFading, setIsFading] = useState(false);
-  const [disableSlideTransition, setDisableSlideTransition] = useState(false);
   const [barExpanded, setBarExpanded] = useState(false);
   const [prevIndex, setPrevIndex] = useState(0);
 
@@ -130,13 +130,27 @@ const MissionControlUI = () => {
     }
   }, []);
 
-  // —— Track viewport resize ——
+  // —— Track viewport resize & disable transition on orientation change ——
   useEffect(() => {
-    const onResize = () =>
+    const handleResize = () => {
+      // disable the smooth slide one tick
+      setDisableSlideTransition(true);
       setViewport({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    };
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
   }, []);
+
+  // —— Reset transition disabling immediately after render ——
+  useEffect(() => {
+    if (!disableSlideTransition) return;
+    const t = setTimeout(() => setDisableSlideTransition(false), 0);
+    return () => clearTimeout(t);
+  }, [disableSlideTransition]);
 
   // —— Mouse hover hints ——
   useEffect(() => {
@@ -215,11 +229,9 @@ const MissionControlUI = () => {
             ? -TOUCH_HINT_OFFSET
             : TOUCH_HINT_OFFSET;
 
-        // begin dragging
         setTouching(true);
         setTouchDelta(touchStartRef.current.initialOffset);
 
-        // one-time ease into the peek
         setDragTransition(true);
         initialDragRef.current = true;
       }, HOVER_DELAY);
@@ -228,7 +240,6 @@ const MissionControlUI = () => {
     const onTouchMove = e => {
       if (touchStartRef.current.active) {
         e.preventDefault();
-        // first move: drop the one-time transition
         if (initialDragRef.current) {
           setDragTransition(false);
           initialDragRef.current = false;
@@ -242,7 +253,6 @@ const MissionControlUI = () => {
             : Math.max(0, dx);
         let newDelta = touchStartRef.current.initialOffset + limitedDx;
 
-        // clamp so you can't slide further than one desktop:
         const slideAmount = viewport.width + DESKTOP_SPACING;
         if (hoverSideRef.current === 'right') {
           newDelta = Math.max(newDelta, -slideAmount);
@@ -252,7 +262,6 @@ const MissionControlUI = () => {
 
         setTouchDelta(newDelta);
       } else if (touchStartRef.current.timer) {
-        // cancel hold if finger drifts off-edge
         const x = e.touches[0].clientX;
         const side = hoverSideRef.current;
         const movedOff =
@@ -303,7 +312,6 @@ const MissionControlUI = () => {
         }
       }
 
-      // reset flags
       touchStartRef.current.active = false;
       hoverSideRef.current = null;
       initialDragRef.current = false;
@@ -354,11 +362,6 @@ const MissionControlUI = () => {
     setDisableSlideTransition(true);
     switchDesktop(i);
   }, [switchDesktop]);
-  useEffect(() => {
-    if (!disableSlideTransition) return;
-    const t = setTimeout(() => setDisableSlideTransition(false), 0);
-    return () => clearTimeout(t);
-  }, [disableSlideTransition]);
 
   const exitOverview = useCallback((restore = true) => {
     setShowWallpaperPlaceholder(false);
