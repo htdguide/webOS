@@ -42,9 +42,21 @@
   to   { transform: translateY(-145px); opacity: 0; }
 }
 
+/* ---------- NEW: + Button Slide-Up (position only) ---------- */
+@keyframes slidePlusUp {
+  from {
+    bottom: 0;
+  }
+  to {
+    /* center in the 145px-tall bar: 50% of 145px is 72.5px, minus half of ~40px = 20px */
+    bottom: calc(50% - 20px);
+  }
+}
+
 /* ---------- MC Bar ---------- */
 .mc-bar {
-  position: absolute; top: 0; left: 0; right: 0;
+  position: absolute;
+  top: 0; left: 0; right: 0;
   height: 145px;
   backdrop-filter: blur(10px);
   background: rgba(230,230,230,0.7);
@@ -62,9 +74,12 @@
 
 /* ---------- Bar names row ---------- */
 .mc-bar-names {
-  position: absolute; bottom: 0; left: 0; right: 0;
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
   height: 40px;
-  display: flex; justify-content: center; align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   gap: 43px;
   transition:
     gap var(--names-slide-duration) var(--easing-flattened),
@@ -97,50 +112,72 @@
     margin-top var(--bar-slide-duration) var(--easing-flattened);
 }
 
-/* ---------- + New button ---------- */
+/* ---------- Plain “+” trigger ---------- */
 .mc-bar-new {
   position: absolute;
-  right: 20px;
-  bottom: 12px;
-  padding: 4px 8px;
-  font-size: 12px;
+  right: 20px;        /* 20px from right edge */
+  bottom: 0;
+  font-size: 40px;    /* scaled up */
+  font-weight: 150;
   color: rgb(33,35,36);
-  background: rgba(255,255,255,0.9);
-  border: 1px solid rgba(33,35,36,0.2);
-  border-radius: 2px;
+  background: none;   /* no background */
+  border: none;       /* no border */
+  padding: 0;         /* no padding */
   cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s, background 0.2s;
-  z-index: 160;
+  opacity: 1;         /* now always visible */
+  z-index: 191;
 }
+
+/* Animate the “+” up when the bar expands */
+.mission-control-container.overview-open.bar-expanded .mc-bar-new {
+  animation: slidePlusUp var(--bar-slide-duration) var(--easing-flattened) forwards;
+}
+
 .mc-bar-new:hover {
   opacity: 1;
-  background: rgba(255,255,255,1);
 }
 
 /* ---------- Exit overlay ---------- */
 .mc-exit-overlay {
-  position: absolute; inset: 0; z-index: 140;
+  position: absolute;
+  inset: 0;
+  z-index: 140;
 }
 
 /* ---------- Desktops Wrapper ---------- */
 .desktops-wrapper {
-  display: flex; gap: 60px; height: 100%; position: relative;
+  /* ← allow all empty-space clicks to pass through */
+  pointer-events: none;
+
+  display: flex;
+  gap: 60px;
+  height: 100%;
+  position: relative;
   transition:
     transform var(--desktop-slide-duration) var(--easing-flattened),
     opacity   var(--desktop-slide-duration) var(--easing-flattened);
 }
 
 .mission-control-container.overview-open .desktops-wrapper {
-  position: absolute; top: 30px; left: 0; right: 0;
-  display: flex; align-items: center; justify-content: center;
-  gap: 30px; padding: 0 20px; z-index: 200; flex-wrap: nowrap;
+  /* still ignore pointer-events here */
+  pointer-events: none;
+
+  position: absolute;
+  top: 30px; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  padding: 0 20px;
+  z-index: 190;
+  flex-wrap: nowrap;
   transform: translateY(-120px);
   opacity: 0;
   transition: none;
 }
 
 .mission-control-container.overview-open.bar-expanded .desktops-wrapper {
+  pointer-events: none;
   transform: translateY(5px);
   opacity: 1;
   transition:
@@ -154,9 +191,12 @@
 
 /* ---------- Desktop Panel ---------- */
 .desktop-panel {
-  flex-shrink: 0; 
-  width: 100vw; 
-  height: 100%; 
+  /* ← re-enable clicks on each panel */
+  pointer-events: auto;
+
+  flex-shrink: 0;
+  width: 100vw;
+  height: 100%;
   position: relative;
   margin-left: 0;
 }
@@ -180,13 +220,18 @@
 
 /* ---------- Scale Wrapper Inside Each Panel ---------- */
 .desktop-scale-wrapper {
-  width: 100%; height: 100%; position: relative; z-index: 1;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 /* ---------- Invisible blocker overlay ---------- */
 .desktop-panel-overlay {
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  z-index: 2; background: transparent;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 2;
+  background: transparent;
 }
 
 /* ---------- Delete Icon on Hover ---------- */

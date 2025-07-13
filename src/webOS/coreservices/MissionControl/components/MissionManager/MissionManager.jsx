@@ -66,6 +66,7 @@ const MissionManager = ({
     if (overviewOpen) {
       setBaselineDesktopIds(desktops.map(d => d.id));
     }
+    // ← only depends on overviewOpen
   }, [overviewOpen]);
 
   // sync --screenratio for CSS
@@ -212,25 +213,20 @@ const MissionManager = ({
   const shiftX = THUMB_W + 30;
   const centerIndex = (desktops.length - 1) / 2;
 
-  // unified delete handler: first, middle, last
+  // unified delete handler
   const handleDelete = (e, i) => {
     e.stopPropagation();
     const lastIdx = desktops.length - 1;
 
     if (i === 0) {
-      // first → shift wrapper right (names & panels)
       setDeleteShiftAmount(shiftX);
       setIsDeleteShifted(true);
       deleteDesktop(i);
-
     } else if (i === lastIdx) {
-      // last → shift wrapper left (names & panels)
       setDeleteShiftAmount(-shiftX);
       setIsDeleteShifted(true);
       deleteDesktop(i);
-
     } else {
-      // middle → shift only next panel and next name
       const next = desktops[i + 1];
       setPanelShiftId(next.id);
       setIsPanelShifted(true);
@@ -297,7 +293,6 @@ const MissionManager = ({
           <div className={barClass} onMouseEnter={() => setBarExpanded(true)}>
             <div className="mc-bar-names" style={mergedNamesStyle}>
               {desktops.map((desk, i) => {
-                // base fade/new‐name style
                 let nameStyle = {};
                 if (i === newNameIndex && newNamePhase !== 'idle') {
                   nameStyle =
@@ -309,8 +304,6 @@ const MissionManager = ({
                             'opacity 0.1s var(--easing-flattened) calc(var(--desktop-panel-duration) - 0.1s)'
                         };
                 }
-
-                // apply individual‐name delete shift/back
                 if (
                   desk.id === nameShiftId &&
                   isNameShifted &&
@@ -347,9 +340,9 @@ const MissionManager = ({
               })}
             </div>
 
-            <button className="mc-bar-new" onClick={handleNewClick}>
-              + New
-            </button>
+            <span className="mc-bar-new" onClick={handleNewClick}>
+              +
+            </span>
           </div>
           <div className="mc-exit-overlay" onClick={handleExit} />
         </>
@@ -357,7 +350,6 @@ const MissionManager = ({
 
       <div className={wrapClass} style={mergedWrapperStyle}>
         {desktops.map((desk, i) => {
-          // base style for each panel
           const baseStyle = overviewOpen
             ? {
                 width: `${THUMB_W}px`,
@@ -373,7 +365,6 @@ const MissionManager = ({
               }
             : {};
 
-          // apply individual‐panel delete shift/back
           const panelStyle = { ...baseStyle };
           if (
             desk.id === panelShiftId &&
