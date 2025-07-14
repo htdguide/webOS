@@ -19,7 +19,7 @@ function DesktopAssembler({ desktopId = 'default' }) {
   const { notify } = useNotification();
 
   useEffect(() => {
-    notify('Test Notification: App has loaded!', 3000, icon);
+    //notify('Test Notification: App has loaded!', 3000, icon);
   }, [notify]);
 
   const handleOpenApp = (appId) => {

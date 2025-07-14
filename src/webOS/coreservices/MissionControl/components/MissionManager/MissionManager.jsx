@@ -7,11 +7,14 @@ import React, {
   useState,
   useCallback
 } from 'react';
+// adjust this path if your Wallpaper component lives elsewhere
+import Wallpaper from '../../../../components/Wallpaper/Wallpaper.jsx';
 import './MissionManager.css';
 
 const SLIDE_DURATION = 300;                    // overview open/close timing (ms)
 const NEW_DESKTOP_ANIMATION_DURATION = 2000;   // new‐desktop timing (ms)
 const DELETE_ANIMATION_DURATION = 200;         // delete timing (ms)
+const PREVIEW_HIDE_DELAY = 200;                // hide preview after click (ms)
 
 const MissionManager = ({
   desktops,
@@ -36,17 +39,13 @@ const MissionManager = ({
   const [isShifted, setIsShifted] = useState(false);
   const [isAnimatingBack, setIsAnimatingBack] = useState(false);
 
-  // wrapper‐level delete shift/back (first or last)
+  // delete shifts…
   const [isDeleteShifted, setIsDeleteShifted] = useState(false);
   const [isAnimatingDeleteBack, setIsAnimatingDeleteBack] = useState(false);
   const [deleteShiftAmount, setDeleteShiftAmount] = useState(0);
-
-  // individual‐panel delete shift/back (for “middle” deletes)
   const [isPanelShifted, setIsPanelShifted] = useState(false);
   const [isAnimatingPanelBack, setIsAnimatingPanelBack] = useState(false);
   const [panelShiftId, setPanelShiftId] = useState(null);
-
-  // individual‐name delete shift/back (for “middle” deletes in the names row)
   const [isNameShifted, setIsNameShifted] = useState(false);
   const [isAnimatingNameBack, setIsAnimatingNameBack] = useState(false);
   const [nameShiftId, setNameShiftId] = useState(null);
@@ -55,9 +54,16 @@ const MissionManager = ({
   const [newNamePhase, setNewNamePhase] = useState('idle');
   const [newNameIndex, setNewNameIndex] = useState(null);
 
+  // ** NEW: disable interactions until animation finishes **
+  //    we'll reuse disabledIndex to also gate the + button
+  const [disabledIndex, setDisabledIndex] = useState(null);
+
   // hover to show delete “×”
   const [showDeleteIndex, setShowDeleteIndex] = useState(null);
   const hoverTimeoutRef = useRef(null);
+
+  // ** NEW: preview panel **
+  const [isPreviewVisible, setIsPreviewVisible] = useState(false);
 
   const panelRefs = useRef([]);
 
@@ -66,7 +72,6 @@ const MissionManager = ({
     if (overviewOpen) {
       setBaselineDesktopIds(desktops.map(d => d.id));
     }
-    // ← only depends on overviewOpen
   }, [overviewOpen]);
 
   // sync --screenratio for CSS
@@ -105,7 +110,7 @@ const MissionManager = ({
     return () => clearTimeout(frame);
   }, [isShifted]);
 
-  // animate-back for wrapper‐level delete
+  // animate-back for delete…
   useEffect(() => {
     if (!isDeleteShifted) return;
     const frame = setTimeout(() => {
@@ -119,7 +124,6 @@ const MissionManager = ({
     return () => clearTimeout(frame);
   }, [isDeleteShifted]);
 
-  // animate-back for individual‐panel delete
   useEffect(() => {
     if (!isPanelShifted) return;
     const frame = setTimeout(() => {
@@ -134,7 +138,6 @@ const MissionManager = ({
     return () => clearTimeout(frame);
   }, [isPanelShifted]);
 
-  // animate-back for individual‐name delete
   useEffect(() => {
     if (!isNameShifted) return;
     const frame = setTimeout(() => {
@@ -178,20 +181,43 @@ const MissionManager = ({
 
   const handleClick = i => {
     if (isClosing) return;
-    setIsClosing(true);
-    setTimeout(() => {
-      instantSwitchDesktop(i);
-      exitOverview(false);
-      setIsClosing(false);
-    }, SLIDE_DURATION);
+    instantSwitchDesktop(i);
+    exitOverview(false);
   };
 
   const handleNewClick = () => {
-    if (isClosing) return;
+    // guard against double‐click while animation in progress
+    if (disabledIndex !== null || isClosing) return;
+
+    // mark panel idx as disabled, and thus + button as disabled
+    const idx = desktops.length;
+    setDisabledIndex(idx);
+
+    // shift the panels
     setIsShifted(true);
+
+    // kick off name fade
     setNewNamePhase('init');
-    setNewNameIndex(desktops.length);
+    setNewNameIndex(idx);
+
+    // actually create the desktop
     createDesktop();
+
+    // hide preview almost immediately
+    setTimeout(() => setIsPreviewVisible(false), PREVIEW_HIDE_DELAY);
+
+    // re-enable both panel names and + button once animation fully done
+    setTimeout(() => setDisabledIndex(null), NEW_DESKTOP_ANIMATION_DURATION);
+  };
+
+  // ** NEW: show/hide preview on plus hover **
+  const handlePlusMouseEnter = () => {
+    if (disabledIndex === null) {
+      setIsPreviewVisible(true);
+    }
+  };
+  const handlePlusMouseLeave = () => {
+    setIsPreviewVisible(false);
   };
 
   const handleMouseEnterPanel = useCallback(i => {
@@ -209,8 +235,12 @@ const MissionManager = ({
   // sizing
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
-  const THUMB_W = viewport.width * scale;
-  const shiftX = THUMB_W + 30;
+  // raw computed thumbnail width
+  const rawThumbW = viewport.width * scale;
+  // clamp CSS thumb-width to at least 55px:
+  const cssThumbWidth = Math.max(rawThumbW, 55);
+  // you can still use rawThumbW for math if you like:
+  const shiftX = rawThumbW + 30;
   const centerIndex = (desktops.length - 1) / 2;
 
   // unified delete handler
@@ -243,7 +273,7 @@ const MissionManager = ({
       : desktops.map(d =>
           baselineDesktopIds.includes(d.id)
             ? 'slideFromCenter'
-            : 'slideFromRight'
+            : 'slideFadeFromRight'
         );
 
   const barClass = `mc-bar${isClosing ? ' closing' : ''}`;
@@ -252,6 +282,10 @@ const MissionManager = ({
   // —— wrapper style (panels) —— 
   const originalWrapperMargin = wrapperStyle.marginLeft ?? '0px';
   const mergedWrapperStyle = { ...wrapperStyle };
+  // set clamped CSS var here:
+  mergedWrapperStyle['--desktop-count'] = desktops.length;
+  mergedWrapperStyle['--thumb-width'] = `${cssThumbWidth}px`;
+
   if (isShifted && !isAnimatingBack) {
     mergedWrapperStyle.marginLeft = `${shiftX}px`;
     mergedWrapperStyle.transition = 'none';
@@ -269,7 +303,7 @@ const MissionManager = ({
   }
 
   // —— names‐row style mirror (entire row) —— 
-  const mergedNamesStyle = { '--thumb-w': `${THUMB_W}px` };
+  const mergedNamesStyle = { '--thumb-w': `${cssThumbWidth}px` };
   if (isShifted && !isAnimatingBack) {
     mergedNamesStyle.marginLeft = `${shiftX}px`;
     mergedNamesStyle.transition = 'none';
@@ -286,6 +320,9 @@ const MissionManager = ({
       `margin-left ${DELETE_ANIMATION_DURATION}ms var(--easing-flattened)`;
   }
 
+  // is the + button currently disabled?
+  const plusDisabled = disabledIndex !== null;
+
   return (
     <>
       {overviewOpen && (
@@ -293,6 +330,9 @@ const MissionManager = ({
           <div className={barClass} onMouseEnter={() => setBarExpanded(true)}>
             <div className="mc-bar-names" style={mergedNamesStyle}>
               {desktops.map((desk, i) => {
+                const isDisabled = i === disabledIndex;
+
+                // existing fade / shift name styles
                 let nameStyle = {};
                 if (i === newNameIndex && newNamePhase !== 'idle') {
                   nameStyle =
@@ -328,11 +368,12 @@ const MissionManager = ({
                 return (
                   <span
                     key={desk.id}
-                    className={
-                      i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'
-                    }
-                    onClick={() => handleClick(i)}
-                    style={nameStyle}
+                    className={i === activeIndex ? 'mc-bar-name active' : 'mc-bar-name'}
+                    onClick={isDisabled ? undefined : () => handleClick(i)}
+                    style={{
+                      ...nameStyle,
+                      ...(isDisabled && { pointerEvents: 'none', cursor: 'default' })
+                    }}
                   >
                     {desk.name || `Desktop ${i + 1}`}
                   </span>
@@ -340,9 +381,25 @@ const MissionManager = ({
               })}
             </div>
 
-            <span className="mc-bar-new" onClick={handleNewClick}>
+            <span
+              className={`mc-bar-new${plusDisabled ? ' disabled' : ''}`}
+              onClick={plusDisabled ? undefined : handleNewClick}
+              onMouseEnter={handlePlusMouseEnter}
+              onMouseLeave={handlePlusMouseLeave}
+            >
               +
             </span>
+
+            {/* preview panel */}
+            <div
+              className={`preview-panel${isPreviewVisible ? ' visible' : ''}`}
+              style={{
+                '--thumb-width': `${cssThumbWidth}px`,
+                '--thumb-height': `${THUMB_H}px`
+              }}
+            >
+              <Wallpaper />
+            </div>
           </div>
           <div className="mc-exit-overlay" onClick={handleExit} />
         </>
@@ -352,9 +409,9 @@ const MissionManager = ({
         {desktops.map((desk, i) => {
           const baseStyle = overviewOpen
             ? {
-                width: `${THUMB_W}px`,
+                width: `${cssThumbWidth}px`,
                 height: `${THUMB_H}px`,
-                '--tx': `${-(i - centerIndex) * (THUMB_W + 30)}px`,
+                '--tx': `${-(i - centerIndex) * (cssThumbWidth + 30)}px`,
                 '--ty': `-120px`,
                 '--panel-animation': animations[i],
                 '--panel-duration':
@@ -365,6 +422,7 @@ const MissionManager = ({
               }
             : {};
 
+          // delete‐shift adjustments
           const panelStyle = { ...baseStyle };
           if (
             desk.id === panelShiftId &&
@@ -382,25 +440,27 @@ const MissionManager = ({
               `margin-left ${DELETE_ANIMATION_DURATION}ms var(--easing-flattened)`;
           }
 
+          const isDisabled = i === disabledIndex;
+
           return (
             <div
               ref={el => (panelRefs.current[i] = el)}
               key={desk.id}
               className="desktop-panel"
-              draggable={overviewOpen}
-              onDragStart={overviewOpen ? e => onDragStart(e, i) : undefined}
-              onDragOver={overviewOpen ? onDragOver : undefined}
-              onDrop={overviewOpen ? e => onDrop(e, i) : undefined}
-              onClick={overviewOpen ? () => handleClick(i) : undefined}
+              draggable={overviewOpen && !isDisabled}
+              onDragStart={overviewOpen && !isDisabled ? e => onDragStart(e, i) : undefined}
+              onDragOver={overviewOpen && !isDisabled ? onDragOver : undefined}
+              onDrop={overviewOpen && !isDisabled ? e => onDrop(e, i) : undefined}
+              onClick={overviewOpen && !isDisabled ? () => handleClick(i) : undefined}
               onMouseEnter={overviewOpen ? () => handleMouseEnterPanel(i) : undefined}
               onMouseLeave={overviewOpen ? handleMouseLeavePanel : undefined}
-              style={panelStyle}
+              style={{
+                ...panelStyle,
+                ...(isDisabled && { pointerEvents: 'none' })
+              }}
             >
               {overviewOpen && showDeleteIndex === i && (
-                <div
-                  className="delete-icon"
-                  onClick={e => handleDelete(e, i)}
-                >
+                <div className="delete-icon" onClick={e => handleDelete(e, i)}>
                   ×
                 </div>
               )}

@@ -1,5 +1,3 @@
-/* src/components/MissionControl/MissionBar/MissionManager.css */
-
 @import "../../../../configs/CSSConfigs/animations.css";
 
 /* timing vars & defaults */
@@ -12,6 +10,9 @@
 
   /* new var, if you want to reference in CSS */
   --delete-slide-duration:   0.3s;
+  /* fallback values; will be overridden by inline styles */
+  --desktop-count: 0;
+  --thumb-width:  0px;
 }
 
 /* ---------- Keyframes ---------- */
@@ -33,8 +34,30 @@
   to   { transform: translate(0, 0);               opacity: 1; }
 }
 @keyframes slideFromRight {
-  from { transform: translateX(100vw); opacity: 0; }
-  to   { transform: translateX(0);      opacity: 1; }
+  from {
+    transform: translateX(
+      calc(
+        -68px
+        + (55vw - ((var(--thumb-width) * var(--desktop-count)) + (30px * var(--desktop-count))) / 2)
+      )
+    );
+    opacity: 1;
+  }
+  to   { transform: translateX(0); opacity: 1; }
+}
+/* new: fade then slide in */
+@keyframes slideFadeFromRight {
+  0%   {
+    transform: translateX(
+      calc(
+        -68px
+        + (55vw - ((var(--thumb-width) * var(--desktop-count)) + (30px * var(--desktop-count))) / 2)
+      )
+    );
+    opacity: 0;
+  }
+  10%  { opacity: 1; }
+  100% { transform: translateX(0); opacity: 1; }
 }
 
 @keyframes slideWrapperUp {
@@ -80,6 +103,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 190;
   gap: 43px;
   transition:
     gap var(--names-slide-duration) var(--easing-flattened),
@@ -126,6 +150,16 @@
   cursor: pointer;
   opacity: 1;         /* now always visible */
   z-index: 191;
+  /* ensure the circle can expand beyond the button bounds */
+  overflow: visible;
+  transition: opacity 0.2s;
+}
+
+/* disabled state for the + button */
+.mc-bar-new.disabled {
+  cursor: default;
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* Animate the “+” up when the bar expands */
@@ -135,6 +169,27 @@
 
 .mc-bar-new:hover {
   opacity: 1;
+}
+
+/* ---------- Grow circle behind “+” on hover (synced) ---------- */
+.mc-bar-new::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 27px;
+  width: 31px;
+  height: 31px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  transform: translate(-50%, -50%) scale(0);
+  /* synced to bar-slide-duration and easing */
+  transition: transform var(--bar-slide-duration) var(--easing-flattened);
+  z-index: -1;
+  pointer-events: none;
+}
+.mc-bar-new:hover::before {
+  transform: translate(-50%, -50%) scale(1);
 }
 
 /* ---------- Exit overlay ---------- */
@@ -157,11 +212,8 @@
     transform var(--desktop-slide-duration) var(--easing-flattened),
     opacity   var(--desktop-slide-duration) var(--easing-flattened);
 }
-
 .mission-control-container.overview-open .desktops-wrapper {
-  /* still ignore pointer-events here */
   pointer-events: none;
-
   position: absolute;
   top: 30px; left: 0; right: 0;
   display: flex;
@@ -175,7 +227,6 @@
   opacity: 0;
   transition: none;
 }
-
 .mission-control-container.overview-open.bar-expanded .desktops-wrapper {
   pointer-events: none;
   transform: translateY(5px);
@@ -184,7 +235,6 @@
     transform var(--bar-slide-duration) var(--easing-flattened),
     opacity   var(--bar-slide-duration) var(--easing-flattened);
 }
-
 .mission-control-container.overview-open.bar-expanded .desktops-wrapper.closing {
   animation: slideWrapperUp var(--bar-slide-duration) var(--easing-flattened) forwards;
 }
@@ -200,7 +250,6 @@
   position: relative;
   margin-left: 0;
 }
-
 .mission-control-container.overview-open .desktop-panel {
   overflow: hidden;
   background: transparent;
@@ -209,7 +258,6 @@
   transform: translate(var(--tx), var(--ty));
   opacity: 0;
 }
-
 .mission-control-container.overview-open.bar-expanded .desktop-panel {
   animation:
     var(--panel-animation, var(--desktop-panel-animation))
@@ -254,4 +302,29 @@
 }
 .delete-icon:hover {
   background: rgba(255,255,255,1);
+}
+
+/* ---------- Desktop Preview Panel (synced & fading) ---------- */
+.preview-panel {
+  position: absolute;
+  top: 30px; /* align with desktops-wrapper */
+  right: calc(0% - var(--thumb-width));
+  width: var(--thumb-width);
+  height: var(--thumb-height, 90px);
+  pointer-events: none;
+  z-index: 189;
+  background: rgba(255, 255, 255, 0);
+  border-radius: 2px;
+
+  /* ensure it's hidden by default */
+  opacity: 0;
+
+  /* slide-right still 0.3s, but fade only 0.2s */
+  transition:
+    right var(--bar-slide-duration) var(--easing-flattened),
+    opacity 0.2s ease-in-out;
+}
+.preview-panel.visible {
+  right: calc(55px - var(--thumb-width));
+  opacity: 1;
 }
