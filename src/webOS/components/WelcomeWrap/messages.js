@@ -1,6 +1,6 @@
 // Add or remove messages as needed.
 const messages = [
-    "Welcome",
+    "Kia Ora",
     "webOS is here",
     "developed by Nikita Mogilevskii",
     "Have fun!"

@@ -18,6 +18,7 @@ import marioIcon from '../../media/icons/mario64.png';
 import quakeIcon from '../../media/icons/quake3.png';
 import Quake3 from '../../initialapps/Quake3/Quake3.jsx';
 import missionControlIcon from '../../media/icons/missioncontrol.png';
+import MissionControlOpener from '../../initialapps/MissionControlOpener/MissionControlOpener.jsx';
 
 /**
  * The initial list of apps.
@@ -104,9 +105,9 @@ const initialAppsList = [
     id: 'missioncontrol',
     name: 'Mission Control',
     icon: missionControlIcon,
-    component: null,
+    component: MissionControlOpener,
     priority: 3,
-    indock: true,
+    indock: false,
     available: true,
   },
   {

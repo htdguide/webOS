@@ -15,13 +15,15 @@ import { useStateManager } from '../../../../stores/StateManager/StateManager.js
 import './MissionControlUI.css';
 import MissionManager from '../MissionManager/MissionManager.jsx';
 
-const FADE_DURATION = 300;        // CSS fade timing (ms)
-const SLIDE_DURATION = 300;       // overview slide timing (ms)
-const OPEN_DELAY = 200;           // delay before fade (ms)
+const FADE_DURATION = 300;               // CSS fade timing (ms)
+const SLIDE_DURATION = 300;              // overview slide timing (ms)
+const OPEN_DELAY = 200;                  // delay before fade (ms)
+// must match your CSS --desktop-slide-duration: 0.55s
+const DESKTOP_SLIDE_DURATION = 550;      // ms
 
 // Hint / touch config
 const EDGE_THRESHOLD = 20;        // px from either edge to trigger
-const HOVER_DELAY = 200;         // ms to hold before hint (1 s)
+const HOVER_DELAY = 200;          // ms to hold before hint / touch‐hold
 const TOUCH_HINT_OFFSET = 30;     // px touch‐hold peek
 const MOUSE_HINT_OFFSET = 10;     // px hover peek
 const HINT_SLIDE_DURATION = 200;  // ms for hover‐hint ease
@@ -31,12 +33,57 @@ const DESKTOP_SPACING = 60;       // px extra between desktops
 const MissionControlUI = () => {
   // —— Context & stores ——
   const {
-    createDesktop, addDesktop, switchDesktop,
-    deleteDesktop, reorderDesktops,
-    activeIndex, desktops
+    createDesktop,
+    addDesktop,
+    switchDesktop: rawSwitchDesktop,
+    deleteDesktop: contextDeleteDesktop,
+    reorderDesktops,
+    activeIndex,
+    desktops
   } = useContext(MissionControlContext);
-  const { state, addState, editStateValue } = useStateManager();
+  const { state, editStateValue } = useStateManager();
+
   const overlayVisible = state.groups.missionControl?.overlayVisible === 'true';
+  const stateOpened   = state.groups.missionControl?.isOpened     === 'true';
+
+  // —— Initialize currentDesktopID on mount (runs exactly once) ——
+  useEffect(() => {
+    const desktop = desktops[activeIndex];
+    if (desktop?.id != null) {
+      editStateValue(
+        'missionControl',
+        'currentDesktopID',
+        String(desktop.id)
+      );
+    }
+    // only on mount:
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // —— Wrap switchDesktop so it also writes currentDesktopID when the user actually switches ——
+  const switchDesktop = useCallback((i) => {
+    rawSwitchDesktop(i);
+    const desktop = desktops[i];
+    if (desktop?.id != null) {
+      editStateValue(
+        'missionControl',
+        'currentDesktopID',
+        String(desktop.id)
+      );
+    }
+  }, [rawSwitchDesktop, desktops, editStateValue]);
+
+  // Keep activeIndex valid after delete
+  const handleDeleteDesktop = useCallback((index) => {
+    contextDeleteDesktop(index);
+    let newIndex = activeIndex;
+    if (index === activeIndex) {
+      newIndex = index > 0 ? index - 1 : 0;
+    } else if (index < activeIndex) {
+      newIndex = activeIndex - 1;
+    }
+    switchDesktop(newIndex);
+  }, [contextDeleteDesktop, switchDesktop, activeIndex]);
 
   // —— Wallpaper / portal readiness ——
   const [showWallpaperPlaceholder, setShowWallpaperPlaceholder] = useState(false);
@@ -51,14 +98,14 @@ const MissionControlUI = () => {
   const hintTimerRef = useRef(null);
   const hoverSideRef = useRef(null);
 
-  // —— Touch-drag state ——
+  // —— Touch‐drag state ——
   const [touching, setTouching] = useState(false);
   const [touchDelta, setTouchDelta] = useState(0);
   const touchStartRef = useRef({ timer: null, active: false, x0: 0, initialOffset: 0 });
+  const initialDragRef = useRef(false);
 
   // —— One-time initial-drag easing ——
   const [dragTransition, setDragTransition] = useState(false);
-  const initialDragRef = useRef(false);
 
   // —— Release animations ——
   const [releaseInProgress, setReleaseInProgress] = useState(false);
@@ -77,6 +124,12 @@ const MissionControlUI = () => {
   const [isFading, setIsFading] = useState(false);
   const [barExpanded, setBarExpanded] = useState(false);
   const [prevIndex, setPrevIndex] = useState(0);
+
+  // instant switch (no transition)
+  const instantSwitchDesktop = useCallback(i => {
+    setDisableSlideTransition(true);
+    switchDesktop(i);
+  }, [switchDesktop]);
 
   // —— Sync portalReady on desktop changes ——
   useEffect(() => {
@@ -111,29 +164,9 @@ const MissionControlUI = () => {
     }
   });
 
-  // —— Manage 'opened' flag in stateManager ——
-  useEffect(() => {
-    if (!state.groups.missionControl.hasOwnProperty('opened')) {
-      addState('missionControl', 'opened', 'false');
-    }
-  }, [addState, state.groups.missionControl]);
-
-  // —— Clear lingering 'opened' on first mount ——
-  const initialMount = useRef(true);
-  useEffect(() => {
-    if (!initialMount.current) return;
-    initialMount.current = false;
-    if (state.groups.missionControl.opened === 'true') {
-      editStateValue('desktop','iconVisible','true');
-      editStateValue('desktop','menubarVisible','true');
-      editStateValue('missionControl','opened','false');
-    }
-  }, []);
-
-  // —— Track viewport resize & disable transition on orientation change ——
+  // —— Track viewport resize & orientation change ——
   useEffect(() => {
     const handleResize = () => {
-      // disable the smooth slide one tick
       setDisableSlideTransition(true);
       setViewport({ width: window.innerWidth, height: window.innerHeight });
     };
@@ -145,7 +178,7 @@ const MissionControlUI = () => {
     };
   }, []);
 
-  // —— Reset transition disabling immediately after render ——
+  // —— Reset transition disabling after one render ——
   useEffect(() => {
     if (!disableSlideTransition) return;
     const t = setTimeout(() => setDisableSlideTransition(false), 0);
@@ -165,12 +198,14 @@ const MissionControlUI = () => {
 
       if (atRight && hoverSideRef.current !== 'right') {
         clearTimeout(hintTimerRef.current);
-        setShowLeftHint(false); setShowRightHint(false);
+        setShowLeftHint(false);
+        setShowRightHint(false);
         hoverSideRef.current = 'right';
         hintTimerRef.current = setTimeout(() => setShowRightHint(true), HOVER_DELAY);
       } else if (atLeft && hoverSideRef.current !== 'left') {
         clearTimeout(hintTimerRef.current);
-        setShowRightHint(false); setShowLeftHint(false);
+        setShowRightHint(false);
+        setShowLeftHint(false);
         hoverSideRef.current = 'left';
         hintTimerRef.current = setTimeout(() => setShowLeftHint(true), HOVER_DELAY);
       } else if (!atRight && !atLeft && hoverSideRef.current) {
@@ -206,7 +241,7 @@ const MissionControlUI = () => {
     return () => window.removeEventListener('click', onClick);
   }, [showRightHint, showLeftHint, viewport.width, activeIndex, switchDesktop]);
 
-  // —— Touch‐hold + draggable swipe ——
+  // —— Touch‐hold + draggable swipe (copied verbatim) ——
   useEffect(() => {
     if (overviewOpen) return;
     const canRight = desktops.length > activeIndex + 1;
@@ -257,7 +292,7 @@ const MissionControlUI = () => {
         if (hoverSideRef.current === 'right') {
           newDelta = Math.max(newDelta, -slideAmount);
         } else {
-          newDelta = Math.min(newDelta,  slideAmount);
+          newDelta = Math.min(newDelta, slideAmount);
         }
 
         setTouchDelta(newDelta);
@@ -285,7 +320,7 @@ const MissionControlUI = () => {
         const threshold = viewport.width / 6;
         const willSwitch =
           (hoverSideRef.current === 'right' && finalDx < -threshold) ||
-          (hoverSideRef.current === 'left'  && finalDx >  threshold);
+          (hoverSideRef.current === 'left'  && finalDx > threshold);
 
         if (willSwitch) {
           const nextIdx = activeIndex + (finalDx < 0 ? 1 : -1);
@@ -352,42 +387,56 @@ const MissionControlUI = () => {
     const t = setTimeout(() => {
       editStateValue('desktop','iconVisible','false');
       editStateValue('desktop','menubarVisible','false');
-      editStateValue('missionControl','opened','true');
       setIsFading(true);
     }, OPEN_DELAY);
     return () => clearTimeout(t);
   }, [activeIndex, editStateValue]);
 
-  const instantSwitchDesktop = useCallback(i => {
-    setDisableSlideTransition(true);
-    switchDesktop(i);
-  }, [switchDesktop]);
-
   const exitOverview = useCallback((restore = true) => {
-    setShowWallpaperPlaceholder(false);
     setOverviewOpen(false);
     setIsFading(false);
     setBarExpanded(false);
-    if (state.groups.missionControl.opened === 'true') {
-      editStateValue('desktop','iconVisible','true');
-      editStateValue('desktop','menubarVisible','true');
-      editStateValue('missionControl','opened','false');
-    }
-    if (restore) instantSwitchDesktop(prevIndex);
-  }, [prevIndex, editStateValue, state.groups.missionControl.opened, instantSwitchDesktop]);
+    editStateValue('desktop','iconVisible','true');
+    editStateValue('desktop','menubarVisible','true');
+    editStateValue('missionControl','isOpened','false');
 
-  // —— Drag-drop reorder ——
-  const onDragStart = useCallback((e,i) => {
+    if (restore) {
+      setDisableSlideTransition(false);
+      switchDesktop(prevIndex);
+      setTimeout(() => {
+        setShowWallpaperPlaceholder(false);
+      }, DESKTOP_SLIDE_DURATION);
+    } else {
+      setShowWallpaperPlaceholder(false);
+    }
+  }, [prevIndex, editStateValue, switchDesktop]);
+
+  // —— Click handler for the UI button ——
+  const handleOpenClick = useCallback(() => {
+    editStateValue('missionControl','isOpened','true');
+    openOverview();
+  }, [editStateValue, openOverview]);
+
+  // —— External open/close triggers ——
+  useEffect(() => {
+    if (stateOpened && !overviewOpen) openOverview();
+  }, [stateOpened, overviewOpen, openOverview]);
+  useEffect(() => {
+    if (!stateOpened && overviewOpen) exitOverview();
+  }, [stateOpened, overviewOpen, exitOverview]);
+
+  // —— Drag‐drop reorder ——
+  const onDragStart = useCallback((e, i) => {
     e.dataTransfer.setData('text/plain', String(i));
   }, []);
-  const onDragOver = useCallback(e => {
+  const onDragOver  = useCallback(e => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
   }, []);
-  const onDrop = useCallback((e,to) => {
+  const onDrop      = useCallback((e, to) => {
     e.preventDefault();
-    const from = parseInt(e.dataTransfer.getData('text/plain'),10);
-    if (!isNaN(from) && from!==to) reorderDesktops(from,to);
+    const from = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (!isNaN(from) && from !== to) reorderDesktops(from, to);
   }, [reorderDesktops]);
 
   // —— Compute wrapper transform & style ——
@@ -457,10 +506,10 @@ const MissionControlUI = () => {
             disabled={desktops.length === 1}
           >Next ›</button>
           <button
-            onClick={() => deleteDesktop(activeIndex)}
+            onClick={() => handleDeleteDesktop(activeIndex)}
             disabled={desktops.length === 1}
           >🗑 Delete</button>
-          <button onClick={openOverview}>Mission Control</button>
+          <button onClick={handleOpenClick}>Mission Control</button>
         </div>
       )}
 
@@ -481,7 +530,7 @@ const MissionControlUI = () => {
         onDrop={onDrop}
         viewport={viewport}
         createDesktop={addDesktop}
-        deleteDesktop={deleteDesktop}
+        deleteDesktop={handleDeleteDesktop}
       />
     </div>
   );

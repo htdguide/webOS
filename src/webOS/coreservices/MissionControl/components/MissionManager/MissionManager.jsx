@@ -15,6 +15,7 @@ const SLIDE_DURATION = 300;                    // overview open/close timing (ms
 const NEW_DESKTOP_ANIMATION_DURATION = 2000;   // new‐desktop timing (ms)
 const DELETE_ANIMATION_DURATION = 200;         // delete timing (ms)
 const PREVIEW_HIDE_DELAY = 200;                // hide preview after click (ms)
+const MAX_DESKTOPS = 4;                        // new constant for max
 
 const MissionManager = ({
   desktops,
@@ -67,10 +68,22 @@ const MissionManager = ({
 
   const panelRefs = useRef([]);
 
+  // detect touch devices so we can keep the delete‐icon always visible
+  const isTouchDevice =
+    typeof window !== 'undefined' &&
+    (('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
+
   // capture baseline IDs when overview first opens
   useLayoutEffect(() => {
     if (overviewOpen) {
       setBaselineDesktopIds(desktops.map(d => d.id));
+    }
+  }, [overviewOpen]);
+
+  // ** NEW: hide all delete buttons whenever the overview is opened **
+  useEffect(() => {
+    if (overviewOpen) {
+      setShowDeleteIndex(null);
     }
   }, [overviewOpen]);
 
@@ -186,33 +199,20 @@ const MissionManager = ({
   };
 
   const handleNewClick = () => {
-    // guard against double‐click while animation in progress
-    if (disabledIndex !== null || isClosing) return;
-
-    // mark panel idx as disabled, and thus + button as disabled
+    if (isPlusDisabled) return;
     const idx = desktops.length;
     setDisabledIndex(idx);
-
-    // shift the panels
     setIsShifted(true);
-
-    // kick off name fade
     setNewNamePhase('init');
     setNewNameIndex(idx);
-
-    // actually create the desktop
     createDesktop();
-
-    // hide preview almost immediately
     setTimeout(() => setIsPreviewVisible(false), PREVIEW_HIDE_DELAY);
-
-    // re-enable both panel names and + button once animation fully done
     setTimeout(() => setDisabledIndex(null), NEW_DESKTOP_ANIMATION_DURATION);
   };
 
   // ** NEW: show/hide preview on plus hover **
   const handlePlusMouseEnter = () => {
-    if (disabledIndex === null) {
+    if (!isPlusDisabled) {
       setIsPreviewVisible(true);
     }
   };
@@ -235,19 +235,19 @@ const MissionManager = ({
   // sizing
   const THUMB_H = 90;
   const scale = THUMB_H / viewport.height;
-  // raw computed thumbnail width
   const rawThumbW = viewport.width * scale;
-  // clamp CSS thumb-width to at least 55px:
   const cssThumbWidth = Math.max(rawThumbW, 55);
-  // you can still use rawThumbW for math if you like:
   const shiftX = rawThumbW + 30;
   const centerIndex = (desktops.length - 1) / 2;
 
-  // unified delete handler
+  // ** UPDATED: guard delete when only one desktop **
   const handleDelete = (e, i) => {
+    if (desktops.length <= 1) {
+      // nothing to delete
+      return;
+    }
     e.stopPropagation();
     const lastIdx = desktops.length - 1;
-
     if (i === 0) {
       setDeleteShiftAmount(shiftX);
       setIsDeleteShifted(true);
@@ -266,7 +266,6 @@ const MissionManager = ({
     }
   };
 
-  // determine panel entrance animation
   const animations =
     Array.isArray(panelAnimations) && panelAnimations.length === desktops.length
       ? panelAnimations
@@ -279,10 +278,8 @@ const MissionManager = ({
   const barClass = `mc-bar${isClosing ? ' closing' : ''}`;
   const wrapClass = `desktops-wrapper${isClosing ? ' closing' : ''}`;
 
-  // —— wrapper style (panels) —— 
   const originalWrapperMargin = wrapperStyle.marginLeft ?? '0px';
   const mergedWrapperStyle = { ...wrapperStyle };
-  // set clamped CSS var here:
   mergedWrapperStyle['--desktop-count'] = desktops.length;
   mergedWrapperStyle['--thumb-width'] = `${cssThumbWidth}px`;
 
@@ -302,7 +299,6 @@ const MissionManager = ({
       `margin-left ${DELETE_ANIMATION_DURATION}ms var(--easing-flattened)`;
   }
 
-  // —— names‐row style mirror (entire row) —— 
   const mergedNamesStyle = { '--thumb-w': `${cssThumbWidth}px` };
   if (isShifted && !isAnimatingBack) {
     mergedNamesStyle.marginLeft = `${shiftX}px`;
@@ -320,8 +316,19 @@ const MissionManager = ({
       `margin-left ${DELETE_ANIMATION_DURATION}ms var(--easing-flattened)`;
   }
 
-  // is the + button currently disabled?
-  const plusDisabled = disabledIndex !== null;
+  // Disable + when at max or during animation
+  const isPlusDisabled = disabledIndex !== null || desktops.length >= MAX_DESKTOPS;
+  const plusClassName = `mc-bar-new${isPlusDisabled ? ' disabled' : ''}${isTouchDevice ? ' touch' : ''}`;
+  const plusHandlers = {};
+  if (!isPlusDisabled) {
+    if (isTouchDevice) {
+      plusHandlers.onTouchStart = handleNewClick;
+    } else {
+      plusHandlers.onClick = handleNewClick;
+      plusHandlers.onMouseEnter = handlePlusMouseEnter;
+      plusHandlers.onMouseLeave = handlePlusMouseLeave;
+    }
+  }
 
   return (
     <>
@@ -331,8 +338,6 @@ const MissionManager = ({
             <div className="mc-bar-names" style={mergedNamesStyle}>
               {desktops.map((desk, i) => {
                 const isDisabled = i === disabledIndex;
-
-                // existing fade / shift name styles
                 let nameStyle = {};
                 if (i === newNameIndex && newNamePhase !== 'idle') {
                   nameStyle =
@@ -382,10 +387,8 @@ const MissionManager = ({
             </div>
 
             <span
-              className={`mc-bar-new${plusDisabled ? ' disabled' : ''}`}
-              onClick={plusDisabled ? undefined : handleNewClick}
-              onMouseEnter={handlePlusMouseEnter}
-              onMouseLeave={handlePlusMouseLeave}
+              className={plusClassName}
+              {...plusHandlers}
             >
               +
             </span>
@@ -422,7 +425,6 @@ const MissionManager = ({
               }
             : {};
 
-          // delete‐shift adjustments
           const panelStyle = { ...baseStyle };
           if (
             desk.id === panelShiftId &&
@@ -459,11 +461,23 @@ const MissionManager = ({
                 ...(isDisabled && { pointerEvents: 'none' })
               }}
             >
-              {overviewOpen && showDeleteIndex === i && (
-                <div className="delete-icon" onClick={e => handleDelete(e, i)}>
-                  ×
+              {/* only show delete button if more than one desktop */}
+              {overviewOpen && desktops.length > 1 && (
+                <div
+                  className="delete-icon"
+                  style={{
+                    visibility: showDeleteIndex === i || isTouchDevice
+                      ? 'visible'
+                      : 'hidden'
+                  }}
+                  onClick={e => handleDelete(e, i)}
+                >
+                  <div className="cross">
+                    ×
+                  </div>
                 </div>
               )}
+
               {overviewOpen && <div className="desktop-panel-overlay" />}
               <div
                 className="desktop-scale-wrapper"

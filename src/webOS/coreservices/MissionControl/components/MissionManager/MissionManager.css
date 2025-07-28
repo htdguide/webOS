@@ -1,3 +1,5 @@
+/* src/components/MissionControl/MissionManager.css */
+
 @import "../../../../configs/CSSConfigs/animations.css";
 
 /* timing vars & defaults */
@@ -45,7 +47,6 @@
   }
   to   { transform: translateX(0); opacity: 1; }
 }
-/* new: fade then slide in */
 @keyframes slideFadeFromRight {
   0%   {
     transform: translateX(
@@ -65,21 +66,17 @@
   to   { transform: translateY(-145px); opacity: 0; }
 }
 
-/* ---------- NEW: + Button Slide-Up (position only) ---------- */
+/* ---------- + Button Slide-Up ---------- */
 @keyframes slidePlusUp {
-  from {
-    bottom: 0;
-  }
-  to {
-    /* center in the 145px-tall bar: 50% of 145px is 72.5px, minus half of ~40px = 20px */
-    bottom: calc(50% - 20px);
-  }
+  from { bottom: 0; }
+  to   { bottom: calc(50% - 20px); }
 }
 
-/* ---------- MC Bar ---------- */
+/* ---------- MC Bar (fixed to viewport) ---------- */
 .mc-bar {
-  position: absolute;
+  position: fixed;
   top: 0; left: 0; right: 0;
+  width: 100vw;
   height: 145px;
   backdrop-filter: blur(10px);
   background: rgba(230,230,230,0.7);
@@ -139,39 +136,31 @@
 /* ---------- Plain “+” trigger ---------- */
 .mc-bar-new {
   position: absolute;
-  right: 20px;        /* 20px from right edge */
+  right: 20px;
   bottom: 0;
-  font-size: 40px;    /* scaled up */
+  font-size: 40px;
   font-weight: 150;
   color: rgb(33,35,36);
-  background: none;   /* no background */
-  border: none;       /* no border */
-  padding: 0;         /* no padding */
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
-  opacity: 1;         /* now always visible */
+  transition: opacity 0.3s ease-in-out;
+  opacity: 1;
   z-index: 191;
-  /* ensure the circle can expand beyond the button bounds */
   overflow: visible;
-  transition: opacity 0.2s;
 }
-
-/* disabled state for the + button */
 .mc-bar-new.disabled {
   cursor: default;
-  opacity: 0.5;
+  opacity: 0;
   pointer-events: none;
 }
-
-/* Animate the “+” up when the bar expands */
 .mission-control-container.overview-open.bar-expanded .mc-bar-new {
   animation: slidePlusUp var(--bar-slide-duration) var(--easing-flattened) forwards;
 }
-
 .mc-bar-new:hover {
   opacity: 1;
 }
-
-/* ---------- Grow circle behind “+” on hover (synced) ---------- */
 .mc-bar-new::before {
   content: '';
   position: absolute;
@@ -183,7 +172,6 @@
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
   transform: translate(-50%, -50%) scale(0);
-  /* synced to bar-slide-duration and easing */
   transition: transform var(--bar-slide-duration) var(--easing-flattened);
   z-index: -1;
   pointer-events: none;
@@ -199,18 +187,19 @@
   z-index: 140;
 }
 
-/* ---------- Desktops Wrapper ---------- */
+/* ---------- Desktops Wrapper (smooth sliding) ---------- */
 .desktops-wrapper {
-  /* ← allow all empty-space clicks to pass through */
   pointer-events: none;
-
   display: flex;
   gap: 60px;
   height: 100%;
   position: relative;
-  transition:
-    transform var(--desktop-slide-duration) var(--easing-flattened),
-    opacity   var(--desktop-slide-duration) var(--easing-flattened);
+  will-change: transform, opacity;
+  /* restore the smooth slide: */
+  -webkit-transition: transform var(--desktop-slide-duration) var(--desktop-panel-easing),
+                     opacity var(--desktop-slide-duration) var(--desktop-panel-easing);
+  transition:        transform var(--desktop-slide-duration) var(--desktop-panel-easing),
+                     opacity var(--desktop-slide-duration) var(--desktop-panel-easing);
 }
 .mission-control-container.overview-open .desktops-wrapper {
   pointer-events: none;
@@ -239,11 +228,9 @@
   animation: slideWrapperUp var(--bar-slide-duration) var(--easing-flattened) forwards;
 }
 
-/* ---------- Desktop Panel ---------- */
+/* ---------- Desktop Panels ---------- */
 .desktop-panel {
-  /* ← re-enable clicks on each panel */
   pointer-events: auto;
-
   flex-shrink: 0;
   width: 100vw;
   height: 100%;
@@ -251,7 +238,7 @@
   margin-left: 0;
 }
 .mission-control-container.overview-open .desktop-panel {
-  overflow: hidden;
+  overflow: visible;
   background: transparent;
   border-radius: 2px;
   cursor: pointer;
@@ -282,32 +269,40 @@
   background: transparent;
 }
 
-/* ---------- Delete Icon on Hover ---------- */
+/* ---------- Delete Icon ---------- */
 .delete-icon {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  width: 24px;
-  height: 24px;
+  top: -11px;
+  left: -11px;
+  width: 23px;
+  height: 23px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.8);
+  background: rgb(255, 255, 255);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  color: #333;
+  font-size: 17px;
+  color: rgb(135, 135, 135);
   cursor: pointer;
   z-index: 3;
   transition: background 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 .delete-icon:hover {
   background: rgba(255,255,255,1);
 }
 
-/* ---------- Desktop Preview Panel (synced & fading) ---------- */
+.cross {
+  margin-top: -2.5px;
+  margin-left: -0.5px;
+  font-family: 'Varela Round' !important;
+  font-weight: 500;
+}
+
+/* ---------- Preview Panel ---------- */
 .preview-panel {
   position: absolute;
-  top: 30px; /* align with desktops-wrapper */
+  top: 30px;
   right: calc(0% - var(--thumb-width));
   width: var(--thumb-width);
   height: var(--thumb-height, 90px);
@@ -315,11 +310,7 @@
   z-index: 189;
   background: rgba(255, 255, 255, 0);
   border-radius: 2px;
-
-  /* ensure it's hidden by default */
   opacity: 0;
-
-  /* slide-right still 0.3s, but fade only 0.2s */
   transition:
     right var(--bar-slide-duration) var(--easing-flattened),
     opacity 0.2s ease-in-out;
@@ -327,4 +318,21 @@
 .preview-panel.visible {
   right: calc(55px - var(--thumb-width));
   opacity: 1;
+}
+
+/* Disable the +‐button and names until the bar is fully expanded */
+.mission-control-container.overview-open:not(.bar-expanded) .mc-bar-names,
+.mission-control-container.overview-open:not(.bar-expanded) .mc-bar-new {
+  pointer-events: none;
+}
+
+/* Touch overrides for “+” */
+.mc-bar-new.touch {
+  transition: none !important;
+}
+.mc-bar-new.touch:hover {
+  opacity: 1;
+}
+.mc-bar-new.touch::before {
+  display: none !important;
 }

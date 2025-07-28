@@ -1,4 +1,4 @@
-/* src/components/MissionControl/MissionControlUI.css */
+/* src/components/MissionControl/components/MissionControlUI/MissionControlUI.css */
 
 /* ---------- Animations ---------- */
 
@@ -9,7 +9,7 @@
 }
 
 /* Panels flying in from center when overview-expanded */
-/* (This keyframe is still needed here for the initial fade‐in behavior.) */
+/* (This keyframe is still needed here for the initial fade-in behavior.) */
 @keyframes slideFromCenter {
   from {
     transform: translate(var(--tx), var(--ty));
@@ -41,24 +41,27 @@
   animation: none;
 }
 
-/* ---------- Wallpaper ---------- */
+/* ---------- Wallpaper (now fixed!) ---------- */
 .mc-wallpaper {
-  position: absolute;
-  inset: 0;
+  position: fixed;      /* anchor to viewport, not the sliding container */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   z-index: 100;
   opacity: 0;
   animation: none;
 }
 
-/* ---------- Overlay Toolbar (buttons at top) ---------- */
+/* ---------- Overlay Toolbar (buttons at top, now fixed!) ---------- */
 .mc-overlay {
-  position: absolute;
+  position: fixed;      /* anchor to viewport */
   top: 10px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   gap: 8px;
-  z-index: 100;
+  z-index: 300;
 }
 .mc-overlay button {
   background: rgba(0, 0, 0, 0.6);

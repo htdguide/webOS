@@ -27,7 +27,9 @@
     "backgroundColor": "#FFFFFF"
   },
   "missionControl": {
-    "overlayVisible": "false"
+    "overlayVisible": "false",
+    "isOpened": "false",
+    "currentDesktopID": "1"
   },
   "developer": {
     "logsenabled": "false"

@@ -20,8 +20,8 @@ function Mario64({ onClose: parentOnClose }) {
       title: 'Super Mario 64',
       windowWidth: 800,
       windowHeight: 600,
-      minWindowWidth: 600,
-      minWindowHeight: 400,
+      minWindowWidth: 300,
+      minWindowHeight: 200,
       iframeSrc: iframeUrl,
       onClose: () => {
         // called when user clicks the X
