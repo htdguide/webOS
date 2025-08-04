@@ -1,5 +1,32 @@
 // src/components/Dock/Dock.jsx
 
+/**
+ * Renders the global Dock with:
+ * - responsive portrait vs. desktop layout
+ * - persistent fade in/out and slide-in on initial load
+ * - pagination, magnification, tooltips, and one-shot component launches
+ *
+ * Areas:
+ * 1: Imports & Hooks Setup
+ *   1.1: React & style imports
+ *   1.2: Custom hooks & config imports
+ *   1.3: Core state (fade, load animation, portrait)
+ *   1.4: One-shot component launcher state
+ *   1.5: useDock hook unpacking
+ * 2: Effects (orientation, resize, fade, load)
+ *   2.1: Mobile portrait listener
+ *   2.2: Keyboard/viewport offset
+ *   2.3: Fade visibility
+ *   2.4: Animate-on-load trigger
+ * 3: Style Computation
+ *   3.1: Slide-in appearance flag
+ *   3.2: Outer container style
+ * 4: Render Dock & Icons
+ *   4.1: Icon grid with tooltips, disabled overlay, open indicator
+ *   4.2: Pagination dots
+ * 5: Render launched one-shot components
+ */
+
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { useDock } from '../../interactions/useDock/useDock.jsx';
 import { AppsContext } from '../../contexts/AppsContext/AppsContext.jsx';
@@ -20,36 +47,24 @@ import {
 } from './DockStyle';
 import disabledOverlay from '../../media/icons/disable.png';
 
+// —————————————————————————————————————
+// Area 1: Imports & Hooks Setup
+// —————————————————————————————————————
 export default function Dock() {
-  // 1) Portrait-mobile detection
+  // 1.3: Core state for fade, load animation, and portrait detection
   const [isMobilePortrait, setIsMobilePortrait] = useState(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return false;
     return window
       .matchMedia('(max-width: 768px) and (orientation: portrait)')
       .matches;
   });
-  useEffect(() => {
-    if (!window.matchMedia) return;
-    const mql = window.matchMedia(
-      '(max-width: 768px) and (orientation: portrait)'
-    );
-    const handler = (e) => setIsMobilePortrait(e.matches);
-    mql.addEventListener
-      ? mql.addEventListener('change', handler)
-      : mql.addListener(handler);
-    return () => {
-      mql.removeEventListener
-        ? mql.removeEventListener('change', handler)
-        : mql.removeListener(handler);
-    };
-  }, []);
+  const [fadeVisible, setFadeVisible] = useState(false);
+  const [animateOnLoad, setAnimateOnLoad] = useState(false);
 
-  // 2) Pick config
-  const effectiveConfig = isMobilePortrait
-    ? { ...DOCK_CONFIG, ...DOCK_CONFIG.vertical }
-    : DOCK_CONFIG;
+  // 1.4: One-shot component launcher state
+  const [launchedComponents, setLaunchedComponents] = useState([]);
 
-  // 3) Call our updated hook (no desktopId needed; dock is global)
+  // 1.5: useDock hook unpacking
   const {
     outerRef,
     iconsContainerRef,
@@ -61,7 +76,6 @@ export default function Dock() {
     scales,
     shouldTransition,
     hoveredApp,
-    activeApp,
     openedApps,
     currentPage,
     totalPages,
@@ -91,13 +105,36 @@ export default function Dock() {
     setCurrentPage,
   } = useDock({
     AppsContext,
-    DOCK_CONFIG: effectiveConfig,
+    DOCK_CONFIG: isMobilePortrait
+      ? { ...DOCK_CONFIG, ...DOCK_CONFIG.vertical }
+      : DOCK_CONFIG,
     useDeviceInfo,
     useStateManager,
     useLogger,
   });
 
-  // 4) Keyboard offset
+  // —————————————————————————————————————
+  // Area 2: Effects
+  // —————————————————————————————————————
+
+  // 2.1: Mobile portrait listener
+  useEffect(() => {
+    if (!window.matchMedia) return;
+    const mql = window.matchMedia(
+      '(max-width: 768px) and (orientation: portrait)'
+    );
+    const handler = (e) => setIsMobilePortrait(e.matches);
+    mql.addEventListener
+      ? mql.addEventListener('change', handler)
+      : mql.addListener(handler);
+    return () => {
+      mql.removeEventListener
+        ? mql.removeEventListener('change', handler)
+        : mql.removeListener(handler);
+    };
+  }, []);
+
+  // 2.2: Keyboard/viewport offset
   const [toolbarOffset, setToolbarOffset] = useState(0);
   useLayoutEffect(() => {
     const updateOffset = () => {
@@ -115,8 +152,7 @@ export default function Dock() {
     };
   }, []);
 
-  // 5) Fade in/out
-  const [fadeVisible, setFadeVisible] = useState(isDockVisible);
+  // 2.3: Fade visibility when docking toggles
   useEffect(() => {
     let id;
     if (isDockVisible) setFadeVisible(true);
@@ -124,38 +160,35 @@ export default function Dock() {
     return () => clearTimeout(id);
   }, [isDockVisible]);
 
-  // 6) Compute outer style (now animated)
+  // 2.4: Animate-on-load trigger
+  useEffect(() => {
+    setAnimateOnLoad(true);
+  }, []);
+
+  // —————————————————————————————————————
+  // Area 3: Style Computation
+  // —————————————————————————————————————
+
+  // 3.1: Slide-in appearance flag
+  const shouldAppear = animateOnLoad && isDockVisible;
+
+  // 3.2: Outer container style (transform + opacity)
   const outerStyle = {
-    ...getOuterContainerStyle(DOCK_POSITION, DOCK_MARGIN, isDockVisible),
+    ...getOuterContainerStyle(DOCK_POSITION, DOCK_MARGIN, shouldAppear),
     opacity: fadeVisible ? 1 : 0,
-    // Only override top/bottom for bottom‑positioned dock:
     ...(DOCK_POSITION === 'bottom'
       ? {
           top: 'auto',
           bottom: `calc(${toolbarOffset + DOCK_MARGIN}px + env(safe-area-inset-bottom))`,
         }
-      : {
-          bottom: 'auto',
-        }),
+      : { bottom: 'auto' }),
   };
 
   const DOT_SIZE = 8;
 
   // —————————————————————————————————————
-  // NEW: one‑shot component launcher (for apps that are just functions/components)
+  // Area 4: Render Dock & Icons
   // —————————————————————————————————————
-  const [launchedComponents, setLaunchedComponents] = useState([]);
-
-  const handleIconClick = (app) => {
-    // keep original dock behavior
-    openApp(app.id);
-
-    // if this app object has a React component attached, mount it
-    if (app.component && typeof app.component === 'function') {
-      setLaunchedComponents((prev) => [...prev, app.component]);
-    }
-  };
-
   return (
     <>
       <div
@@ -196,7 +229,12 @@ export default function Dock() {
                     }),
                     position: 'relative',
                   }}
-                  onClick={() => handleIconClick(app)}
+                  onClick={() => {
+                    openApp(app.id);
+                    if (app.component && typeof app.component === 'function') {
+                      setLaunchedComponents(prev => [...prev, app.component]);
+                    }
+                  }}
                   onMouseEnter={() => handleIconMouseEnter(app.id)}
                   onMouseLeave={handleIconMouseLeave}
                 >
@@ -232,6 +270,7 @@ export default function Dock() {
             })}
           </div>
 
+          {/* 4.2: Pagination dots */}
           {paginationEnabled && totalPages > 1 && (
             <div
               style={{
@@ -262,12 +301,12 @@ export default function Dock() {
         </div>
       </div>
 
-      {/* Render any one‑shot components you've launched */}
+      {/* 5: Render launched one-shot components */}
       {launchedComponents.map((Comp, idx) => (
         <Comp
           key={idx}
           onClose={() =>
-            setLaunchedComponents((prev) => prev.filter((_, i) => i !== idx))
+            setLaunchedComponents(prev => prev.filter((_, i) => i !== idx))
           }
         />
       ))}

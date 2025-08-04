@@ -2,12 +2,5 @@
 .display-container {
   width: 100%;
   height: 100%;
-  overflow: hidden !important;
-  touch-action: none !important;
-  overscroll-behavior: none !important;
-  -webkit-user-select: none !important;
-  -moz-user-select: none !important;
-  -ms-user-select: none !important;
-  user-select: none !important;
   }
   

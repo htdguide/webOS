@@ -8,7 +8,6 @@ html, body, #root {
   height: 100%;
   background-color: black;                /* Outside the monitor: black */
   overflow: hidden !important;            /* Disable scrolling */
-  touch-action: none !important;          /* Disable touch gestures */
   overscroll-behavior: none !important;   /* Prevent scroll chaining */
   -webkit-user-select: none !important;   /* Disable text selection in WebKit */
   -moz-user-select: none !important;      /* Disable text selection in Firefox */
@@ -34,6 +33,5 @@ body > iframe {
   -moz-user-select: none !important;
   -ms-user-select: none !important;
   user-select: none !important;
-  touch-action: none !important;
   overscroll-behavior: none !important;
 }

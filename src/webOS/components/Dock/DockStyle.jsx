@@ -2,7 +2,7 @@
 
 // flattened cubic‑bezier easing used everywhere
 const FLATTENED_EASING = 'cubic-bezier(0.4, 0.0, 0.2, 1.0)';
-const DURATION = 0.3; // seconds
+const DURATION = 0.2; // seconds
 
 /**
  * Safely include both modern and legacy iOS bottom safe‑area insets.

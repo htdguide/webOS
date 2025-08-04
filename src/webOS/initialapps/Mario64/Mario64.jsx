@@ -18,8 +18,8 @@ function Mario64({ onClose: parentOnClose }) {
     const windowId = openDraggableWindow({
       id: 'Mario64',            // stable id to dedupe StrictMode
       title: 'Super Mario 64',
-      windowWidth: 800,
-      windowHeight: 600,
+      windowWidth: 350,
+      windowHeight: 250,
       minWindowWidth: 300,
       minWindowHeight: 200,
       iframeSrc: iframeUrl,

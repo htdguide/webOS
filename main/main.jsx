@@ -14,7 +14,6 @@ const Main = () => {
 
     // Block wheel, touchmove, text selection start, and context menu (long-press)
     document.addEventListener('wheel', preventDefault, { passive: false });
-    document.addEventListener('touchmove', preventDefault, { passive: false });
     document.addEventListener('selectstart', preventDefault);
     document.addEventListener('contextmenu', preventDefault);
 

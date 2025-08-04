@@ -1,25 +1,33 @@
-// WelcomeWrap.jsx
-
-// Thanks for the hello animation from here: https://codepen.io/steefmaster/pen/MWvdyGb
+// =================================================================================
+// Chapter 1: Imports & Dependencies
+// =================================================================================
 
 import React, { useEffect, useState } from 'react';
 import messages from './messages';
 import './WelcomeWrap.css';
 import { useStateManager } from '../../stores/StateManager/StateManager';
 
+// =================================================================================
+// Chapter 2: Component Definition & State Manager Setup
+// =================================================================================
+
 const WelcomeWrap = () => {
+  // Initialize state manager hooks
   const { state, editStateValue, refreshState } = useStateManager();
 
+  // Determine if welcome screen is enabled in global state
   const welcomeEnabledStr =
     state.groups.welcomeWrap && state.groups.welcomeWrap.welcomeEnabled;
   const welcomeEnabled = welcomeEnabledStr === "false" ? false : true;
   if (!welcomeEnabled) return null;
 
+  // Timing configuration for messages and animations
   const totalDuration = 10;
   const initialDelay = 1;
   const messageCount = messages.length;
   const messageDuration = (totalDuration - initialDelay) / messageCount;
 
+  // Local UI state
   const [showWelcome, setShowWelcome] = useState(true);
   const [showLoading, setShowLoading] = useState(false);
   const [messageIndex, setMessageIndex] = useState(-1);
@@ -27,31 +35,45 @@ const WelcomeWrap = () => {
   const [fadeLoading, setFadeLoading] = useState(false);
   const [fadeHello, setFadeHello] = useState(false);
 
-  // Mount: hide dock & desktop
+  // =================================================================================
+  // Chapter 3: Mount Effect: Hide UI on Mount
+  // =================================================================================
+
   useEffect(() => {
+    // Hide dock, desktop icons, and menubar immediately
     editStateValue("dock", "dockVisible", "false");
     editStateValue("desktop", "iconVisible", "false");
     editStateValue("desktop", "menubarVisible", "false");
     refreshState();
   }, []);
 
-  // After totalDuration, show loading and fade out welcome
+  // =================================================================================
+  // Chapter 4: Effect: Show Loading and Fade Welcome
+  // =================================================================================
+
   useEffect(() => {
+    // After totalDuration seconds, transition to loading screen
     const t = setTimeout(() => {
       setShowLoading(true);
       setFadeWelcome(true);
+      // Remove welcome screen after fade-out
       setTimeout(() => setShowWelcome(false), 1000);
     }, totalDuration * 1000);
     return () => clearTimeout(t);
   }, [totalDuration]);
 
-  // Cycle welcome messages
+  // =================================================================================
+  // Chapter 5: Effect: Cycle Welcome Messages
+  // =================================================================================
+
   useEffect(() => {
     if (!showWelcome) return;
+    // Start cycling messages after initial delay
     if (messageIndex === -1) {
       const t = setTimeout(() => setMessageIndex(0), initialDelay * 1000);
       return () => clearTimeout(t);
     }
+    // Advance to next message until all shown
     if (messageIndex < messageCount - 1) {
       const t = setTimeout(
         () => setMessageIndex(i => i + 1),
@@ -61,23 +83,34 @@ const WelcomeWrap = () => {
     }
   }, [showWelcome, messageIndex, messageCount, messageDuration, initialDelay]);
 
-  // After SVG hello animation
+  // =================================================================================
+  // Chapter 6: Handler: Hello Animation End and Restore UI
+  // =================================================================================
+
   const handleHelloAnimationEnd = () => {
+    // Trigger fade-out of the SVG “hello”
     setFadeHello(true);
     setTimeout(() => {
-      // restore UI
+      // Restore dock, desktop icons, and menubar
       editStateValue("dock", "dockVisible", "true");
       editStateValue("desktop", "iconVisible", "true");
       editStateValue("desktop", "menubarVisible", "true");
+      // Disable further welcome screens
+      editStateValue("welcomeWrap", "welcomeEnabled", "false");
       refreshState();
-      // then fade out loading
+
+      // Fade out loading screen and then hide it
       setFadeLoading(true);
       setTimeout(() => setShowLoading(false), 1000);
     }, 1000);
   };
 
-  // if either phase is active, block pointer-events; otherwise allow clicks through
+  // Prevent pointer-events during welcome/loading phases
   const isBlocking = showWelcome || showLoading;
+
+  // =================================================================================
+  // Chapter 7: Rendering: Conditional Screens and Animations
+  // =================================================================================
 
   return (
     <div className={`welcome-container ${isBlocking ? 'blocking' : 'non-blocking'}`}>

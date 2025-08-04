@@ -1,3 +1,4 @@
+// Area 1: “Imports and constants”
 import React, { useState, useRef, useEffect } from 'react';
 import './DesktopIcon.css';
 
@@ -18,6 +19,7 @@ import {
 // 30%-opacity overlay PNG
 import disabledOverlay from '../../media/icons/disable.png';
 
+// Area 2: “Component state and effects”
 function DesktopIcon({
   wrapId,
   id,
@@ -30,22 +32,19 @@ function DesktopIcon({
   disableClick,
   clearDisableClick,
   icon,
-  available = true,             // ← new prop
+  available = true,
   position: controlledPosition,
   onPositionChange
 }) {
+  // 2.1: Position, drag and tap state
   const iconRef = useRef(null);
   const { log, enabled } = useLogger(`DesktopIcon[${wrapId}]`);
   const { state } = useStateManager();
   const desktopCfg = state.groups.desktop;
-
-  // grid & icon sizing
   const gridGap    = parseInt(desktopCfg.gridGap,      10) || 30;
   const iconWidth  = parseInt(desktopCfg.iconWidth,    10) || 64;
   const iconHeight = parseInt(desktopCfg.iconHeight,   10) || 64;
   const gridSize   = iconHeight;
-
-  // margins
   const topMargin    = parseInt(desktopCfg.topMargin,    10) || 40;
   const leftMargin   = parseInt(desktopCfg.leftMargin,   10) || 20;
   const rightMargin  = parseInt(desktopCfg.rightMargin,  10) || 20;
@@ -57,13 +56,24 @@ function DesktopIcon({
   const [isDragging, setIsDragging] = useState(false);
   const [holdTimer, setHoldTimer] = useState(null);
   const [lastTap, setLastTap] = useState(0);
+  const isIconVisible = desktopCfg.iconVisible !== 'false';
 
-  // sync controlledPosition
+  // 2.2: Animation state for initial mount
+  //     Icons start scaled/down-opacity, then animate in on first render
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    if (isIconVisible) {
+      // trigger animation one tick after mount
+      setHasMounted(true);
+    }
+  }, [isIconVisible]);
+
+  // keep controlledPosition in sync
   useEffect(() => {
     if (
       controlledPosition &&
       (controlledPosition.x !== position.x ||
-        controlledPosition.y !== position.y)
+       controlledPosition.y !== position.y)
     ) {
       setPosition(controlledPosition);
     }
@@ -74,16 +84,12 @@ function DesktopIcon({
     if (onPositionChange) onPositionChange(newPos);
   };
 
-  const isIconVisible = desktopCfg.iconVisible !== 'false';
-
   if (enabled) {
-    log(
-      'render',
-      `Rendering "${name}" at x=${position.x},y=${position.y}`
-    );
+    log('render', `Rendering "${name}" at x=${position.x},y=${position.y}`);
   }
 
-  // Hold/drag/tap interactions (unchanged)…
+  // Area 3: “Event handlers”
+  // 3.1: Mouse/touch down, up, leave, tap logic…
   const handleMouseDown = (e) => {
     if (isSelected && selectedCount > 1 && onGroupMouseDown) {
       onGroupMouseDown(e);
@@ -97,10 +103,7 @@ function DesktopIcon({
       setHoldTimer,
       (x, y, offsetX, offsetY) => {
         startDragging(
-          x,
-          y,
-          offsetX,
-          offsetY,
+          x, y, offsetX, offsetY,
           iconRef,
           updatePosition,
           setIsDragging,
@@ -135,10 +138,7 @@ function DesktopIcon({
       setHoldTimer,
       (x, y, offsetX, offsetY) => {
         startDragging(
-          x,
-          y,
-          offsetX,
-          offsetY,
+          x, y, offsetX, offsetY,
           iconRef,
           updatePosition,
           setIsDragging,
@@ -159,6 +159,8 @@ function DesktopIcon({
   const wrapperOnClick = () => onClick();
   const wrapperOnDoubleClick = () => onDoubleClick();
 
+  // Area 4: “Render”
+  // 4.1: Compute inline style (adds opacity & transform animation)
   const iconStyle = {
     '--icon-width': `${iconWidth}px`,
     '--icon-height': `${iconHeight}px`,
@@ -166,13 +168,15 @@ function DesktopIcon({
     height: iconHeight,
     left: position.x,
     top: position.y,
-    opacity: isIconVisible ? 1 : 0,
+    opacity: hasMounted && isIconVisible ? 1 : 0,
+    transform: hasMounted && isIconVisible ? 'scale(1)' : 'scale(0.8)',
     transition: isDragging
       ? 'none'
-      : 'left 0.3s, top 0.3s, opacity 0.5s'
+      : 'left 0.3s, top 0.3s, opacity 0.5s, transform 0.5s'
   };
 
   return (
+    // 4.2: JSX structure with a possible disabled overlay
     <div
       id={`desktop-icon-${wrapId}-${id}`}
       ref={iconRef}
@@ -219,7 +223,6 @@ function DesktopIcon({
           className="icon-image"
           style={{ backgroundImage: `url(${icon})` }}
         />
-        {/* Disabled-overlay */}
         {!available && (
           <img
             src={disabledOverlay}

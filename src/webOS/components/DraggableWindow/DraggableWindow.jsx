@@ -1,5 +1,21 @@
-// src/webOS/components/DraggableWindow/DraggableWindow.jsx
+/**
+ * DraggableWindow.jsx defines a window component that can be dragged, resized,
+ * focused, and toggled fullscreen. Resize‐handles are now completely hidden
+ * whenever the window is in fullscreen mode, so no resizing is possible and
+ * no resize cursor ever appears.
+ *
+ * Areas:
+ * 1: Imports & Constants (1.1, 1.2)
+ * 2: Component Definition & Hooks (2.1 … 2.5)
+ * 3: Effects & Handlers (3.1 … 3.7)
+ * 4: Imperative API (4.1)
+ * 5: Render & Dynamic Z-Index (5.1 … 5.4)
+ */
 
+// ================================
+// Area 1: Imports & Constants
+// ================================
+// 1.1: Import dependencies
 import React, {
   useRef,
   useState,
@@ -14,49 +30,46 @@ import { useLogger } from '../Logger/Logger.jsx';
 import { useFocus } from '../../contexts/FocusControl/FocusControl.jsx';
 import { FullscreenSpace } from '../FullScreenSpace/FullScreenSpace.jsx';
 import { useDraggableWindowContext } from '../../contexts/DraggableWindowProvider/DraggableWindowProvider.jsx';
+import { useStateManager } from '../../stores/StateManager/StateManager.jsx';  // 1.1.1
 
+// 1.2: Define corner handles for resizing
 const CORNER_HANDLES = ['br', 'tr', 'bl', 'tl'];
 
+
+// ===================================
+// Area 2: Component Definition & Hooks
+// ===================================
+// 2.1: Define DraggableWindow as forwardRef
 const DraggableWindow = forwardRef(
   (
-    {
-      wrapId,
-      windowId,
-      title,
-      windowWidth,
-      windowHeight,
-      minWindowWidth,
-      minWindowHeight,
-      maxWindowWidth,
-      maxWindowHeight,
-      onClose,
-      onMount,
-      onUnmount,
-      onResize,
-      initialX,
-      initialY,
-      iframeSrc,
-      children,
-    },
+    { wrapId, windowId, title,
+      windowWidth, windowHeight,
+      minWindowWidth, minWindowHeight,
+      maxWindowWidth, maxWindowHeight,
+      onClose, onMount, onUnmount, onResize,
+      initialX, initialY, iframeSrc, children },
     ref
   ) => {
+    // 2.2: Logging and focus tracking
     const { enabled } = useLogger(`DraggableWindow [wrap:${wrapId}]`);
     const { focusedComponent, updateFocus } = useFocus();
     const isFocused = focusedComponent === windowId;
-    const {
-      isFullscreen,
-      fullscreenWindowId,
-      enterFullscreen,
-      exitFullscreen,
-    } = useContext(FullscreenSpace);
-    const { enableFullscreenForWrap, disableFullscreenForWrap } = useDraggableWindowContext();
+
+    // 2.3: Fullscreen context
+    const { isFullscreen, fullscreenWindowId, enterFullscreen, exitFullscreen } =
+      useContext(FullscreenSpace);
+    const { enableFullscreenForWrap, disableFullscreenForWrap } =
+      useDraggableWindowContext();
     const isThisFullscreen = isFullscreen && fullscreenWindowId === wrapId;
 
+    // 2.4: StateManager hook for dock visibility
+    const { editStateValue } = useStateManager();
+
+    // 2.5: Refs & local size/position state
     const windowRef = useRef(null);
     const iframeRef = useRef(null);
-
     const parseCoord = (val, def) =>
-      val === undefined
+      val == null
         ? def
         : typeof val === 'number'
         ? val
@@ -65,21 +78,21 @@ const DraggableWindow = forwardRef(
     const [currentWidth, setCurrentWidth] = useState(windowWidth);
     const [currentHeight, setCurrentHeight] = useState(windowHeight);
     const [currentX, setCurrentX] = useState(parseCoord(initialX, 10));
-    const [currentY, setCurrentY] = useState(Math.max(parseCoord(initialY, 10), 26));
-
+    const [currentY, setCurrentY] = useState(
+      Math.max(parseCoord(initialY, 10), 26)
+    );
     const [isUserDragging, setIsUserDragging] = useState(false);
     const [isUserResizing, setIsUserResizing] = useState(false);
-    // Track exactly which handle is active
     const [activeResizeHandle, setActiveResizeHandle] = useState(null);
-
     const [scaleTransform, setScaleTransform] = useState({
-      tx: 0,
-      ty: 0,
-      sx: 1,
-      sy: 1,
+      tx: 0, ty: 0, sx: 1, sy: 1,
     });
 
-    // stop drag/resize on mouseup/touchend
+
+    // ================================
+    // Area 3: Effects & Handlers
+    // ================================
+    // 3.1: Stop drag/resize when mouse/touch ends
     useEffect(() => {
       const up = () => {
         setIsUserDragging(false);
@@ -94,13 +107,13 @@ const DraggableWindow = forwardRef(
       };
     }, []);
 
-    // respond to prop changes
+    // 3.2: Sync size when props change
     useEffect(() => {
       setCurrentWidth(windowWidth);
       setCurrentHeight(windowHeight);
     }, [windowWidth, windowHeight]);
 
-    // draggable/resizable integration
+    // 3.3: Hook in draggable/resizable lib
     useDraggable(
       windowRef,
       {
@@ -115,7 +128,7 @@ const DraggableWindow = forwardRef(
       onUnmount
     );
 
-    // focus + mount/unmount callbacks
+    // 3.4: On mount → focus + callbacks
     useEffect(() => {
       updateFocus(windowId);
       onMount?.();
@@ -123,7 +136,41 @@ const DraggableWindow = forwardRef(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // imperative API for parent control
+    // 3.5: Reset transform after exiting fullscreen
+    useEffect(() => {
+      if (!isThisFullscreen) {
+        setTimeout(
+          () => setScaleTransform({ tx: 0, ty: 0, sx: 1, sy: 1 }),
+          500
+        );
+      }
+    }, [isThisFullscreen]);
+
+    // 3.6: Restore iframe focus when this window is focused
+    useEffect(() => {
+      if (isFocused && iframeSrc && iframeRef.current) {
+        setTimeout(() => {
+          try {
+            const win = iframeRef.current.contentWindow;
+            const canvas = win?.document.getElementById('canvas');
+            if (canvas) canvas.focus();
+            else win?.focus();
+          } catch {
+            iframeRef.current.focus();
+          }
+        }, 0);
+      }
+    }, [isFocused, iframeSrc, windowId]);
+
+    // 3.7: Mark this window as focused on interaction
+    const markFocused = () => updateFocus(windowId);
+    const clampedY = Math.max(currentY, 26);
+
+
+    // ================================
+    // Area 4: Imperative API
+    // ================================
+    // 4.1: Expose imperative methods via ref
     useImperativeHandle(
       ref,
       () => ({
@@ -140,40 +187,14 @@ const DraggableWindow = forwardRef(
       [isFocused]
     );
 
-    // after exiting fullscreen, reset transform so next enter animates
-    useEffect(() => {
-      if (!isThisFullscreen) {
-        setTimeout(
-          () => setScaleTransform({ tx: 0, ty: 0, sx: 1, sy: 1 }),
-          500
-        );
-      }
-    }, [isThisFullscreen]);
 
-    // restore iframe focus when this window regains focus
-    useEffect(() => {
-      if (isFocused && iframeSrc && iframeRef.current) {
-        setTimeout(() => {
-          try {
-            const win = iframeRef.current.contentWindow;
-            const canvas = win?.document.getElementById('canvas');
-            if (canvas) canvas.focus();
-            else win?.focus();
-          } catch {
-            iframeRef.current.focus();
-          }
-        }, 0);
-      }
-    }, [isFocused, iframeSrc, windowId]);
-
-    const markFocused = () => updateFocus(windowId);
-    const clampedY = Math.max(currentY, 26);
-
-    // only disable CSS transitions while dragging OR corner‐resize
+    // ================================
+    // Area 5: Render & Dynamic Z-Index
+    // ================================
+    // 5.1: Compute classes & z-index
     const noTransition =
       isUserDragging ||
       (isUserResizing && CORNER_HANDLES.includes(activeResizeHandle));
-
     const className = [
       'draggable-window',
       isFocused && 'focused',
@@ -182,6 +203,7 @@ const DraggableWindow = forwardRef(
     ]
       .filter(Boolean)
       .join(' ');
+    const dynamicZ = isThisFullscreen ? 1000 : isFocused ? 101 : 100;
 
     return (
       <div
@@ -195,6 +217,7 @@ const DraggableWindow = forwardRef(
           transform: isThisFullscreen
             ? `translate(${scaleTransform.tx}px, ${scaleTransform.ty}px) scale(${scaleTransform.sx}, ${scaleTransform.sy})`
             : 'none',
+          zIndex: dynamicZ,
           minWidth:
             minWindowWidth != null
               ? typeof minWindowWidth === 'number'
@@ -245,6 +268,7 @@ const DraggableWindow = forwardRef(
                 if (isThisFullscreen) {
                   exitFullscreen();
                   disableFullscreenForWrap(wrapId);
+                  editStateValue('dock', 'dockVisible', 'true');
                 }
                 onClose?.();
               }}
@@ -254,19 +278,22 @@ const DraggableWindow = forwardRef(
               onClick={(e) => {
                 e.stopPropagation();
                 if (!isThisFullscreen) {
+                  // → enter fullscreen & hide dock
                   const rect = windowRef.current.getBoundingClientRect();
-                  const tx = -rect.left;
-                  const ty = -rect.top;
+                  const tx = -rect.left, ty = -rect.top;
                   const sx = window.innerWidth / rect.width;
                   const sy = window.innerHeight / rect.height;
                   setScaleTransform({ tx, ty, sx, sy });
                   setTimeout(() => {
                     enterFullscreen(wrapId);
                     enableFullscreenForWrap(wrapId);
+                    editStateValue('dock', 'dockVisible', 'false');
                   }, 0);
                 } else {
+                  // → exit fullscreen & show dock
                   exitFullscreen();
                   disableFullscreenForWrap(wrapId);
+                  editStateValue('dock', 'dockVisible', 'true');
                 }
               }}
             />
@@ -296,33 +323,25 @@ const DraggableWindow = forwardRef(
           )}
         </div>
 
-        {/* Resizers */}
-        {[
-          'br',
-          'tr',
-          'bl',
-          'tl',
-          'top',
-          'bottom',
-          'left',
-          'right',
-        ].map((pos) => (
-          <div
-            key={pos}
-            className={`resize-handle resize-${pos}`}
-            onMouseDown={() => {
-              markFocused();
-              setIsUserResizing(true);
-              setActiveResizeHandle(pos);
-            }}
-            onTouchStart={(e) => {
-              e.preventDefault();
-              markFocused();
-              setIsUserResizing(true);
-              setActiveResizeHandle(pos);
-            }}
-          />
-        ))}
+        {/* 5.4: ONLY render resize handles if NOT fullscreen */}
+        {!isThisFullscreen &&
+          ['br','tr','bl','tl','top','bottom','left','right'].map((pos) => (
+            <div
+              key={pos}
+              className={`resize-handle resize-${pos}`}
+              onMouseDown={() => {
+                markFocused();
+                setIsUserResizing(true);
+                setActiveResizeHandle(pos);
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault();
+                markFocused();
+                setIsUserResizing(true);
+                setActiveResizeHandle(pos);
+              }}
+            />
+          ))}
       </div>
     );
   }

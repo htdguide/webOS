@@ -15,11 +15,11 @@ import { useStateManager } from '../../../../stores/StateManager/StateManager.js
 import './MissionControlUI.css';
 import MissionManager from '../MissionManager/MissionManager.jsx';
 
-const FADE_DURATION = 300;               // CSS fade timing (ms)
-const SLIDE_DURATION = 300;              // overview slide timing (ms)
-const OPEN_DELAY = 200;                  // delay before fade (ms)
+const FADE_DURATION = 200;               // CSS fade timing (ms)
+const SLIDE_DURATION = 200;              // overview slide timing (ms)
+const OPEN_DELAY = 100;                  // delay before fade (ms)
 // must match your CSS --desktop-slide-duration: 0.55s
-const DESKTOP_SLIDE_DURATION = 550;      // ms
+const DESKTOP_SLIDE_DURATION = 450;      // ms
 
 // Hint / touch config
 const EDGE_THRESHOLD = 20;        // px from either edge to trigger

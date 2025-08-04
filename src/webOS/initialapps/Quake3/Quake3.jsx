@@ -17,10 +17,10 @@ function Quake3({ onClose: parentOnClose }) {
     const windowId = openDraggableWindow({
       id: 'Quake3',            // stable ID to dedupe StrictMode
       title: 'Quake3',
-      windowWidth: 800,
-      windowHeight: 600,
-      minWindowWidth: 600,
-      minWindowHeight: 400,
+      windowWidth: 350,
+      windowHeight: 250,
+      minWindowWidth: 300,
+      minWindowHeight: 200,
       iframeSrc: iframeUrl,
       onClose: () => {
         // called when the user clicks the X
