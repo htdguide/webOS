@@ -7,14 +7,13 @@ import React, {
   useState,
   useCallback
 } from 'react';
-// adjust this path if your Wallpaper component lives elsewhere
 import Wallpaper from '../../../../components/Wallpaper/Wallpaper.jsx';
 import './MissionManager.css';
 
 const SLIDE_DURATION = 300;                    // overview open/close timing (ms)
 const NEW_DESKTOP_ANIMATION_DURATION = 2000;   // new‐desktop timing (ms)
 const DELETE_ANIMATION_DURATION = 200;         // delete timing (ms)
-const PREVIEW_HIDE_DELAY = 200;                // hide preview after click (ms)
+const PREVIEW_HIDE_DELAY = 200;                // hide preview after slide (ms)
 const MAX_DESKTOPS = 4;                        // new constant for max
 
 const MissionManager = ({
@@ -31,7 +30,8 @@ const MissionManager = ({
   viewport,
   panelAnimations,
   createDesktop,
-  deleteDesktop
+  deleteDesktop,
+  stateOpened    // ← new prop
 }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [baselineDesktopIds, setBaselineDesktopIds] = useState([]);
@@ -55,15 +55,14 @@ const MissionManager = ({
   const [newNamePhase, setNewNamePhase] = useState('idle');
   const [newNameIndex, setNewNameIndex] = useState(null);
 
-  // ** NEW: disable interactions until animation finishes **
-  //    we'll reuse disabledIndex to also gate the + button
+  // disable interactions until animation finishes
   const [disabledIndex, setDisabledIndex] = useState(null);
 
   // hover to show delete “×”
   const [showDeleteIndex, setShowDeleteIndex] = useState(null);
   const hoverTimeoutRef = useRef(null);
 
-  // ** NEW: preview panel **
+  // preview panel
   const [isPreviewVisible, setIsPreviewVisible] = useState(false);
 
   const panelRefs = useRef([]);
@@ -80,7 +79,7 @@ const MissionManager = ({
     }
   }, [overviewOpen]);
 
-  // ** NEW: hide all delete buttons whenever the overview is opened **
+  // hide all delete buttons whenever the overview is opened
   useEffect(() => {
     if (overviewOpen) {
       setShowDeleteIndex(null);
@@ -100,7 +99,7 @@ const MissionManager = ({
     return () => window.removeEventListener('resize', update);
   }, []);
 
-  // center active thumbnail
+  // center active thumbnail on overview open
   useEffect(() => {
     if (overviewOpen && panelRefs.current[activeIndex]) {
       panelRefs.current[activeIndex].scrollIntoView({
@@ -109,7 +108,7 @@ const MissionManager = ({
     }
   }, [overviewOpen, activeIndex]);
 
-  // animate-back for new desktop
+  // animate‐back for new desktop
   useEffect(() => {
     if (!isShifted) return;
     const frame = setTimeout(() => {
@@ -123,7 +122,7 @@ const MissionManager = ({
     return () => clearTimeout(frame);
   }, [isShifted]);
 
-  // animate-back for delete…
+  // animate‐back for delete
   useEffect(() => {
     if (!isDeleteShifted) return;
     const frame = setTimeout(() => {
@@ -137,6 +136,7 @@ const MissionManager = ({
     return () => clearTimeout(frame);
   }, [isDeleteShifted]);
 
+  // panel shift animate‐back
   useEffect(() => {
     if (!isPanelShifted) return;
     const frame = setTimeout(() => {
@@ -151,6 +151,7 @@ const MissionManager = ({
     return () => clearTimeout(frame);
   }, [isPanelShifted]);
 
+  // name shift animate‐back
   useEffect(() => {
     if (!isNameShifted) return;
     const frame = setTimeout(() => {
@@ -183,14 +184,29 @@ const MissionManager = ({
     };
   }, [desktops.length, newNamePhase, newNameIndex]);
 
+  // handleExit invoked on click–overlay or on programmatic close
   const handleExit = () => {
     if (isClosing) return;
     setIsClosing(true);
+
+    // 1) After slide‐up, fade out the wallpaper preview
+    setTimeout(() => {
+      setIsPreviewVisible(false);
+    }, SLIDE_DURATION);
+
+    // 2) After slide‐up + fade, actually signal parent to close
     setTimeout(() => {
       exitOverview(true);
       setIsClosing(false);
-    }, SLIDE_DURATION);
+    }, SLIDE_DURATION + PREVIEW_HIDE_DELAY);
   };
+
+  // ** NEW: if parent toggles stateOpened → false while we're open, run same handleExit
+  useEffect(() => {
+    if (!stateOpened && overviewOpen) {
+      handleExit();
+    }
+  }, [stateOpened, overviewOpen]);
 
   const handleClick = i => {
     if (isClosing) return;
@@ -210,7 +226,7 @@ const MissionManager = ({
     setTimeout(() => setDisabledIndex(null), NEW_DESKTOP_ANIMATION_DURATION);
   };
 
-  // ** NEW: show/hide preview on plus hover **
+  // hover preview‐panel
   const handlePlusMouseEnter = () => {
     if (!isPlusDisabled) {
       setIsPreviewVisible(true);
@@ -240,10 +256,9 @@ const MissionManager = ({
   const shiftX = rawThumbW + 30;
   const centerIndex = (desktops.length - 1) / 2;
 
-  // ** UPDATED: guard delete when only one desktop **
+  // guard delete when only one desktop
   const handleDelete = (e, i) => {
     if (desktops.length <= 1) {
-      // nothing to delete
       return;
     }
     e.stopPropagation();
@@ -461,7 +476,6 @@ const MissionManager = ({
                 ...(isDisabled && { pointerEvents: 'none' })
               }}
             >
-              {/* only show delete button if more than one desktop */}
               {overviewOpen && desktops.length > 1 && (
                 <div
                   className="delete-icon"

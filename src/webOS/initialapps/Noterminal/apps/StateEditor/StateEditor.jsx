@@ -1,13 +1,41 @@
-// src/apps/StateEditor/StateEditor.jsx
+/**
+ * StateEditor.jsx
+ *
+ * This file implements a custom terminal-like React component for editing
+ * persistent application state via the StateManager context. It supports
+ * listing, selecting, creating, renaming, moving, and deleting both state groups
+ * and individual states, with visual indication of which states are dynamic.
+ *
+ * Topics:
+ * 1. Imports & Context Hook
+ * 2. Component Setup & Refs
+ * 3. Terminal I/O Helpers
+ * 4. Command Processing (with Dynamic flags)
+ * 5. Autocomplete Suggestions
+ * 6. Ref Exposure & Lifecycle Effects
+ * 7. Render UI Display (with Dynamic markers)
+ */
 
-import React, { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
-// Import the context hook to access state groups and operations.
+//////////////////////////////////////////
+// 1. Imports & Context Hook
+//////////////////////////////////////////
+import React, {
+  useState,
+  forwardRef,
+  useImperativeHandle,
+  useEffect
+} from 'react';
+// Import the context hook (now exposes `dynamicStates`)
 import { useStateManager } from '../../../../stores/StateManager/StateManager';
 
+//////////////////////////////////////////
+// 2. Component Setup & Refs
+//////////////////////////////////////////
 const StateEditor = forwardRef(({ output, setAutocompleteCommands }, ref) => {
-  // Destructure state and operations from the state manager context.
+  // Destructure state, operations, and dynamicStates from context
   const {
     state,
+    dynamicStates,
     addStateGroup,
     deleteStateGroup,
     editStateGroupName,
@@ -21,11 +49,10 @@ const StateEditor = forwardRef(({ output, setAutocompleteCommands }, ref) => {
     setDebug,
   } = useStateManager();
 
-  // Local state tracks the currently selected group.
-  // When null, we are in group mode; otherwise, we're in state mode.
+  // null = group mode; string = selected group
   const [selectedGroup, setSelectedGroup] = useState(null);
 
-  // useEffect to show welcome message and hint only once when the app opens.
+  // Show welcome only once
   useEffect(() => {
     if (output?.current?.writeln) {
       output.current.writeln('Welcome to State Editor Terminal.');
@@ -35,129 +62,116 @@ const StateEditor = forwardRef(({ output, setAutocompleteCommands }, ref) => {
     }
   }, [output]);
 
-  /**
-   * Helper function to write a line to the terminal output.
-   */
+  //////////////////////////////////////////
+  // 3. Terminal I/O Helpers
+  //////////////////////////////////////////
   const writeln = (msg = '') => {
     if (output?.current?.writeln) {
       output.current.writeln(msg);
     }
   };
 
-  /**
-   * processInput parses a text command and executes the corresponding operation.
-   * It automatically detects whether we're in group mode (selectedGroup is null)
-   * or state mode (selectedGroup is set) and interprets commands accordingly.
-   */
+  //////////////////////////////////////////
+  // 4. Command Processing (with Dynamic flags)
+  //////////////////////////////////////////
   const processInput = (input) => {
     const trimmed = input.trim();
     if (!trimmed) return;
     const tokens = trimmed.split(/\s+/);
     const command = tokens[0].toLowerCase();
 
-    // HELP: Show available commands based on the current mode.
+    // HELP
     if (command === 'help') {
       const boxWidth = 70;
-      // Build top and bottom borders
-      const topBorder = `+${'-'.repeat(boxWidth - 2)}+`;
-      const bottomBorder = topBorder;
-
-      // Padding helper
-      const padLine = (text = '') => {
-        const content = text.slice(0, boxWidth - 4);
-        const padding = ' '.repeat(boxWidth - 4 - content.length);
-        return `| ${content}${padding} |`;
+      const border = `+${'-'.repeat(boxWidth - 2)}+`;
+      const pad = (text = '') => {
+        const t = text.slice(0, boxWidth - 4);
+        return `| ${t}${' '.repeat(boxWidth - 4 - t.length)} |`;
       };
-
-      const lines = [];
-      lines.push(topBorder);
-      lines.push(padLine('Available Commands'));
-      lines.push(topBorder);
-
-      // Group Mode section
-      lines.push(padLine('  Group Mode'));
-      lines.push(padLine('    • list               : List all state groups.'));
-      lines.push(padLine('    • select <name>      : Select a state group.'));
-      lines.push(padLine('    • create <name>      : Create a new state group.'));
-      lines.push(padLine('    • delete <name>      : Delete a state group.'));
-      lines.push(padLine('    • rename <old> <new> : Rename a state group.'));
-      lines.push(padLine(''));
-
-      // State Mode section (dynamic header)
-      const header = selectedGroup
-        ? `  State Mode (Group: ${selectedGroup})`
-        : '  State Mode (no group selected)';
-      lines.push(padLine(header));
-      lines.push(padLine('    • list                     : List states in this group.'));
-      lines.push(padLine('    • select <name>            : Switch to another group.'));
-      lines.push(padLine('    • back                     : Return to group mode.'));
-      lines.push(padLine('    • create <name> <value>    : Create a new state.'));
-      lines.push(padLine('    • delete <name>            : Delete a state.'));
-      lines.push(padLine('    • rename <old> <new>       : Rename a state.'));
-      lines.push(padLine("    • edit <name> <newValue>   : Edit a state's value."));
-      lines.push(padLine('    • move <name> <target>     : Move a state.'));
-      lines.push(padLine(''));
-
-      // Other Commands section
-      lines.push(padLine('  Other Commands'));
-      lines.push(padLine('    • reset              : Reset all states.'));
-      lines.push(padLine('    • toggle debug       : Toggle debug mode.'));
-      lines.push(padLine('    • set debug <on/off> : Set debug mode.'));
-      lines.push(bottomBorder);
-
-      lines.forEach((l) => writeln(l));
+      const lines = [
+        border,
+        pad('Available Commands'),
+        border,
+        pad('  Group Mode'),
+        pad('    • list               : List all state groups.'),
+        pad('    • select <name>      : Select a state group.'),
+        pad('    • create <name>      : Create a new state group.'),
+        pad('    • delete <name>      : Delete a state group.'),
+        pad('    • rename <old> <new> : Rename a state group.'),
+        pad(''),
+        pad(selectedGroup
+          ? `  State Mode (Group: ${selectedGroup})`
+          : '  State Mode (no group selected)'),
+        pad('    • list                     : List states in this group.'),
+        pad('    • select <name>            : Switch to another group.'),
+        pad('    • back                     : Return to group mode.'),
+        pad('    • create <name> <value>    : Create a new state.'),
+        pad('    • delete <name>            : Delete a state.'),
+        pad('    • rename <old> <new>       : Rename a state.'),
+        pad('    • edit <name> <newValue>   : Edit a state’s value.'),
+        pad('    • move <name> <target>     : Move a state.'),
+        pad(''),
+        pad('  Other Commands'),
+        pad('    • reset              : Reset all states.'),
+        pad('    • toggle debug       : Toggle debug mode.'),
+        pad('    • set debug <on/off> : Set debug mode.'),
+        pad(''),
+        border
+      ];
+      lines.forEach(l => writeln(l));
       writeln('');
       return;
     }
 
-    // LIST: List groups or states depending on mode.
+    // LIST
     if (command === 'list') {
       writeln('');
       if (!selectedGroup) {
-        // Group mode: list all groups.
-        const groupNames = Object.keys(state.groups);
-        if (groupNames.length === 0) {
+        // Group mode
+        const groups = Object.keys(state.groups);
+        if (groups.length === 0) {
           writeln('No state groups found.');
         } else {
           writeln('State Groups:');
-          groupNames.forEach((g) => writeln(`  • ${g}`));
+          groups.forEach(g => writeln(`  • ${g}`));
         }
       } else {
-        // State mode: list states in the selected group.
-        const groupStates = state.groups[selectedGroup];
-        if (groupStates && Object.keys(groupStates).length > 0) {
-          writeln(`States in group "${selectedGroup}":`);
-          Object.entries(groupStates).forEach(([key, value]) =>
-            writeln(`  • ${key}: ${JSON.stringify(value)}`)
-          );
-        } else {
+        // State mode
+        const groupStates = state.groups[selectedGroup] || {};
+        const dynKeys = dynamicStates[selectedGroup] || [];
+        if (Object.keys(groupStates).length === 0) {
           writeln(`No states found in group "${selectedGroup}".`);
+        } else {
+          writeln(`States in group "${selectedGroup}":`);
+          Object.entries(groupStates).forEach(([key, val]) => {
+            const flag = dynKeys.includes(key) ? ' [Dynamic]' : '';
+            writeln(`  • ${key}: ${JSON.stringify(val)}${flag}`);
+          });
         }
       }
       writeln('');
       return;
     }
 
-    // SELECT: In both modes, 'select <name>' selects (or switches) a group.
+    // SELECT
     if (command === 'select') {
       writeln('');
       if (tokens.length < 2) {
         writeln('Usage: select <groupName>');
-        writeln('');
-        return;
-      }
-      const groupName = tokens[1];
-      if (state.groups.hasOwnProperty(groupName)) {
-        setSelectedGroup(groupName);
-        writeln(`Selected group "${groupName}".`);
       } else {
-        writeln(`Group "${groupName}" does not exist.`);
+        const grp = tokens[1];
+        if (state.groups[grp]) {
+          setSelectedGroup(grp);
+          writeln(`Selected group "${grp}".`);
+        } else {
+          writeln(`Group "${grp}" does not exist.`);
+        }
       }
       writeln('');
       return;
     }
 
-    // BACK: Only available in state mode.
+    // BACK
     if (command === 'back') {
       writeln('');
       if (!selectedGroup) {
@@ -170,131 +184,114 @@ const StateEditor = forwardRef(({ output, setAutocompleteCommands }, ref) => {
       return;
     }
 
-    // CREATE: Behavior depends on the current mode.
+    // CREATE
     if (command === 'create') {
       writeln('');
       if (!selectedGroup) {
-        // In group mode, create a new group.
         if (tokens.length < 2) {
           writeln('Usage: create <groupName>');
-          writeln('');
-          return;
+        } else {
+          addStateGroup(tokens[1]);
+          writeln(`Created group "${tokens[1]}".`);
         }
-        const groupName = tokens[1];
-        addStateGroup(groupName);
-        writeln(`Created group "${groupName}".`);
       } else {
-        // In state mode, create a new state.
         if (tokens.length < 3) {
           writeln('Usage in state mode: create <stateName> <value>');
-          writeln('');
-          return;
+        } else {
+          const [ , name, ...rest ] = tokens;
+          const value = rest.join(' ');
+          addState(selectedGroup, name, value);
+          writeln(
+            `Created state "${name}" with value "${value}" in group "${selectedGroup}".`
+          );
         }
-        const stateName = tokens[1];
-        const value = tokens.slice(2).join(' ');
-        addState(selectedGroup, stateName, value);
-        writeln(`Created state "${stateName}" with value "${value}" in group "${selectedGroup}".`);
       }
       writeln('');
       return;
     }
 
-    // DELETE: Behavior depends on the current mode.
+    // DELETE
     if (command === 'delete') {
       writeln('');
       if (!selectedGroup) {
-        // In group mode, delete a group.
         if (tokens.length < 2) {
           writeln('Usage: delete <groupName>');
-          writeln('');
-          return;
+        } else {
+          deleteStateGroup(tokens[1]);
+          writeln(`Deleted group "${tokens[1]}".`);
+          if (selectedGroup === tokens[1]) setSelectedGroup(null);
         }
-        const groupName = tokens[1];
-        deleteStateGroup(groupName);
-        writeln(`Deleted group "${groupName}".`);
-        if (selectedGroup === groupName) setSelectedGroup(null);
       } else {
-        // In state mode, delete a state.
         if (tokens.length < 2) {
           writeln('Usage in state mode: delete <stateName>');
-          writeln('');
-          return;
+        } else {
+          deleteState(selectedGroup, tokens[1]);
+          writeln(`Deleted state "${tokens[1]}" from "${selectedGroup}".`);
         }
-        const stateName = tokens[1];
-        deleteState(selectedGroup, stateName);
-        writeln(`Deleted state "${stateName}" from group "${selectedGroup}".`);
       }
       writeln('');
       return;
     }
 
-    // RENAME: Works for groups in group mode or states in state mode.
+    // RENAME
     if (command === 'rename') {
       writeln('');
       if (tokens.length < 3) {
         writeln('Usage: rename <oldName> <newName>');
-        writeln('');
-        return;
-      }
-      const oldName = tokens[1];
-      const newName = tokens[2];
-      if (!selectedGroup) {
-        // Rename a group.
-        editStateGroupName(oldName, newName);
-        writeln(`Renamed group "${oldName}" → "${newName}".`);
-        if (selectedGroup === oldName) setSelectedGroup(newName);
       } else {
-        // Rename a state in the selected group.
-        editStateName(selectedGroup, oldName, newName);
-        writeln(`Renamed state "${oldName}" → "${newName}" in group "${selectedGroup}".`);
+        const [ , oldName, newName ] = tokens;
+        if (!selectedGroup) {
+          editStateGroupName(oldName, newName);
+          writeln(`Renamed group "${oldName}" → "${newName}".`);
+          if (selectedGroup === oldName) setSelectedGroup(newName);
+        } else {
+          editStateName(selectedGroup, oldName, newName);
+          writeln(
+            `Renamed state "${oldName}" → "${newName}" in group "${selectedGroup}".`
+          );
+        }
       }
       writeln('');
       return;
     }
 
-    // EDIT: Only applicable in state mode.
+    // EDIT
     if (command === 'edit') {
       writeln('');
       if (!selectedGroup) {
         writeln('“edit” is only available in state mode.');
-        writeln('');
-        return;
-      }
-      if (tokens.length < 3) {
+      } else if (tokens.length < 3) {
         writeln('Usage in state mode: edit <stateName> <newValue>');
-        writeln('');
-        return;
+      } else {
+        const [ , name, ...rest ] = tokens;
+        const newVal = rest.join(' ');
+        editStateValue(selectedGroup, name, newVal);
+        writeln(
+          `Updated state "${name}" → "${newVal}" in group "${selectedGroup}".`
+        );
       }
-      const stateName = tokens[1];
-      const newValue = tokens.slice(2).join(' ');
-      editStateValue(selectedGroup, stateName, newValue);
-      writeln(`Updated state "${stateName}" → "${newValue}" in group "${selectedGroup}".`);
       writeln('');
       return;
     }
 
-    // MOVE: Only applicable in state mode.
+    // MOVE
     if (command === 'move') {
       writeln('');
       if (!selectedGroup) {
         writeln('“move” is only available in state mode.');
-        writeln('');
-        return;
-      }
-      if (tokens.length < 3) {
+      } else if (tokens.length < 3) {
         writeln('Usage in state mode: move <stateName> <targetGroup>');
-        writeln('');
-        return;
+      } else {
+        moveState(selectedGroup, tokens[1], tokens[2]);
+        writeln(
+          `Moved state "${tokens[1]}" from "${selectedGroup}" → "${tokens[2]}".`
+        );
       }
-      const stateName = tokens[1];
-      const targetGroup = tokens[2];
-      moveState(selectedGroup, stateName, targetGroup);
-      writeln(`Moved state "${stateName}" from "${selectedGroup}" → "${targetGroup}".`);
       writeln('');
       return;
     }
 
-    // RESET: Reset all states (works in both modes).
+    // RESET
     if (command === 'reset') {
       writeln('');
       resetStates();
@@ -304,7 +301,7 @@ const StateEditor = forwardRef(({ output, setAutocompleteCommands }, ref) => {
       return;
     }
 
-    // TOGGLE DEBUG: Toggle debug mode.
+    // TOGGLE DEBUG
     if (command === 'toggle' && tokens[1]?.toLowerCase() === 'debug') {
       writeln('');
       toggleDebug();
@@ -313,14 +310,14 @@ const StateEditor = forwardRef(({ output, setAutocompleteCommands }, ref) => {
       return;
     }
 
-    // SET DEBUG: Set debug mode explicitly.
-    if (command === 'set' && tokens[1]?.toLowerCase() === 'debug' && tokens[2]) {
+    // SET DEBUG
+    if (command === 'set' && tokens[1]?.toLowerCase() === 'debug') {
       writeln('');
-      const value = tokens[2].toLowerCase();
-      if (value === 'on' || value === 'true') {
+      const v = tokens[2]?.toLowerCase();
+      if (v === 'on' || v === 'true') {
         setDebug(true);
         writeln('Debug mode set to ON.');
-      } else if (value === 'off' || value === 'false') {
+      } else if (v === 'off' || v === 'false') {
         setDebug(false);
         writeln('Debug mode set to OFF.');
       } else {
@@ -330,163 +327,102 @@ const StateEditor = forwardRef(({ output, setAutocompleteCommands }, ref) => {
       return;
     }
 
-    // Unknown command.
+    // UNKNOWN
     writeln('');
     writeln('Unknown command.');
     writeln('Type "help" to list available commands.');
     writeln('');
   };
 
-  /**
-   * getAutocompleteSuggestions dynamically generates suggestions for autocomplete
-   * based on the current input. It handles both the completion of command names and,
-   * once a valid command is entered, provides suggestions for state group or state names.
-   */
+  //////////////////////////////////////////
+  // 5. Autocomplete Suggestions
+  //////////////////////////////////////////
   const getAutocompleteSuggestions = (input) => {
-    const trimmedInput = input.trim();
-    const groupModeCommands = [
-      'list',
-      'select',
-      'create',
-      'delete',
-      'rename',
-      'reset',
-      'toggle debug',
-      'set debug',
-      'help',
+    const groupCmds = [
+      'list','select','create','delete','rename',
+      'reset','toggle debug','set debug','help'
     ];
-    const stateModeCommands = [
-      'list',
-      'select',
-      'back',
-      'create',
-      'delete',
-      'rename',
-      'edit',
-      'move',
-      'reset',
-      'toggle debug',
-      'set debug',
-      'help',
+    const stateCmds = [
+      'list','select','back','create','delete','rename',
+      'edit','move','reset','toggle debug','set debug','help'
     ];
 
-    const staticCommands = !selectedGroup ? groupModeCommands : stateModeCommands;
-    const tokens = trimmedInput.split(/\s+/);
+    const cmds = !selectedGroup ? groupCmds : stateCmds;
+    const tokens = input.trim().split(/\s+/);
 
     if (tokens.length === 1) {
-      const partialCommand = tokens[0].toLowerCase();
-      return staticCommands.filter((cmd) => cmd.startsWith(partialCommand));
+      return cmds.filter(c => c.startsWith(tokens[0].toLowerCase()));
     }
-
-    const command = tokens[0].toLowerCase();
-    const argPartial = tokens[tokens.length - 1].toLowerCase();
-
-    switch (command) {
-      case 'select': {
-        const groupNames = Object.keys(state.groups);
-        return groupNames.filter((name) => name.toLowerCase().startsWith(argPartial));
-      }
-      case 'delete': {
-        if (!selectedGroup) {
-          const groupNames = Object.keys(state.groups);
-          return groupNames.filter((name) => name.toLowerCase().startsWith(argPartial));
-        } else {
-          const stateNames = Object.keys(state.groups[selectedGroup] || {});
-          return stateNames.filter((name) => name.toLowerCase().startsWith(argPartial));
-        }
-      }
-      case 'rename': {
+    const cmd = tokens[0].toLowerCase();
+    const partial = tokens[tokens.length - 1].toLowerCase();
+    switch (cmd) {
+      case 'select':
+      case 'delete':
+        return Object.keys(state.groups)
+          .filter(n => n.toLowerCase().startsWith(partial));
+      case 'rename':
         if (tokens.length === 2) {
-          if (!selectedGroup) {
-            const groupNames = Object.keys(state.groups);
-            return groupNames.filter((name) => name.toLowerCase().startsWith(argPartial));
-          } else {
-            const stateNames = Object.keys(state.groups[selectedGroup] || {});
-            return stateNames.filter((name) => name.toLowerCase().startsWith(argPartial));
-          }
+          const items = !selectedGroup
+            ? Object.keys(state.groups)
+            : Object.keys(state.groups[selectedGroup] || {});
+          return items.filter(n => n.toLowerCase().startsWith(partial));
         }
         return [];
-      }
-      case 'edit': {
+      case 'edit':
         if (!selectedGroup) return [];
-        const stateNames = Object.keys(state.groups[selectedGroup] || {});
-        return stateNames.filter((name) => name.toLowerCase().startsWith(argPartial));
-      }
-      case 'move': {
+        return Object.keys(state.groups[selectedGroup] || {})
+          .filter(n => n.toLowerCase().startsWith(partial));
+      case 'move':
         if (!selectedGroup) return [];
         if (tokens.length === 2) {
-          const stateNames = Object.keys(state.groups[selectedGroup] || {});
-          return stateNames.filter((name) => name.toLowerCase().startsWith(argPartial));
-        } else if (tokens.length === 3) {
-          const groupNames = Object.keys(state.groups);
-          return groupNames.filter((name) => name.toLowerCase().startsWith(argPartial));
+          return Object.keys(state.groups[selectedGroup] || {})
+            .filter(n => n.toLowerCase().startsWith(partial));
+        }
+        if (tokens.length === 3) {
+          return Object.keys(state.groups)
+            .filter(n => n.toLowerCase().startsWith(partial));
         }
         return [];
-      }
       default:
         return [];
     }
   };
 
-  // Expose functions to parent components via ref.
+  //////////////////////////////////////////
+  // 6. Ref Exposure & Lifecycle Effects
+  //////////////////////////////////////////
   useImperativeHandle(ref, () => ({
     processInput,
     getAutocompleteSuggestions,
   }));
 
-  // Set static autocomplete commands based on the current mode.
   useEffect(() => {
     if (setAutocompleteCommands) {
-      if (!selectedGroup) {
-        setAutocompleteCommands([
-          'list',
-          'select',
-          'create',
-          'delete',
-          'rename',
-          'reset',
-          'toggle debug',
-          'set debug',
-          'help',
-        ]);
-      } else {
-        setAutocompleteCommands([
-          'list',
-          'select',
-          'back',
-          'create',
-          'delete',
-          'rename',
-          'edit',
-          'move',
-          'reset',
-          'toggle debug',
-          'set debug',
-          'help',
-        ]);
-      }
+      setAutocompleteCommands(
+        !selectedGroup
+          ? ['list','select','create','delete','rename','reset','toggle debug','set debug','help']
+          : ['list','select','back','create','delete','rename','edit','move','reset','toggle debug','set debug','help']
+      );
     }
-  }, [selectedGroup, setAutocompleteCommands]);
-
-  // Clear autocomplete commands when this component unmounts.
-  useEffect(() => {
     return () => {
       if (setAutocompleteCommands) {
         setAutocompleteCommands([]);
       }
     };
-  }, [setAutocompleteCommands]);
+  }, [selectedGroup, setAutocompleteCommands]);
 
+  //////////////////////////////////////////
+  // 7. Render UI Display (with Dynamic markers)
+  //////////////////////////////////////////
   return (
     <div className="state-editor">
       <h3>State Editor Terminal</h3>
-
       <div className="state-editor-display">
         {!selectedGroup ? (
           <>
             <h4>Available State Groups</h4>
             <ul>
-              {Object.keys(state.groups).map((group) => (
+              {Object.keys(state.groups).map(group => (
                 <li key={group}>{group}</li>
               ))}
             </ul>
@@ -495,11 +431,16 @@ const StateEditor = forwardRef(({ output, setAutocompleteCommands }, ref) => {
           <>
             <h4>States in Group: {selectedGroup}</h4>
             <ul>
-              {Object.entries(state.groups[selectedGroup]).map(([key, value]) => (
-                <li key={key}>
-                  {key}: {JSON.stringify(value)}
-                </li>
-              ))}
+              {Object.entries(state.groups[selectedGroup] || {}).map(
+                ([key, val]) => {
+                  const isDyn = (dynamicStates[selectedGroup] || []).includes(key);
+                  return (
+                    <li key={key}>
+                      {key}: {JSON.stringify(val)}{isDyn ? ' [Dynamic]' : ''}
+                    </li>
+                  );
+                }
+              )}
             </ul>
           </>
         )}

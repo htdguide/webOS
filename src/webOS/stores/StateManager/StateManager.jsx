@@ -1,216 +1,284 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+/**
+ * StateManager.jsx
+ *
+ * This file provides a React context for grouping and persisting UI state.
+ * On load it flattens any nested “Dynamic” sub-objects into top-level keys,
+ * records which keys are dynamic, and ensures they always reset to defaults
+ * on a full page refresh. All state-manipulation APIs (add, delete, edit, rename,
+ * move, reset, debug, refresh) operate on this flattened shape.
+ *
+ * Topics:
+ * 1. Imports & Constants
+ * 2. Flatten & Load Logic
+ * 3. State Initialization
+ * 4. Group-level Operations
+ * 5. State-level Operations
+ * 6. Debug & Refresh Operations
+ * 7. Context & Hook Exports
+ */
+
+//////////////////////////////////////////
+// 1. Imports & Constants
+//////////////////////////////////////////
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef
+} from 'react';
 import defaultInitialStates from './initialstates.json';
 
 const LOCAL_STORAGE_KEY = 'stateManagerCache';
 
-// Create a context for the state manager.
-const StateManagerContext = createContext();
+//////////////////////////////////////////
+// 2. Flatten & Load Logic
+//////////////////////////////////////////
+
+/** 
+ * Take nested groups with optional `Dynamic` sub-objects and:
+ *  - Pull all keys in `Dynamic` up to top level
+ *  - Return both the flattened groups and a map of which keys were dynamic
+ */
+const flattenDefaults = (nested) => {
+  const flat = {};
+  const dynamicMap = {};
+  Object.entries(nested).forEach(([group, defs]) => {
+    const dynDefs = defs.Dynamic || {};
+    dynamicMap[group] = Object.keys(dynDefs);
+    flat[group] = {
+      // include non-dynamic entries...
+      ...Object.entries(defs)
+        .filter(([k]) => k !== 'Dynamic')
+        .reduce((acc, [k, v]) => ({ ...acc, [k]: v }), {}),
+      // ...then dynamic defaults at top level
+      ...dynDefs
+    };
+  });
+  return { flat, dynamicMap };
+};
 
 /**
- * StateManagerProvider wraps your application (or parts of it) to provide
- * a persistent state context. It loads state from localStorage if available,
- * and updates localStorage on every state change.
+ * Load state from localStorage if present, else fall back to defaults.
+ * Always re-apply default values for dynamic keys on load.
  */
-export const StateManagerProvider = ({ children, initialState }) => {
-  // Determine initial state: load from localStorage or fall back to default.
-  const loadStoredState = () => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {
-        console.error('Error parsing stored state:', e);
-      }
+const loadStoredState = () => {
+  // prepare flattened defaults + dynamic-key map
+  const { flat: defaultFlat, dynamicMap } = flattenDefaults(defaultInitialStates);
+
+  const storedJSON = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (storedJSON) {
+    try {
+      const parsed = JSON.parse(storedJSON);
+      const rawGroups = parsed.groups || {};
+      // flatten what was stored
+      const flattenedStored = {};
+      Object.keys(defaultFlat).forEach(group => {
+        const raw = rawGroups[group] || {};
+        // if someone had nested Dynamic in storage, ignore it here:
+        const { Dynamic: _ignore, ...others } = raw;
+        flattenedStored[group] = { ...others };
+      });
+      // re-inject default dynamic values
+      const finalGroups = {};
+      Object.entries(defaultFlat).forEach(([group, defs]) => {
+        const dynKeys = dynamicMap[group];
+        // copy stored non-dynamic, then default dynamic
+        finalGroups[group] = {
+          ...flattenedStored[group],
+          ...dynKeys.reduce((acc, k) => ({ ...acc, [k]: defs[k] }), {})
+        };
+      });
+      return {
+        groups: finalGroups,
+        debug: typeof parsed.debug === 'boolean' ? parsed.debug : false
+      };
+    } catch (e) {
+      console.error('Error parsing stored state:', e);
     }
-    // Use provided initialState or default states with debug off.
-    return initialState || { groups: { ...defaultInitialStates }, debug: false };
-  };
+  }
 
-  // Save the initial state in a ref for later reset.
-  const initialStateRef = useRef(loadStoredState());
+  // no storage → use defaults (flat) with debug off
+  return { groups: defaultFlat, debug: false };
+};
 
-  const [state, setState] = useState(loadStoredState());
+//////////////////////////////////////////
+// 3. State Initialization
+//////////////////////////////////////////
+const StateManagerContext = createContext();
 
-  // Persist the state to localStorage on every change.
+export const StateManagerProvider = ({ children }) => {
+  // initial load & dynamic-map
+  const initial = loadStoredState();
+  const initialStateRef = useRef(initial);
+  // extract dynamic keys for consumers
+  const { dynamicMap } = flattenDefaults(defaultInitialStates);
+  const dynamicStatesRef = useRef(dynamicMap);
+
+  const [state, setState] = useState(initial);
+
+  // persist on every change (dynamic keys always reset on fresh load)
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
-  /* -----------------------------
-     Group-level Operations
-  ----------------------------- */
+  //////////////////////////////////////////
+  // 4. Group-level Operations
+  //////////////////////////////////////////
   const addStateGroup = (groupName) => {
-    setState(prevState => {
-      if (prevState.groups.hasOwnProperty(groupName)) {
+    setState(prev => {
+      if (prev.groups[groupName]) {
         console.warn(`State group "${groupName}" already exists.`);
-        return prevState;
+        return prev;
       }
-      const newGroups = { ...prevState.groups, [groupName]: {} };
-      return { ...prevState, groups: newGroups };
-    });
-  };
-
-  const deleteStateGroup = (groupName) => {
-    setState(prevState => {
-      if (!prevState.groups.hasOwnProperty(groupName)) {
-        console.warn(`State group "${groupName}" does not exist.`);
-        return prevState;
-      }
-      const { [groupName]: removed, ...remainingGroups } = prevState.groups;
-      return { ...prevState, groups: remainingGroups };
-    });
-  };
-
-  const editStateGroupName = (oldGroupName, newGroupName) => {
-    setState(prevState => {
-      if (!prevState.groups.hasOwnProperty(oldGroupName)) {
-        console.warn(`State group "${oldGroupName}" does not exist.`);
-        return prevState;
-      }
-      if (prevState.groups.hasOwnProperty(newGroupName)) {
-        console.warn(`State group "${newGroupName}" already exists.`);
-        return prevState;
-      }
-      const { [oldGroupName]: groupData, ...rest } = prevState.groups;
-      const newGroups = { ...rest, [newGroupName]: groupData };
-      return { ...prevState, groups: newGroups };
-    });
-  };
-
-  const moveState = (fromGroup, stateName, toGroup) => {
-    setState(prevState => {
-      if (!prevState.groups.hasOwnProperty(fromGroup)) {
-        console.warn(`Source group "${fromGroup}" does not exist.`);
-        return prevState;
-      }
-      if (!prevState.groups.hasOwnProperty(toGroup)) {
-        console.warn(`Target group "${toGroup}" does not exist.`);
-        return prevState;
-      }
-      if (!prevState.groups[fromGroup].hasOwnProperty(stateName)) {
-        console.warn(`State "${stateName}" does not exist in group "${fromGroup}".`);
-        return prevState;
-      }
-      if (prevState.groups[toGroup].hasOwnProperty(stateName)) {
-        console.warn(`State "${stateName}" already exists in group "${toGroup}".`);
-        return prevState;
-      }
-      const stateValue = prevState.groups[fromGroup][stateName];
-      const { [stateName]: removed, ...sourceRest } = prevState.groups[fromGroup];
-      const newFromGroup = sourceRest;
-      const newToGroup = { ...prevState.groups[toGroup], [stateName]: stateValue };
       return {
-        ...prevState,
-        groups: {
-          ...prevState.groups,
-          [fromGroup]: newFromGroup,
-          [toGroup]: newToGroup,
-        },
+        ...prev,
+        groups: { ...prev.groups, [groupName]: {} }
       };
     });
   };
 
-  /* -----------------------------
-     State-level Operations (within a group)
-  ----------------------------- */
-  const addState = (group, stateName, value) => {
-    setState(prevState => {
-      if (!prevState.groups.hasOwnProperty(group)) {
-        console.warn(`State group "${group}" does not exist.`);
-        return prevState;
+  const deleteStateGroup = (groupName) => {
+    setState(prev => {
+      if (!prev.groups[groupName]) {
+        console.warn(`State group "${groupName}" does not exist.`);
+        return prev;
       }
-      if (prevState.groups[group].hasOwnProperty(stateName)) {
-        console.warn(`State "${stateName}" already exists in group "${group}".`);
-        return prevState;
-      }
-      const newGroup = { ...prevState.groups[group], [stateName]: value };
-      return { ...prevState, groups: { ...prevState.groups, [group]: newGroup } };
+      const { [groupName]: _, ...rest } = prev.groups;
+      return { ...prev, groups: rest };
     });
   };
 
-  const deleteState = (group, stateName) => {
-    setState(prevState => {
-      if (!prevState.groups.hasOwnProperty(group)) {
-        console.warn(`State group "${group}" does not exist.`);
-        return prevState;
+  const editStateGroupName = (oldName, newName) => {
+    setState(prev => {
+      if (!prev.groups[oldName] || prev.groups[newName]) {
+        console.warn(`Invalid rename from "${oldName}" to "${newName}".`);
+        return prev;
       }
-      if (!prevState.groups[group].hasOwnProperty(stateName)) {
-        console.warn(`State "${stateName}" does not exist in group "${group}".`);
-        return prevState;
-      }
-      const { [stateName]: removed, ...newGroup } = prevState.groups[group];
-      return { ...prevState, groups: { ...prevState.groups, [group]: newGroup } };
+      const { [oldName]: groupData, ...others } = prev.groups;
+      return {
+        ...prev,
+        groups: { ...others, [newName]: groupData }
+      };
     });
   };
 
-  const editStateValue = (group, stateName, newValue) => {
-    setState(prevState => {
-      if (!prevState.groups.hasOwnProperty(group)) {
-        console.warn(`State group "${group}" does not exist.`);
-        return prevState;
+  const moveState = (fromGroup, stateName, toGroup) => {
+    setState(prev => {
+      const from = prev.groups[fromGroup];
+      const to   = prev.groups[toGroup];
+      if (!from || !to || from[stateName] === undefined || to[stateName] !== undefined) {
+        console.warn(`Cannot move "${stateName}" from "${fromGroup}" to "${toGroup}".`);
+        return prev;
       }
-      if (!prevState.groups[group].hasOwnProperty(stateName)) {
-        console.warn(`State "${stateName}" does not exist in group "${group}".`);
-        return prevState;
-      }
-      const newGroup = { ...prevState.groups[group], [stateName]: newValue };
-      return { ...prevState, groups: { ...prevState.groups, [group]: newGroup } };
+      const { [stateName]: val, ...restFrom } = from;
+      return {
+        ...prev,
+        groups: {
+          ...prev.groups,
+          [fromGroup]: restFrom,
+          [toGroup]:   { ...to, [stateName]: val }
+        }
+      };
     });
   };
 
-  const editStateName = (group, oldStateName, newStateName) => {
-    setState(prevState => {
-      if (!prevState.groups.hasOwnProperty(group)) {
-        console.warn(`State group "${group}" does not exist.`);
-        return prevState;
+  //////////////////////////////////////////
+  // 5. State-level Operations
+  //////////////////////////////////////////
+  const addState = (group, name, value) => {
+    setState(prev => {
+      const g = prev.groups[group];
+      if (!g || g[name] !== undefined) {
+        console.warn(`Cannot add "${name}" to "${group}".`);
+        return prev;
       }
-      if (!prevState.groups[group].hasOwnProperty(oldStateName)) {
-        console.warn(`State "${oldStateName}" does not exist in group "${group}".`);
-        return prevState;
-      }
-      if (prevState.groups[group].hasOwnProperty(newStateName)) {
-        console.warn(`State "${newStateName}" already exists in group "${group}".`);
-        return prevState;
-      }
-      const { [oldStateName]: value, ...rest } = prevState.groups[group];
-      const newGroup = { ...rest, [newStateName]: value };
-      return { ...prevState, groups: { ...prevState.groups, [group]: newGroup } };
+      return {
+        ...prev,
+        groups: { ...prev.groups, [group]: { ...g, [name]: value } }
+      };
     });
   };
 
+  const deleteState = (group, name) => {
+    setState(prev => {
+      const g = prev.groups[group];
+      if (!g || g[name] === undefined) {
+        console.warn(`Cannot delete "${name}" from "${group}".`);
+        return prev;
+      }
+      const { [name]: _, ...rest } = g;
+      return {
+        ...prev,
+        groups: { ...prev.groups, [group]: rest }
+      };
+    });
+  };
+
+  const editStateValue = (group, name, newValue) => {
+    setState(prev => {
+      const g = prev.groups[group];
+      if (!g || g[name] === undefined) {
+        console.warn(`Cannot edit "${name}" in "${group}".`);
+        return prev;
+      }
+      return {
+        ...prev,
+        groups: { ...prev.groups, [group]: { ...g, [name]: newValue } }
+      };
+    });
+  };
+
+  const editStateName = (group, oldName, newName) => {
+    setState(prev => {
+      const g = prev.groups[group];
+      if (!g || g[oldName] === undefined || g[newName] !== undefined) {
+        console.warn(`Cannot rename "${oldName}" to "${newName}" in "${group}".`);
+        return prev;
+      }
+      const { [oldName]: val, ...rest } = g;
+      return {
+        ...prev,
+        groups: { ...prev.groups, [group]: { ...rest, [newName]: val } }
+      };
+    });
+  };
+
+  //////////////////////////////////////////
+  // 6. Debug & Refresh Operations
+  //////////////////////////////////////////
   const resetStates = () => {
-    setState(prevState => {
-      return { ...initialStateRef.current, debug: prevState.debug };
-    });
+    // restore to initial load (which had defaults for dynamic keys)
+    setState(prev => ({
+      ...initialStateRef.current,
+      debug: prev.debug
+    }));
   };
 
-  /* -----------------------------
-     Debug Operations
-  ----------------------------- */
-  const setDebug = (isDebug) => {
-    setState(prevState => ({ ...prevState, debug: isDebug }));
-    console.log(`Debug mode set to ${isDebug}`);
+  const setDebug = (flag) => {
+    setState(prev => ({ ...prev, debug: flag }));
+    console.log(`Debug mode set to ${flag}`);
   };
 
   const toggleDebug = () => {
-    setState(prevState => {
-      const newDebug = !prevState.debug;
-      console.log(`Debug mode toggled to ${newDebug}`);
-      return { ...prevState, debug: newDebug };
+    setState(prev => {
+      const d = !prev.debug;
+      console.log(`Debug mode toggled to ${d}`);
+      return { ...prev, debug: d };
     });
   };
 
-  /**
-   * refreshState forces a re-render by updating the state with a shallow copy.
-   * This can be useful if you need to trigger a refresh in components consuming the state.
-   */
+  /** force a re-render without changing values */
   const refreshState = () => {
-    setState(prevState => ({ ...prevState }));
+    setState(prev => ({ ...prev }));
   };
 
-  // Bundle state and operations into context value.
+  //////////////////////////////////////////
+  // 7. Context & Hook Exports
+  //////////////////////////////////////////
   const contextValue = {
     state,
+    dynamicStates: dynamicStatesRef.current,
     addStateGroup,
     deleteStateGroup,
     editStateGroupName,
@@ -222,7 +290,7 @@ export const StateManagerProvider = ({ children, initialState }) => {
     resetStates,
     setDebug,
     toggleDebug,
-    refreshState, // <-- New function to force a refresh.
+    refreshState
   };
 
   return (
@@ -233,12 +301,12 @@ export const StateManagerProvider = ({ children, initialState }) => {
 };
 
 /**
- * Custom hook to access the state manager context.
+ * Custom hook: use inside a StateManagerProvider to access state + API.
  */
 export const useStateManager = () => {
-  const context = useContext(StateManagerContext);
-  if (!context) {
+  const ctx = useContext(StateManagerContext);
+  if (!ctx) {
     throw new Error('useStateManager must be used within a StateManagerProvider');
   }
-  return context;
+  return ctx;
 };

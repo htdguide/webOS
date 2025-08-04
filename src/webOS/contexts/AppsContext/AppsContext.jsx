@@ -107,7 +107,7 @@ const initialAppsList = [
     icon: missionControlIcon,
     component: MissionControlOpener,
     priority: 3,
-    indock: false,
+    indock: true,
     available: true,
   },
   {

@@ -46,7 +46,7 @@ const MissionControlUI = () => {
   const overlayVisible = state.groups.missionControl?.overlayVisible === 'true';
   const stateOpened   = state.groups.missionControl?.isOpened     === 'true';
 
-  // —— Initialize currentDesktopID on mount (runs exactly once) ——
+  // —— Initialize currentDesktopID on mount ——
   useEffect(() => {
     const desktop = desktops[activeIndex];
     if (desktop?.id != null) {
@@ -60,7 +60,7 @@ const MissionControlUI = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // —— Wrap switchDesktop so it also writes currentDesktopID when the user actually switches ——
+  // —— Wrap switchDesktop so it also writes currentDesktopID ——
   const switchDesktop = useCallback((i) => {
     rawSwitchDesktop(i);
     const desktop = desktops[i];
@@ -73,7 +73,7 @@ const MissionControlUI = () => {
     }
   }, [rawSwitchDesktop, desktops, editStateValue]);
 
-  // Keep activeIndex valid after delete
+  // —— Keep activeIndex valid after delete ——
   const handleDeleteDesktop = useCallback((index) => {
     contextDeleteDesktop(index);
     let newIndex = activeIndex;
@@ -104,7 +104,7 @@ const MissionControlUI = () => {
   const touchStartRef = useRef({ timer: null, active: false, x0: 0, initialOffset: 0 });
   const initialDragRef = useRef(false);
 
-  // —— One-time initial-drag easing ——
+  // —— One‐time initial‐drag easing ——
   const [dragTransition, setDragTransition] = useState(false);
 
   // —— Release animations ——
@@ -241,7 +241,7 @@ const MissionControlUI = () => {
     return () => window.removeEventListener('click', onClick);
   }, [showRightHint, showLeftHint, viewport.width, activeIndex, switchDesktop]);
 
-  // —— Touch‐hold + draggable swipe (copied verbatim) ——
+  // —— Touch‐hold + draggable swipe ——
   useEffect(() => {
     if (overviewOpen) return;
     const canRight = desktops.length > activeIndex + 1;
@@ -417,15 +417,19 @@ const MissionControlUI = () => {
     openOverview();
   }, [editStateValue, openOverview]);
 
-  // —— External open/close triggers ——
+  // —— External open trigger ——
   useEffect(() => {
     if (stateOpened && !overviewOpen) openOverview();
   }, [stateOpened, overviewOpen, openOverview]);
-  useEffect(() => {
-    if (!stateOpened && overviewOpen) exitOverview();
-  }, [stateOpened, overviewOpen, exitOverview]);
 
-  // —— Drag‐drop reorder ——
+  // —— External close trigger during fade or full open ——  
+  useEffect(() => {
+    if (!stateOpened && (overviewOpen || isFading || showWallpaperPlaceholder)) {
+      exitOverview();
+    }
+  }, [stateOpened, overviewOpen, isFading, showWallpaperPlaceholder, exitOverview]);
+
+  // —— Drag‐drop reorder etc. ——
   const onDragStart = useCallback((e, i) => {
     e.dataTransfer.setData('text/plain', String(i));
   }, []);
@@ -531,6 +535,7 @@ const MissionControlUI = () => {
         viewport={viewport}
         createDesktop={addDesktop}
         deleteDesktop={handleDeleteDesktop}
+        stateOpened={stateOpened}
       />
     </div>
   );

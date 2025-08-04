@@ -31,6 +31,12 @@
   to   { transform: translateY(-145px); opacity: 0; }
 }
 
+/* new: reverse of slideBarShort, for non‑expanded close */
+@keyframes slideBarCloseShort {
+  from { transform: translateY(-105px); opacity: 1; }
+  to   { transform: translateY(-145px); opacity: 0; }
+}
+
 @keyframes slideFromCenter {
   from { transform: translate(var(--tx), var(--ty)); opacity: 0; }
   to   { transform: translate(0, 0);               opacity: 1; }
@@ -85,11 +91,17 @@
   transform: translateY(-145px);
   animation: slideBarShort var(--bar-slide-duration) var(--easing-flattened) forwards;
 }
+/* on hover (fully expanded) */
 .mission-control-container.overview-open.bar-expanded .mc-bar {
   animation: slideBarFull var(--bar-slide-duration) var(--easing-flattened) forwards;
 }
+/* close when fully expanded */
 .mission-control-container.overview-open.bar-expanded .mc-bar.closing {
   animation: slideBarUp var(--bar-slide-duration) var(--easing-flattened) forwards;
+}
+/* close when NOT fully expanded */
+.mission-control-container.overview-open:not(.bar-expanded) .mc-bar.closing {
+  animation: slideBarCloseShort var(--bar-slide-duration) var(--easing-flattened) forwards;
 }
 
 /* ---------- Bar names row ---------- */
@@ -195,11 +207,9 @@
   height: 100%;
   position: relative;
   will-change: transform, opacity;
-  /* restore the smooth slide: */
-  -webkit-transition: transform var(--desktop-slide-duration) var(--desktop-panel-easing),
-                     opacity var(--desktop-slide-duration) var(--desktop-panel-easing);
-  transition:        transform var(--desktop-slide-duration) var(--desktop-panel-easing),
-                     opacity var(--desktop-slide-duration) var(--desktop-panel-easing);
+  transition:
+    transform var(--desktop-slide-duration) var(--desktop-panel-easing),
+    opacity var(--desktop-slide-duration) var(--desktop-panel-easing);
 }
 .mission-control-container.overview-open .desktops-wrapper {
   pointer-events: none;
@@ -217,14 +227,14 @@
   transition: none;
 }
 .mission-control-container.overview-open.bar-expanded .desktops-wrapper {
-  pointer-events: none;
   transform: translateY(5px);
   opacity: 1;
   transition:
     transform var(--bar-slide-duration) var(--easing-flattened),
-    opacity   var(--bar-slide-duration) var(--easing-flattened);
+    opacity var(--bar-slide-duration) var(--easing-flattened);
 }
-.mission-control-container.overview-open.bar-expanded .desktops-wrapper.closing {
+/* closing (same for both expanded and non‑expanded) */
+.mission-control-container.overview-open .desktops-wrapper.closing {
   animation: slideWrapperUp var(--bar-slide-duration) var(--easing-flattened) forwards;
 }
 
@@ -245,6 +255,12 @@
   transform: translate(var(--tx), var(--ty));
   opacity: 0;
 }
+
+.mission-control-container.overview-open .desktop-panel .desktop-scale-wrapper {
+  overflow: hidden;
+  border-radius: 2px;
+}
+
 .mission-control-container.overview-open.bar-expanded .desktop-panel {
   animation:
     var(--panel-animation, var(--desktop-panel-animation))
@@ -320,7 +336,7 @@
   opacity: 1;
 }
 
-/* Disable the +‐button and names until the bar is fully expanded */
+/* Disable the +‑button and names until the bar is fully expanded */
 .mission-control-container.overview-open:not(.bar-expanded) .mc-bar-names,
 .mission-control-container.overview-open:not(.bar-expanded) .mc-bar-new {
   pointer-events: none;

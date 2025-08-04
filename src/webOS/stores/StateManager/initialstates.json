@@ -10,8 +10,10 @@
     "DOCK_POSITION": "bottom"
   },
   "desktop": {
-    "iconVisible": "true",
-    "menubarVisible": "true",
+    "Dynamic": {
+      "iconVisible": "false",
+      "menubarVisible": "false"
+    },
     "gridGap": "30",
     "iconWidth": "64",
     "iconHeight": "64",
@@ -27,8 +29,10 @@
     "backgroundColor": "#FFFFFF"
   },
   "missionControl": {
+    "Dynamic": {
+      "isOpened": "false"
+    },
     "overlayVisible": "false",
-    "isOpened": "false",
     "currentDesktopID": "1"
   },
   "developer": {

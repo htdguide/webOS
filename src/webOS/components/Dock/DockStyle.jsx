@@ -1,10 +1,11 @@
 // src/components/Dock/DockStyle/DockStyle.jsx
 
-// flattened cubic-bezier easing used everywhere
+// flattened cubic‑bezier easing used everywhere
 const FLATTENED_EASING = 'cubic-bezier(0.4, 0.0, 0.2, 1.0)';
+const DURATION = 0.3; // seconds
 
 /**
- * Safely include both modern and legacy iOS bottom safe-area insets.
+ * Safely include both modern and legacy iOS bottom safe‑area insets.
  * env() is the new syntax; constant() is for older WebKit.
  */
 const SAFE_BOTTOM_ENV      = 'env(safe-area-inset-bottom)';
@@ -13,18 +14,27 @@ const withSafeBottom = (marginPx) =>
   `calc(${marginPx}px + ${SAFE_BOTTOM_CONSTANT} + ${SAFE_BOTTOM_ENV})`;
 
 /**
- * Returns the outer container style, including only positioning—
- * all animations now come exclusively from useDock's INITIAL_TRANSITION.
+ * Returns the outer container style, including positioning
+ * and staggered transitions for opacity and transform.
  */
 export const getOuterContainerStyle = (
   DOCK_POSITION,
   DOCK_MARGIN,
   isDockVisible
 ) => {
+  // when appearing: fade → slide; when hiding: slide → fade
+  const transition = isDockVisible
+    ? // appear: opacity first, then transform
+      `opacity ${DURATION}s ${FLATTENED_EASING}, ` +
+      `transform ${DURATION}s ${FLATTENED_EASING} ${DURATION}s`
+    : // hide: transform first, then opacity
+      `transform ${DURATION}s ${FLATTENED_EASING}, ` +
+      `opacity ${DURATION}s ${FLATTENED_EASING}`;
+
   const style = {
     position: 'fixed',
     zIndex: 200,
-    // no transition here—use only useDock’s INITIAL_TRANSITION
+    transition,
   };
 
   if (DOCK_POSITION === 'bottom') {
@@ -68,7 +78,6 @@ export const getIconsContainerStyle = (
   containerDimension
 ) => {
   if (isVerticalDock) {
-    // vertical docks still resize height instantly, but width is fixed
     const base = {
       position: 'relative',
       display: 'flex',
@@ -76,7 +85,6 @@ export const getIconsContainerStyle = (
       justifyContent: 'center',
       width: `${ICON_SIZE}px`,
       height: `${containerDimension}px`,
-      // no width transition needed in vertical mode
     };
     if (DOCK_POSITION === 'left') {
       return { ...base, alignItems: 'flex-start' };
@@ -86,7 +94,6 @@ export const getIconsContainerStyle = (
       return { ...base, alignItems: 'center' };
     }
   } else {
-    // horizontal dock: width changes as containerDimension updates
     return {
       position: 'relative',
       display: 'flex',
@@ -94,7 +101,7 @@ export const getIconsContainerStyle = (
       alignItems: 'flex-end',
       width: `${containerDimension}px`,
       height: `${ICON_SIZE}px`,
-      transition: `width 0.3s ${FLATTENED_EASING}`,
+      transition: `width ${DURATION}s ${FLATTENED_EASING}`,
     };
   }
 };
@@ -145,7 +152,7 @@ export const getBackgroundStyle = (
     return {
       ...commonStyle,
       top: -10,
-      width: `100%`,
+      width: '100%',
       height: '150%',
     };
   }
@@ -175,7 +182,7 @@ export const getIconContainerStyle = ({
     width: `${ICON_SIZE}px`,
     height: `${ICON_SIZE}px`,
     transition: shouldTransition
-      ? `${INITIAL_TRANSITION}, opacity 0.3s ${FLATTENED_EASING}`
+      ? `${INITIAL_TRANSITION}, opacity ${DURATION}s ${FLATTENED_EASING}`
       : NO_TRANSITION,
     transform: `scale(${scale})`,
     cursor: 'pointer',

@@ -56,13 +56,13 @@ export default function Dock() {
     isDockVisible,
     paginationEnabled,
     isVerticalDock,
-    dockApps,         // pinned + open
-    appsToRender,     // page slice or full
+    dockApps,
+    appsToRender,
     scales,
     shouldTransition,
     hoveredApp,
     activeApp,
-    openedApps,       // array of open app IDs
+    openedApps,
     currentPage,
     totalPages,
     iconsPerPage,
@@ -85,10 +85,10 @@ export default function Dock() {
     handleMouseEnter,
     handleMouseMove,
     handleMouseLeave,
-    openApp,          // opens via context
+    openApp,
     handleIconMouseEnter,
     handleIconMouseLeave,
-    setCurrentPage,   // for pagination
+    setCurrentPage,
   } = useDock({
     AppsContext,
     DOCK_CONFIG: effectiveConfig,
@@ -124,121 +124,153 @@ export default function Dock() {
     return () => clearTimeout(id);
   }, [isDockVisible]);
 
-  // 6) Compute outer style
+  // 6) Compute outer style (now animated)
   const outerStyle = {
     ...getOuterContainerStyle(DOCK_POSITION, DOCK_MARGIN, isDockVisible),
     opacity: fadeVisible ? 1 : 0,
-    top: 'auto',
-    ...(DOCK_POSITION === 'bottom' && {
-      bottom: `calc(${toolbarOffset + DOCK_MARGIN}px + env(safe-area-inset-bottom))`,
-    }),
+    // Only override top/bottom for bottom‑positioned dock:
+    ...(DOCK_POSITION === 'bottom'
+      ? {
+          top: 'auto',
+          bottom: `calc(${toolbarOffset + DOCK_MARGIN}px + env(safe-area-inset-bottom))`,
+        }
+      : {
+          bottom: 'auto',
+        }),
   };
 
   const DOT_SIZE = 8;
 
+  // —————————————————————————————————————
+  // NEW: one‑shot component launcher (for apps that are just functions/components)
+  // —————————————————————————————————————
+  const [launchedComponents, setLaunchedComponents] = useState([]);
+
+  const handleIconClick = (app) => {
+    // keep original dock behavior
+    openApp(app.id);
+
+    // if this app object has a React component attached, mount it
+    if (app.component && typeof app.component === 'function') {
+      setLaunchedComponents((prev) => [...prev, app.component]);
+    }
+  };
+
   return (
-    <div
-      ref={outerRef}
-      style={outerStyle}
-      onTouchStart={paginationEnabled ? handleTouchStart : undefined}
-      onTouchEnd={paginationEnabled ? handleTouchEnd : undefined}
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
-        <div
-          ref={iconsContainerRef}
-          style={getIconsContainerStyle(isVerticalDock, DOCK_POSITION, ICON_SIZE, containerDimension)}
-          onMouseEnter={handleMouseEnter}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-        >
-          <div style={getBackgroundStyle(isVerticalDock, bgStart, bgSize, DOCK_POSITION)} />
-
-          {appsToRender.map((app, idx) => {
-            const isOpen = openedApps.includes(app.id);
-            return (
-              <div
-                key={app.id}
-                style={{
-                  ...getIconContainerStyle({
-                    index: idx,
-                    paginationEnabled,
-                    scales,
-                    currentPage,
-                    iconsPerPage,
-                    ICON_SIZE,
-                    ICON_MARGIN,
-                    ADDITIONAL_MARGIN,
-                    shouldTransition,
-                    INITIAL_TRANSITION,
-                    NO_TRANSITION,
-                    DOCK_POSITION,
-                  }),
-                  position: 'relative',
-                }}
-                onClick={() => openApp(app.id)}
-                onMouseEnter={() => handleIconMouseEnter(app.id)}
-                onMouseLeave={handleIconMouseLeave}
-              >
-                {!paginationEnabled && (
-                  <div style={getTooltipWrapperStyle(DOCK_POSITION, APP_NAME_TOOLTIP_OFFSET)}>
-                    <div
-                      style={{
-                        ...getTooltipBubbleStyle(APP_NAME_BACKGROUND_PADDING, APP_NAME_FONT_SIZE),
-                        opacity: hoveredApp === app.id ? 1 : 0,
-                        transition: hoveredApp === null ? 'opacity 0.3s ease' : 'none',
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      {app.name}
-                      <div style={getTooltipArrowStyle(DOCK_POSITION)} />
-                    </div>
-                  </div>
-                )}
-
-                <img src={app.icon} alt={app.name} style={iconImageStyle} />
-
-                {!app.available && (
-                  <img
-                    src={disabledOverlay}
-                    alt={`${app.name} disabled`}
-                    style={{ ...iconImageStyle, position: 'absolute', top: 0, left: 0, opacity: 0.9, pointerEvents: 'none' }}
-                  />
-                )}
-
-                {isOpen && <div style={getOpenIndicatorStyle(DOCK_POSITION)} />}
-              </div>
-            );
-          })}
-        </div>
-
-        {paginationEnabled && totalPages > 1 && (
+    <>
+      <div
+        ref={outerRef}
+        style={outerStyle}
+        onTouchStart={paginationEnabled ? handleTouchStart : undefined}
+        onTouchEnd={paginationEnabled ? handleTouchEnd : undefined}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
           <div
-            style={{
-              position: 'absolute',
-              bottom: `-${DOTS_MARGIN_BOTTOM + DOT_SIZE}px`,
-              left: 0,
-              right: 0,
-              display: 'flex',
-              justifyContent: 'center',
-            }}
+            ref={iconsContainerRef}
+            style={getIconsContainerStyle(isVerticalDock, DOCK_POSITION, ICON_SIZE, containerDimension)}
+            onMouseEnter={handleMouseEnter}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
           >
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <div
-                key={i}
-                onClick={() => setCurrentPage(i)}
-                style={{
-                  width: `${DOT_SIZE}px`,
-                  height: `${DOT_SIZE}px`,
-                  borderRadius: '50%',
-                  margin: '0 4px',
-                  background: i === currentPage ? 'white' : 'black',
-                  cursor: 'pointer',
-                }}
-              />
-            ))}
+            <div style={getBackgroundStyle(isVerticalDock, bgStart, bgSize, DOCK_POSITION)} />
+
+            {appsToRender.map((app, idx) => {
+              const isOpen = openedApps.includes(app.id);
+              return (
+                <div
+                  key={app.id}
+                  style={{
+                    ...getIconContainerStyle({
+                      index: idx,
+                      paginationEnabled,
+                      scales,
+                      currentPage,
+                      iconsPerPage,
+                      ICON_SIZE,
+                      ICON_MARGIN,
+                      ADDITIONAL_MARGIN,
+                      shouldTransition,
+                      INITIAL_TRANSITION,
+                      NO_TRANSITION,
+                      DOCK_POSITION,
+                    }),
+                    position: 'relative',
+                  }}
+                  onClick={() => handleIconClick(app)}
+                  onMouseEnter={() => handleIconMouseEnter(app.id)}
+                  onMouseLeave={handleIconMouseLeave}
+                >
+                  {!paginationEnabled && (
+                    <div style={getTooltipWrapperStyle(DOCK_POSITION, APP_NAME_TOOLTIP_OFFSET)}>
+                      <div
+                        style={{
+                          ...getTooltipBubbleStyle(APP_NAME_BACKGROUND_PADDING, APP_NAME_FONT_SIZE),
+                          opacity: hoveredApp === app.id ? 1 : 0,
+                          transition: hoveredApp === null ? 'opacity 0.3s ease' : 'none',
+                          pointerEvents: 'none',
+                        }}
+                      >
+                        {app.name}
+                        <div style={getTooltipArrowStyle(DOCK_POSITION)} />
+                      </div>
+                    </div>
+                  )}
+
+                  <img src={app.icon} alt={app.name} style={iconImageStyle} />
+
+                  {!app.available && (
+                    <img
+                      src={disabledOverlay}
+                      alt={`${app.name} disabled`}
+                      style={{ ...iconImageStyle, position: 'absolute', top: 0, left: 0, opacity: 0.9, pointerEvents: 'none' }}
+                    />
+                  )}
+
+                  {isOpen && <div style={getOpenIndicatorStyle(DOCK_POSITION)} />}
+                </div>
+              );
+            })}
           </div>
-        )}
+
+          {paginationEnabled && totalPages > 1 && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: `-${DOTS_MARGIN_BOTTOM + DOT_SIZE}px`,
+                left: 0,
+                right: 0,
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <div
+                  key={i}
+                  onClick={() => setCurrentPage(i)}
+                  style={{
+                    width: `${DOT_SIZE}px`,
+                    height: `${DOT_SIZE}px`,
+                    borderRadius: '50%',
+                    margin: '0 4px',
+                    background: i === currentPage ? 'white' : 'black',
+                    cursor: 'pointer',
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Render any one‑shot components you've launched */}
+      {launchedComponents.map((Comp, idx) => (
+        <Comp
+          key={idx}
+          onClose={() =>
+            setLaunchedComponents((prev) => prev.filter((_, i) => i !== idx))
+          }
+        />
+      ))}
+    </>
   );
 }
