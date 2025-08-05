@@ -1,5 +1,16 @@
+/* 
+ * This stylesheet styles the version label and the debug outlines.
+ *
+ * Areas:
+ * 1: Version label styling
+ *   1.1: Desktop
+ *   1.2: Mobile
+ * 2: Debug outlines
+ * 3: Global div styling note
+ */
 
-/* Version label styling tied to the desktop, not the viewport */
+/* Area 1: Version label styling */
+/* 1.1: Base styling for desktop */
 .version {
   opacity: 0.5;
   position: absolute; /* Changed from fixed to absolute */
@@ -16,7 +27,7 @@
   z-index: 9999;
 }
 
-/* Mobile view: Adjust the version label for smaller screens */
+/* 1.2: Adjustments for mobile view */
 @media (max-width: 600px) {
   .version {
     font-size: 8px;
@@ -26,10 +37,18 @@
   }
 }
 
-div {
-  /* 
-    If you’d rather not affect layout (borders add to width/height), 
-    you can use outline instead:
-    outline: 1px solid blue !important;
-  */
+/* Area 2: Debug outlines */
+/* 2.1: When <body> has 'debug-mode', outline all <div> elements */
+.debug-mode div {
+  border-color: aqua !important;
+  outline: 1px dashed aqua !important;
+  outline-offset: -1px !important;
 }
+
+/* Area 3: Global div styling note */
+/* 3.1: Example if you’d rather use outlines globally instead of borders */
+/*
+div {
+  outline: 1px solid blue !important;
+}
+*/

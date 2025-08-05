@@ -190,15 +190,18 @@
   position: absolute;
   background: transparent;
 }
-.resize-br,
+
 .resize-tr,
-.resize-bl,
-.resize-tl {
-  width: 15px;
-  height: 15px;
+.resize-bl {
+  width: 12px;
+  height: 12px;
   z-index: 199;
 }
+
 .resize-br {
+  z-index: 199;
+  width: 14px;
+  height: 14px;
   bottom: 0;
   right: 0;
   cursor: nwse-resize;
@@ -214,6 +217,9 @@
   cursor: nesw-resize;
 }
 .resize-tl {
+  width: 6px;
+  height: 6px;
+  z-index: 199;
   top: 0;
   left: 0;
   cursor: nwse-resize;
@@ -237,14 +243,16 @@
 .resize-top {
   top: 0;
   left: 0;
-  width: 100%;
+  margin-left: 6px;
+  width: calc(100% - 17px);
   height: 5px;
   cursor: ns-resize;
 }
 .resize-bottom {
   bottom: 0;
   left: 0;
-  width: 100%;
+  margin-left: 11px;
+  width: calc(100% - 24px);
   height: 5px;
   cursor: ns-resize;
 }
@@ -252,14 +260,16 @@
   top: 0;
   left: 0;
   width: 5px;
-  height: 100%;
+  margin-top: 5px;
+  height: 96.5%;
   cursor: ew-resize;
 }
 .resize-right {
   top: 0;
   right: 0;
   width: 5px;
-  height: 100%;
+  margin-top: 2%;
+  height: calc(100% - 24px);
   cursor: ew-resize;
 }
 

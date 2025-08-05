@@ -17,6 +17,7 @@ html, body, #root {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
 
+
 /* Hide React error overlay */
 #react-error-overlay {
   display: none !important;
