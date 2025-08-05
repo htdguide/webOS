@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Quake III Arena</title>
+  <style>
+    html,body{margin:0;padding:0;background-color:black;-webkit-user-select:none;-moz-user-select:none;user-select:none}
+
+    .lds-spinner{color:white;display:inline-block;position:relative;width:64px;height:64px}
+    .lds-spinner div{transform-origin:32px 32px;animation:lds-spinner 1.2s linear infinite}
+    .lds-spinner div:after{content:" ";display:block;position:absolute;top:3px;left:29px;width:5px;height:14px;border-radius:20%;background:white}
+    .lds-spinner div:nth-child(1){transform:rotate(0deg);animation-delay:-1.1s}
+    .lds-spinner div:nth-child(2){transform:rotate(30deg);animation-delay:-1s}
+    .lds-spinner div:nth-child(3){transform:rotate(60deg);animation-delay:-0.9s}
+    .lds-spinner div:nth-child(4){transform:rotate(90deg);animation-delay:-0.8s}
+    .lds-spinner div:nth-child(5){transform:rotate(120deg);animation-delay:-0.7s}
+    .lds-spinner div:nth-child(6){transform:rotate(150deg);animation-delay:-0.6s}
+    .lds-spinner div:nth-child(7){transform:rotate(180deg);animation-delay:-0.5s}
+    .lds-spinner div:nth-child(8){transform:rotate(210deg);animation-delay:-0.4s}
+    .lds-spinner div:nth-child(9){transform:rotate(240deg);animation-delay:-0.3s}
+    .lds-spinner div:nth-child(10){transform:rotate(270deg);animation-delay:-0.2s}
+    .lds-spinner div:nth-child(11){transform:rotate(300deg);animation-delay:-0.1s}
+    .lds-spinner div:nth-child(12){transform:rotate(330deg);animation-delay:0s}
+    @keyframes lds-spinner{0%{opacity:1}100%{opacity:0}}
+
+    #viewport-frame{position:absolute;top:0;left:0;bottom:0;right:0;overflow:hidden}
+    /* Hide the GUI container entirely */
+    .gui_container{display:none !important}
+    .gui_email{position:fixed;right:0;bottom:0;padding-right:15px;line-height:3.2;font-family:Arial;font-size:16px;color:white}
+    .gui_email a{text-decoration:none;color:white}
+    .gui_upload{position:fixed;right:10px;top:10px;width:64px;height:64px;cursor:pointer;filter:drop-shadow(2px 2px 2px #000)}
+    .gui_upload:hover{filter:drop-shadow(2px 2px 2px #000) brightness(110%)}
+    .gui_start{position:fixed;left:0;bottom:10px;right:0;width:64px;height:64px;margin:0 auto;cursor:pointer;filter:drop-shadow(2px 2px 2px #000)}
+    .gui_start:hover{filter:drop-shadow(2px 2px 2px #000) brightness(110%)}
+    .gui_download{position:fixed;right:10px;top:10px;z-index:999;width:64px;height:64px;cursor:pointer;display:none;background-repeat:no-repeat;filter:drop-shadow(2px 2px 2px #000)}
+    .gui_download:hover{filter:drop-shadow(2px 2px 2px #000) brightness(110%)}
+    .gui_loading{position:fixed;width:64px;height:64px;left:0;right:0;top:0;bottom:0;margin:auto auto;border:0;display:none}
+    .gui_controls_file{display:none}
+  </style>
+</head>
+<body>
+  <div id="viewport-frame"></div>
+  <div class="gui_download"></div>
+  <div class="gui_container">
+    <div class="gui_background"></div>
+    <div class="gui_start"></div>
+    <div class="gui_upload"></div>
+    <input type="file" id="gui_controls_file" class="gui_controls_file" onchange="readFile(event.target.files);">
+  </div>
+  <div class="gui_loading" id="loading">
+    <div class="lds-spinner">
+      <div></div><div></div><div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div><div></div><div></div>
+    </div>
+  </div>
+  <script>
+    // alertCustom.js
+    function alertCustom(title,message,accept,callback){try{var alertButtonDelay = new Date().getTime();var alertContainer = document.createElement("div");alertContainer.className = "alert_confirm_input_custom";alertContainer.style.position = "fixed";alertContainer.style.top = 0;alertContainer.style.bottom = 0;alertContainer.style.left = 0;alertContainer.style.right = 0;alertContainer.style.zIndex = 999;alertContainer.style.backgroundColor = "rgba(0,0,0,0.5)";alertContainer.style.userSelect = "none";var alertForm = document.createElement("div");alertForm.style.position = "relative";alertForm.style.top = "50%";alertForm.style.left = 0;alertForm.style.right = 0;alertForm.style.marginLeft = "auto";alertForm.style.marginRight = "auto";alertForm.style.transform = "translateY(-50%)";alertForm.style.width = "300px";alertForm.style.backgroundColor = "#f2f2f2";alertForm.style.textAlign = "center";alertForm.style.borderRadius = "5px";alertForm.style.overflow = "hidden";alertForm.style.boxShadow = "0 2px 2px 1px rgba(0,0,0,0.4)";var alertTitle = document.createElement("div");alertTitle.style.textAlign = "left";alertTitle.style.paddingLeft = "10px";alertTitle.style.backgroundColor = "#3a76b1";alertTitle.style.fontFamily = "Arial";alertTitle.style.fontSize = "16px";alertTitle.style.fontWeight = "bold";alertTitle.style.color = "white";alertTitle.style.lineHeight = 2.5;alertTitle.innerHTML = title;alertTitle.style.cursor = "default";var alertMessage = document.createElement("div");alertMessage.style.padding = "20px";alertMessage.style.fontFamily = "Arial";alertMessage.style.fontSize = "16px";alertMessage.style.color = "black";alertMessage.style.textAlign = "center";alertMessage.style.lineHeight = 2;alertMessage.innerHTML = message;alertMessage.style.cursor = "default";var alertButton = document.createElement("input");alertButton.type = "submit";alertButton.style.outline = "none";alertButton.style.padding = "10px";alertButton.style.backgroundColor = "#d2d2d2";alertButton.style.border = "1px solid #b2b2b2";alertButton.style.fontFamily = "Arial";alertButton.style.fontSize = "16px";alertButton.style.color = "black";alertButton.style.textAlign = "center";alertButton.style.lineHeight = 1.5;alertButton.style.display = "inline-block";alertButton.style.marginBottom = "10px";alertButton.style.paddingLeft = "40px";alertButton.style.paddingRight = "40px";alertButton.style.cursor = "pointer";alertButton.style.borderRadius = "5px";alertButton.addEventListener("keydown",function(event){event.preventDefault()});alertButton.addEventListener("keyup",function(event){if (event.keyCode==13 && new Date().getTime()>alertButtonDelay+200){callback();document.body.removeChild(alertContainer)}});alertButton.addEventListener("click",function(event){callback();document.body.removeChild(alertContainer)});alertButton.value = accept;alertForm.appendChild(alertTitle);alertForm.appendChild(alertMessage);alertForm.appendChild(alertButton);alertContainer.appendChild(alertForm);document.body.appendChild(alertContainer);alertButton.focus()}catch(err){}}
+
+    var userLanguage = window.navigator.userLanguage || window.navigator.language;
+    var STRING_ERROR_TITLE = "";
+    var STRING_ERROR_MESSAGE = "";
+    var STRING_ERROR_OK = "";
+
+    var profileData = null;
+    var CTRLS_IDLE = 0;
+
+    if (userLanguage.substring(0,2)=="es") {
+      STRING_ERROR_TITLE = "MENSAJE";
+      STRING_ERROR_MESSAGE = "Debe seleccionar el archivo<br/>q3config.cfg que contiene su<br/>perfil de Quake III Arena.";
+      STRING_ERROR_OK = "Aceptar";
+    } else {
+      STRING_ERROR_TITLE = "MESSAGE";
+      STRING_ERROR_MESSAGE = "You must select the q3config.cfg file. It has your Quake III Arena profile.";
+      STRING_ERROR_OK = "OK";
+    }
+
+    function runQuake3() {
+      try {
+        // HIDING THE GUI
+        document.getElementsByClassName("gui_container")[0].style.display = "none";
+        // SHOWING THE LOADING SPINNER
+        document.getElementsByClassName("gui_loading")[0].style.display = "block";
+        // LOADING AND RUNNING QUAKE 3
+        var quakeLoader = document.createElement("script");
+        quakeLoader.onload = function() {
+          ioq3.viewport = document.getElementById("viewport-frame");
+          ioq3.elementPointerLock = true;
+          ioq3.exitHandler = function (err) {
+            if (err!=null) {
+              alert(err);
+            }
+            location.reload();
+          }
+          ioq3.callMain();
+          document.getElementsByClassName("gui_loading")[0].style.display = "none";
+        }
+        quakeLoader.src = "Quake3.js";
+        document.body.appendChild(quakeLoader);
+      } catch(err) {}
+    }
+
+    function mouseChecker() {
+      try {
+        if (!ioq3) { return; }
+      } catch(err) {
+        return;
+      }
+      if (document.pointerLockElement == null) {
+        goBackButtonResetIncrement();
+      } else {
+        goBackButtonTimerIncrement();
+      }
+    }
+
+    function goBackButtonResetIncrement() {
+      try {
+        CTRLS_IDLE = 0;
+        // SHOWS THE DOWNLOAD BUTTON
+        document.getElementsByClassName("gui_download")[0].style.display = "block";
+      } catch(err) {}
+    }
+
+    function goBackButtonTimerIncrement() {
+      try {
+        CTRLS_IDLE++;
+        if (CTRLS_IDLE >= 3) {
+          // HIDES THE DOWNLOAD BUTTON
+          document.getElementsByClassName("gui_download")[0].style.display = "none";
+        }
+      } catch(err) {}
+    }
+
+    // PROFILE MANAGEMENT FUNCTIONS
+    function getProfileData() {
+      if (profileData == null) profileData = "";
+      return profileData;
+    }
+    function clearProfileData() {
+      profileData = null;
+    }
+    function downloadProfileData() {
+      try {
+        var rawReading = FS.readFile("/base/baseq3/q3config.cfg");
+        var fileAsArray = new Uint8Array(rawReading);
+        download_Blob(fileAsArray, "q3config.cfg", "application/octet-stream");
+      } catch(err) {}
+    }
+    function download_Blob(data, fileName, mimeType) {
+      var blob = new Blob([data], {type: mimeType});
+      var url = window.URL.createObjectURL(blob);
+      download_URL(url, fileName);
+      setTimeout(function() {
+        window.URL.revokeObjectURL(url);
+      }, 1000);
+    }
+    function download_URL(data, fileName) {
+      var a = document.createElement("a");
+      a.href = data;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.style = "display: none";
+      a.click();
+      a.remove();
+    }
+
+    function readFile(files) {
+      try {
+        if (files[0].name.toLowerCase() == "q3config.cfg") {
+          var filereader = new FileReader();
+          filereader.onload = function() {
+            profileData = this.result;
+            document.getElementById("gui_controls_file").value = null;
+            runQuake3();
+          };
+          filereader.readAsText(files[0]);
+        } else {
+          document.getElementById("gui_controls_file").value = null;
+          alertCustom(STRING_ERROR_TITLE, STRING_ERROR_MESSAGE, STRING_ERROR_OK, function(){});
+        }
+      } catch(err) {}
+    }
+
+    window.addEventListener("resize", function() {
+      try {
+        if (!ioq3.canvas) return;
+        if (document.fullscreenElement) return;
+        ioq3.setCanvasSize(ioq3.viewport.offsetWidth, ioq3.viewport.offsetHeight);
+      } catch(err) {}
+    });
+
+    // **Auto-start** the game immediately
+    runQuake3();
+  </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+/* src/components/MissionControl/MissionBar/animation.css */
+
+/* Shared easing for all slide animations */
+
+/* Apple's animation guide: https://www.youtube.com/watch?v=HaZ2jw9rx9M&t=1161s */
+
+:root {
+    --easing-bouncy: cubic-bezier(0.68, -0.55, 0.265, 1.55);             /* 1) Bouncy (overshoot & settle) */
+    --easing-smooth: cubic-bezier(0.4, 0.0, 0.2, 1.0);                   /* 2) Smooth (no overshoot, classic ease-out) */
+    --easing-flattened: cubic-bezier(0.645, 0.1, 0.455, 1);          /* 3) Flattened (slow start, gentle ramp) */
+  }
+  

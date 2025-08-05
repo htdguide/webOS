@@ -1,0 +1,106 @@
+/* src/components/MissionControl/components/MissionControlUI/MissionControlUI.css */
+
+/* ---------- Animations ---------- */
+
+/* Fade-in animation for wallpaper */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Panels flying in from center when overview-expanded */
+/* (This keyframe is still needed here for the initial fade-in behavior.) */
+@keyframes slideFromCenter {
+  from {
+    transform: translate(var(--tx), var(--ty));
+    opacity: 0;
+  }
+  to {
+    transform: translate(0, 0);
+    opacity: 1;
+  }
+}
+
+/* ---------- Container ---------- */
+.mission-control-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #000;
+}
+
+/* When fading in, apply to wallpaper child */
+.mission-control-container.fade-in .mc-wallpaper {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Once overview is open, wallpaper stays fully opaque */
+.mission-control-container.overview-open .mc-wallpaper {
+  opacity: 1;
+  animation: none;
+}
+
+/* ---------- Wallpaper (now fixed!) ---------- */
+.mc-wallpaper {
+  position: fixed;      /* anchor to viewport, not the sliding container */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+  opacity: 0;
+  animation: none;
+}
+
+/* ---------- Overlay Toolbar (buttons at top, now fixed!) ---------- */
+.mc-overlay {
+  position: fixed;      /* anchor to viewport */
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 300;
+}
+.mc-overlay button {
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.mc-overlay button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.mc-overlay button:not(:disabled):hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* Hide the overlay toolbar when overview is open */
+.mission-control-container.overview-open .mc-overlay {
+  display: none;
+}
+
+/* ---------- Dock (always on top) ---------- */
+.mc-dock {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 250;
+  pointer-events: none;
+}
+.mc-dock > * {
+  pointer-events: all;
+}
+
+/* ---------- Utility & State Classes ---------- */
+/* .fade-in       — added when starting to fade */
+/* .overview-open — added once fade completes and overview is active */
+/* .bar-expanded  — added once mouse hovers over bar, to trigger panel & bar-name animations */
+
+/* No additional rules are needed here; transitions/animations respond to those state classes. */

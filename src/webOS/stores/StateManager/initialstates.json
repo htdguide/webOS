@@ -1,0 +1,43 @@
+{
+  "welcomeWrap": {
+    "welcomeEnabled": "true"
+  },
+  "dock": {
+    "Dynamic": {
+      "dockVisible": "true"
+    },
+    "ICON_SIZE": "45",
+    "ENABLE_MAGNIFICATION": "false",
+    "MAX_SCALE": "1.4",
+    "DOCK_POSITION": "bottom"
+  },
+  "desktop": {
+    "Dynamic": {
+      "iconVisible": "true",
+      "menubarVisible": "true"
+    },
+    "gridGap": "30",
+    "iconWidth": "64",
+    "iconHeight": "64",
+    "topMargin": "40",
+    "leftMargin": "20",
+    "rightMargin": "20",
+    "bottomMargin": "100"
+  },
+  "terminalSettings": {
+    "fontSize": "12px",
+    "fontColor": "#000000",
+    "fontFamily": "monospace",
+    "backgroundColor": "#FFFFFF"
+  },
+  "missionControl": {
+    "Dynamic": {
+      "isOpened": "false"
+    },
+    "overlayVisible": "false",
+    "currentDesktopID": "1"
+  },
+  "developer": {
+    "logsenabled": "false"
+  }
+}

@@ -1,0 +1,40 @@
+/* src/components/Wallpaper/Wallpaper.css */
+
+/* Wallpaper container */
+.wallpaper {
+  position: absolute; /* relative to parent */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;     /* behind everything */
+  overflow: hidden;
+  background: black; /* fallback color */
+}
+
+/* Fallback image (always there in case of very old browsers) */
+.wallpaper img.wallpaper-fallback {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* fill and crop */
+  z-index: -2;
+}
+
+/* Video now simply covers the container without any transform or min-width hacks */
+.wallpaper-video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* fill and crop */
+  z-index: -1;       /* above fallback, behind UI */
+}
+
+/* Hide until loaded (controlled via React) */
+.wallpaper-video.hidden {
+  display: none;
+}

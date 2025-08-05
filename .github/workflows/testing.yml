@@ -1,0 +1,50 @@
+# File: .github/workflows/testing.yml
+
+name: Build and Push Docker Image to Docker Hub (Testing)
+
+on:
+  push:
+    branches:
+      - testing
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      # 1) Check out the repo
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      # 2) Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # 3) Install dependencies
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      # 4) Run tests (optional)
+      - name: Run Tests
+        run: npm run test
+
+      # 5) Build production artifacts
+      - name: Build
+        run: npm run build
+
+      # 6) Log in to Docker Hub
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      # 7) Build Docker image
+      - name: Build Docker Image
+        run: |
+          docker build --no-cache \
+            -t ${{ secrets.DOCKER_USERNAME }}/webportfoliotesting:latest \
+            -f Dockerfile \
+            .
+
+      # 8) Push Docker image
+      - name: Push Docker Image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/webportfoliotesting:latest

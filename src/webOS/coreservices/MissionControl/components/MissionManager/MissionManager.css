@@ -1,0 +1,354 @@
+/* src/components/MissionControl/MissionManager.css */
+
+@import "../../../../configs/CSSConfigs/animations.css";
+
+/* timing vars & defaults */
+:root {
+  --bar-slide-duration:      0.3s;
+  --names-slide-duration:    0.3s;
+  --desktop-slide-duration:  0.55s;
+  --desktop-panel-duration:  2s;
+  --desktop-panel-easing:    var(--easing-flattened);
+
+  /* new var, if you want to reference in CSS */
+  --delete-slide-duration:   0.3s;
+  /* fallback values; will be overridden by inline styles */
+  --desktop-count: 0;
+  --thumb-width:  0px;
+}
+
+/* ---------- Keyframes ---------- */
+@keyframes slideBarShort {
+  from { transform: translateY(-145px); opacity: 0; }
+  to   { transform: translateY(-105px); opacity: 1; }
+}
+@keyframes slideBarFull {
+  from { transform: translateY(-105px); }
+  to   { transform: translateY(0); }
+}
+@keyframes slideBarUp {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(-145px); opacity: 0; }
+}
+
+/* new: reverse of slideBarShort, for non‑expanded close */
+@keyframes slideBarCloseShort {
+  from { transform: translateY(-105px); opacity: 1; }
+  to   { transform: translateY(-145px); opacity: 0; }
+}
+
+@keyframes slideFromCenter {
+  from { transform: translate(var(--tx), var(--ty)); opacity: 0; }
+  to   { transform: translate(0, 0);               opacity: 1; }
+}
+@keyframes slideFromRight {
+  from {
+    transform: translateX(
+      calc(
+        -68px
+        + (55vw - ((var(--thumb-width) * var(--desktop-count)) + (30px * var(--desktop-count))) / 2)
+      )
+    );
+    opacity: 1;
+  }
+  to   { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideFadeFromRight {
+  0%   {
+    transform: translateX(
+      calc(
+        -68px
+        + (55vw - ((var(--thumb-width) * var(--desktop-count)) + (30px * var(--desktop-count))) / 2)
+      )
+    );
+    opacity: 0;
+  }
+  10%  { opacity: 1; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideWrapperUp {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(-145px); opacity: 0; }
+}
+
+/* ---------- + Button Slide-Up ---------- */
+@keyframes slidePlusUp {
+  from { bottom: 0; }
+  to   { bottom: calc(50% - 20px); }
+}
+
+/* ---------- MC Bar (fixed to viewport) ---------- */
+.mc-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  width: 100vw;
+  height: 145px;
+  backdrop-filter: blur(10px);
+  background: rgba(230,230,230,0.7);
+  z-index: 150;
+
+  transform: translateY(-145px);
+  animation: slideBarShort var(--bar-slide-duration) var(--easing-flattened) forwards;
+}
+/* on hover (fully expanded) */
+.mission-control-container.overview-open.bar-expanded .mc-bar {
+  animation: slideBarFull var(--bar-slide-duration) var(--easing-flattened) forwards;
+}
+/* close when fully expanded */
+.mission-control-container.overview-open.bar-expanded .mc-bar.closing {
+  animation: slideBarUp var(--bar-slide-duration) var(--easing-flattened) forwards;
+}
+/* close when NOT fully expanded */
+.mission-control-container.overview-open:not(.bar-expanded) .mc-bar.closing {
+  animation: slideBarCloseShort var(--bar-slide-duration) var(--easing-flattened) forwards;
+}
+
+/* ---------- Bar names row ---------- */
+.mc-bar-names {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 190;
+  gap: 43px;
+  transition:
+    gap var(--names-slide-duration) var(--easing-flattened),
+    transform var(--names-slide-duration) var(--easing-flattened),
+    margin-left var(--names-slide-duration) var(--easing-flattened);
+}
+.mc-bar-name {
+  width: 48px;
+  margin-top: 2px;
+  text-align: center;
+  font-size: 12px;
+  color: rgb(33,35,36);
+  opacity: 0.7;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+.mc-bar-name:hover,
+.mc-bar-name.active {
+  opacity: 1;
+}
+.mission-control-container.overview-open.bar-expanded .mc-bar-names {
+  gap: 30px;
+}
+.mission-control-container.overview-open.bar-expanded .mc-bar-name {
+  width: var(--thumb-w);
+  margin-top: 12px;
+  transition:
+    width 0.2s ease-in-out,
+    margin-top var(--bar-slide-duration) var(--easing-flattened);
+}
+
+/* ---------- Plain “+” trigger ---------- */
+.mc-bar-new {
+  position: absolute;
+  right: 20px;
+  bottom: 0;
+  font-size: 40px;
+  font-weight: 150;
+  color: rgb(33,35,36);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: opacity 0.3s ease-in-out;
+  opacity: 1;
+  z-index: 191;
+  overflow: visible;
+}
+.mc-bar-new.disabled {
+  cursor: default;
+  opacity: 0;
+  pointer-events: none;
+}
+.mission-control-container.overview-open.bar-expanded .mc-bar-new {
+  animation: slidePlusUp var(--bar-slide-duration) var(--easing-flattened) forwards;
+}
+.mc-bar-new:hover {
+  opacity: 1;
+}
+.mc-bar-new::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 27px;
+  width: 31px;
+  height: 31px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform var(--bar-slide-duration) var(--easing-flattened);
+  z-index: -1;
+  pointer-events: none;
+}
+.mc-bar-new:hover::before {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* ---------- Exit overlay ---------- */
+.mc-exit-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 140;
+}
+
+/* ---------- Desktops Wrapper (smooth sliding) ---------- */
+.desktops-wrapper {
+  pointer-events: none;
+  display: flex;
+  gap: 60px;
+  height: 100%;
+  position: relative;
+  will-change: transform, opacity;
+  transition:
+    transform var(--desktop-slide-duration) var(--desktop-panel-easing),
+    opacity var(--desktop-slide-duration) var(--desktop-panel-easing);
+}
+.mission-control-container.overview-open .desktops-wrapper {
+  pointer-events: none;
+  position: absolute;
+  top: 30px; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  padding: 0 20px;
+  z-index: 190;
+  flex-wrap: nowrap;
+  transform: translateY(-120px);
+  opacity: 0;
+  transition: none;
+}
+.mission-control-container.overview-open.bar-expanded .desktops-wrapper {
+  transform: translateY(5px);
+  opacity: 1;
+  transition:
+    transform var(--bar-slide-duration) var(--easing-flattened),
+    opacity var(--bar-slide-duration) var(--easing-flattened);
+}
+/* closing (same for both expanded and non‑expanded) */
+.mission-control-container.overview-open .desktops-wrapper.closing {
+  animation: slideWrapperUp var(--bar-slide-duration) var(--easing-flattened) forwards;
+}
+
+/* ---------- Desktop Panels ---------- */
+.desktop-panel {
+  pointer-events: auto;
+  flex-shrink: 0;
+  width: 100vw;
+  height: 100%;
+  position: relative;
+  margin-left: 0;
+}
+.mission-control-container.overview-open .desktop-panel {
+  overflow: visible;
+  background: transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  transform: translate(var(--tx), var(--ty));
+  opacity: 0;
+}
+
+.mission-control-container.overview-open .desktop-panel .desktop-scale-wrapper {
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.mission-control-container.overview-open.bar-expanded .desktop-panel {
+  animation:
+    var(--panel-animation, var(--desktop-panel-animation))
+    var(--panel-duration,  var(--desktop-panel-duration))
+    var(--panel-easing,    var(--desktop-panel-easing))
+    forwards;
+}
+
+/* ---------- Scale Wrapper Inside Each Panel ---------- */
+.desktop-scale-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- Invisible blocker overlay ---------- */
+.desktop-panel-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 2;
+  background: transparent;
+}
+
+/* ---------- Delete Icon ---------- */
+.delete-icon {
+  position: absolute;
+  top: -11px;
+  left: -11px;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  background: rgb(255, 255, 255);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  color: rgb(135, 135, 135);
+  cursor: pointer;
+  z-index: 3;
+  transition: background 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+.delete-icon:hover {
+  background: rgba(255,255,255,1);
+}
+
+.cross {
+  margin-top: -2.5px;
+  margin-left: -0.5px;
+  font-family: 'Varela Round' !important;
+  font-weight: 500;
+}
+
+/* ---------- Preview Panel ---------- */
+.preview-panel {
+  position: absolute;
+  top: 30px;
+  right: calc(0% - var(--thumb-width));
+  width: var(--thumb-width);
+  height: var(--thumb-height, 90px);
+  pointer-events: none;
+  z-index: 189;
+  background: rgba(255, 255, 255, 0);
+  border-radius: 2px;
+  opacity: 0;
+  transition:
+    right var(--bar-slide-duration) var(--easing-flattened),
+    opacity 0.2s ease-in-out;
+}
+.preview-panel.visible {
+  right: calc(55px - var(--thumb-width));
+  opacity: 1;
+}
+
+/* Disable the +‑button and names until the bar is fully expanded */
+.mission-control-container.overview-open:not(.bar-expanded) .mc-bar-names,
+.mission-control-container.overview-open:not(.bar-expanded) .mc-bar-new {
+  pointer-events: none;
+}
+
+/* Touch overrides for “+” */
+.mc-bar-new.touch {
+  transition: none !important;
+}
+.mc-bar-new.touch:hover {
+  opacity: 1;
+}
+.mc-bar-new.touch::before {
+  display: none !important;
+}

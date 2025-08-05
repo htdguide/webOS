@@ -1,0 +1,100 @@
+/* src/components/DesktopIcon/DesktopIcon.css */
+
+/*************************************************************
+ * Container for the entire desktop icon
+ *************************************************************/
+ .desktop-icon {
+  position: absolute;  /* Positioned absolutely relative to the desktop container */
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  user-select: none;
+  z-index: 5;
+  transition: left 0.2s, top 0.2s, box-shadow 0.2s, opacity 0.5s;
+
+  /* --icon-width and --icon-height are set inline by DesktopIcon.jsx */
+}
+
+/* Slight transparency only while dragging, not when selected. */
+.desktop-icon.dragging {
+  opacity: 0.7;
+  z-index: 10;
+  transition: none;
+}
+
+/* Increase z-index when selected if you like, but no need for a new stacking context. */
+.desktop-icon.selected {
+  z-index: 6;
+}
+
+/*************************************************************
+ * The icon area (frame + highlight + image)
+ *************************************************************/
+.icon-frame {
+  position: relative;
+  width: calc(var(--icon-width) - 19px);
+  height: calc(var(--icon-height) - 19px);
+  margin-bottom: 8px;
+}
+
+/* 
+  The highlight behind the icon. 
+  Uses CSS calc() based on icon dimensions.
+*/
+.icon-highlight {
+  position: absolute;
+  top: -4.5px;
+  left: -4.5px;
+  width: calc(var(--icon-width) - 14px);
+  height: calc(var(--icon-height) - 14px);
+  background-color: rgba(0, 0, 0, 0.4); 
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  z-index: 0;
+  display: none; 
+}
+
+/* Show highlight only when icon is selected */
+.desktop-icon.selected .icon-highlight {
+  display: block;
+}
+
+/* 
+  The icon image, sized based on icon dimensions.
+*/
+.icon-image {
+  position: relative;
+  width: calc(var(--icon-width) - 19px);
+  height: calc(var(--icon-height) - 19px);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+/*************************************************************
+ * Label text
+ *************************************************************/
+.icon-label {
+  display: inline-block;
+  position: relative;
+  padding: 0 5px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: white;
+  line-height: 1.2;
+  text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
+  background-color: transparent; 
+}
+
+/* Highlight the label when the icon is selected */
+.desktop-icon.selected .icon-label {
+  background-color: rgb(34, 91, 201);
+  text-shadow: none; 
+}

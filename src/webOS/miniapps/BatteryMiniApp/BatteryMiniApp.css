@@ -1,0 +1,91 @@
+/* BatteryMiniApp.css */
+
+/* Outer wrapper that creates a new stacking context and applies its own backdrop filter */
+.battery-miniapp-wrapper {
+  position: relative;
+  isolation: isolate; /* Forces a separate stacking context */
+}
+
+/* The pseudo-element applies the backdrop blur to everything behind this element */
+.battery-miniapp-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: -1;
+}
+
+/* Container for the entire battery mini-app */
+.battery-miniapp-container {
+  margin-left: -8px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text',
+    'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: rgb(35, 35, 35);
+  padding: 8px 12px;
+  width: 250px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Top row: "Battery" on the left, battery percentage on the right */
+.battery-header-row {
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+}
+
+.battery-title {
+  font-size: 13px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.battery-percentage {
+  display: flex;
+  align-items: baseline;
+  opacity: 0.6;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Thin gray separator line (like in macOS battery menu) */
+.battery-separator {
+  border-top: 1px solid #a7a7a79d;
+  margin: 8px 0;
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+.using-energy-title {
+  font-size: 12px;
+  font-weight: bold;
+  margin: 0 0 4px 0;
+  color: rgba(35, 35, 35, 0.7);
+}
+
+.energy-item {
+  margin-top: 6px;
+  font-size: 13px;
+  color: rgba(35, 35, 35);
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.energy-logo {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}

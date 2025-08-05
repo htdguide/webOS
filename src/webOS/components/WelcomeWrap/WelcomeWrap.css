@@ -1,0 +1,119 @@
+/* WelcomeWrap.css */
+
+/* Parent of <WelcomeWrap> must have position: relative; width; height */
+
+.welcome-container.blocking {
+  pointer-events: all;
+}
+.welcome-container.non-blocking {
+  pointer-events: none;
+}
+
+/* Container fills its parent */
+.welcome-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+}
+
+/* ===== Welcome Screen ===== */
+.welcome-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+.welcome-screen.fade-out {
+  animation: fadeOutWelcome 1s forwards;
+}
+@keyframes fadeOutWelcome {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+.welcome-message {
+  font-family: -apple-system, BlinkMacSystemFont,
+    "San Francisco", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: black;
+  font-size: 3rem;
+  opacity: 0;
+  animation: messageFade forwards;
+}
+@keyframes messageFade {
+  0%   { opacity: 0; transform: scale(0.95); }
+  20%  { opacity: 1; transform: scale(1); }
+  80%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+/* ===== Loading Screen ===== */
+.loading-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255,255,255,0.3);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+}
+.loading-screen.fade-out {
+  animation: loadingFadeOut 1s forwards;
+}
+@keyframes loadingFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+.loading-animation {
+  margin-top: 20px;
+}
+
+/* Hello SVG */
+.hello__div {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  margin: 0 auto;
+  text-align: center;
+  width: 100%;
+  max-width: 600px;
+}
+.hello__svg {
+  fill: none;
+  stroke: #fff;
+  stroke-linecap: round;
+  stroke-miterlimit: 10;
+  stroke-width: 48px;
+  stroke-dasharray: 5800px;
+  stroke-dashoffset: 5800px;
+  animation: anim__hello linear 5s forwards;
+  width: 100%;
+  height: auto;
+}
+@keyframes anim__hello {
+  0%   { stroke-dashoffset: 5800; }
+  25%  { stroke-dashoffset: 5800; }
+  100% { stroke-dashoffset: 0; }
+}
+.hello__div.fade-out {
+  animation: loadingFadeOut 1s forwards;
+}
+
+/* Mobile */
+@media only screen and (max-width: 480px) {
+  .welcome-message {
+    font-size: 1.5rem;
+  }
+}
