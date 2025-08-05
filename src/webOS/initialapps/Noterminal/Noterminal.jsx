@@ -1,5 +1,7 @@
 // src/initialapps/Noterminal/Noterminal.jsx
 
+// ===== Area 1: Imports and Hooks Setup =====
+// --- 1.1: Import statements
 import React, { useEffect, useRef } from 'react';
 import './Noterminal.css';
 import { useDraggableWindow } from '../../components/DraggableWindow/DraggableWindowWrap';
@@ -7,41 +9,47 @@ import { useStateManager } from '../../stores/StateManager/StateManager';
 import { useDeviceInfo } from '../../contexts/DeviceInfoProvider/DeviceInfoProvider';
 import FlowManager from './components/FlowManager';
 
+// --- 1.2: Hook initializations
 function Noterminal({ onClose: parentOnClose, windowTitle }) {
-  const { openDraggableWindow, resizeWindow, moveWindow } = useDraggableWindow();
+  const { openDraggableWindow, resizeWindow, moveWindow } = useDraggableWindow(); // window API
+  const { state } = useStateManager();                                        // styling state
+  const deviceInfo = useDeviceInfo();                                          // detect device
+  const windowIdRef = useRef(null);                                            // store window ID
 
-  // Terminal styling from global state
-  const { state } = useStateManager();
+  // ===== Area 2: Window Parameter Computation =====
+  // --- 2.1: Default dimensions
+  const defaultParams = {
+    windowWidth: 372,
+    windowHeight: 300,
+    initialX: undefined,
+    initialY: undefined,
+  };
+
+  // --- 2.2: Override for vertical, narrow screens
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
+  const isVertical = screenHeight > screenWidth;
+  let windowParams;
+  if (isVertical && screenWidth < 600) {
+    windowParams = {
+      windowWidth: screenWidth - 16,                       // full width minus 16px
+      windowHeight: Math.floor(screenHeight / 2) - 113,     // half height minus 113px
+      initialX: 8,                                          // offset right by 8px
+      initialY: 0,
+    };
+  } else {
+    windowParams = defaultParams;                          // always use desktop defaults otherwise
+  }
+
+  // ===== Area 3: Terminal Content Wrapper =====
+  // --- 3.1: FlowManager with input‐focus handler
   const {
     fontSize = '12px',
     fontColor = '#000000',
     fontFamily = 'monospace',
     backgroundColor = '#FFFFFF',
   } = state.groups.terminalSettings || {};
-
-  const deviceInfo = useDeviceInfo();
-
-  // Choose dimensions based on device
-  const defaultParams = {
-    windowWidth: 600,
-    windowHeight: 400,
-    initialX: undefined,
-    initialY: undefined,
-  };
-  const windowParams =
-    deviceInfo.deviceType !== 'desktop'
-      ? {
-          windowWidth: window.innerWidth,
-          windowHeight: Math.floor(window.innerHeight / 2),
-          initialX: 0,
-          initialY: 0,
-        }
-      : defaultParams;
-
-  // Use passed title or fallback
   const title = windowTitle || 'Noterminal';
-
-  // Wrap FlowManager so we can resize/move on mobile input focus
   const terminalContent = (
     <FlowManager
       fontSize={fontSize}
@@ -61,13 +69,11 @@ function Noterminal({ onClose: parentOnClose, windowTitle }) {
     />
   );
 
-  // Keep the exact windowId in case you need it
-  const windowIdRef = useRef(null);
-
+  // ===== Area 4: Opening the Draggable Window =====
+  // --- 4.1: useEffect to call openDraggableWindow
   useEffect(() => {
-    // Open _once_ on mount
     const windowId = openDraggableWindow({
-      id: title,                     // stable ID to dedupe
+      id: title,
       title,
       windowWidth: windowParams.windowWidth,
       windowHeight: windowParams.windowHeight,
@@ -80,7 +86,6 @@ function Noterminal({ onClose: parentOnClose, windowTitle }) {
         parentOnClose?.();
       },
     });
-
     windowIdRef.current = windowId;
   }, [
     openDraggableWindow,
@@ -93,7 +98,7 @@ function Noterminal({ onClose: parentOnClose, windowTitle }) {
     parentOnClose,
   ]);
 
-  return null; // UI lives in the draggable window portal
+  return null; // portal renders the UI
 }
 
 export default Noterminal;

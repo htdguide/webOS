@@ -1,5 +1,23 @@
 /* src/components/DraggableWindow/DraggableWindow.css */
+/**
+ * Styles for the DraggableWindow component.
+ * Areas:
+ * 1: Base Styles & Variables (1.1, 1.2)
+ * 2: Window State Styles (2.1, 2.2, 2.3, 2.4)
+ * 3: Header Styles (3.1, 3.2, 3.3)
+ * 4: Button Styles (4.1, 4.2, 4.3)
+ * 5: Hover Styles (5.1)
+ * 6: Content & Overlays (6.1, 6.2, 6.3)
+ * 7: Resize Handles (7.1)
+ * 8: Fullscreen State (8.1)
+ */
 
+/* ================================
+   Area 1: Base Styles & Variables
+   ================================
+   1.1: Base draggable window styles
+   1.2: Disable transitions while dragging
+*/
 .draggable-window {
   position: absolute;
   border-radius: 11px;
@@ -12,20 +30,54 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
-  /* no transition here—only fullscreen will animate */
 }
 
-/* disable all transitions while dragging */
 .draggable-window.no-transition {
   transition: none !important;
 }
 
-/* Focused state overrides */
+/* ================================
+   Area 2: Window State Styles
+   ================================
+   2.1: Focused window shadow
+   2.2: Default unfocused button & title colors
+   2.3: Unfocused pseudo-element overrides
+   2.4: Force darker duplicates (pseudo-elements) to gray when unfocused
+*/
 .draggable-window.focused {
   box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3);
 }
 
-/* Header */
+/* 2.2: Buttons and title when NOT focused */
+.draggable-window:not(.focused) .close-button,
+.draggable-window:not(.focused) .resize-button {
+  background: rgb(200, 200, 200);
+  border-color: rgb(200, 200, 200);
+}
+
+.draggable-window:not(.focused) .header-title {
+  color: rgb(170, 170, 170);
+}
+
+/* 2.3: Also override the pseudo-elements behind the buttons */
+.draggable-window:not(.focused) .close-button::before,
+.draggable-window:not(.focused) .resize-button::before {
+  background: rgb(200, 200, 200);
+}
+
+/* 2.4: Ensure any darker “shadow” duplicates turn gray */
+.draggable-window:not(.focused) .close-button::before,
+.draggable-window:not(.focused) .resize-button::before {
+  background: rgb(200, 200, 200) !important;
+}
+
+/* ================================
+   Area 3: Header Styles
+   ================================
+   3.1: Header container
+   3.2: Header left section
+   3.3: Header title and right
+*/
 .window-header {
   position: relative;
   height: 28px;
@@ -49,10 +101,34 @@
   gap: 10px;
 }
 
-/* Base styles for both buttons */
+.header-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  font-weight: bold;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+/* ================================
+   Area 4: Button Styles
+   ================================
+   4.1: Base styles for close & resize buttons
+   4.2: Decorative pseudo-elements
+   4.3: Focused state button colors
+*/
 .close-button,
 .resize-button {
-  position: relative;      /* for the ::before pseudo */
+  position: relative;
   margin-top: 3px;
   width: 11px;
   height: 11px;
@@ -64,24 +140,22 @@
   appearance: none;
   cursor: default;
   z-index: 110;
-  background: transparent; /* background comes from focused/unfocused rules below */
+  background: transparent;
 }
 
-/* decorative duplicate behind each button */
 .close-button::before,
 .resize-button::before {
   content: '';
   position: absolute;
-  top: -0.5px;    /* 1px above */
-  left: -0.5px;   /* 1px left */
+  top: -0.5px;
+  left: -0.5px;
   width: calc(100% + 1px);
   height: calc(100% + 1px);
   border-radius: 50%;
-  pointer-events: none;  /* unclickable */
-  z-index: 100;           /* behind the real button */
+  pointer-events: none;
+  z-index: 100;
 }
 
-/* darker “shadow” colors for each pseudo-element -30 for all rgb colors comparing originals*/
 .close-button::before {
   background: rgb(225, 65, 60);
 }
@@ -89,7 +163,6 @@
   background: rgb(50, 170, 35);
 }
 
-/* Buttons coloring */
 .draggable-window.focused .close-button {
   background: rgb(255, 95, 90);
   border-color: rgb(0, 0, 0);
@@ -104,7 +177,11 @@
   background: #49bf43;
 }
 
-/* hover when unfocused */
+/* ================================
+   Area 5: Hover Styles (Unfocused)
+   ================================
+   5.1: Unfocused header-left hover overrides
+*/
 .draggable-window:not(.focused) .header-left:hover .close-button {
   background: #ff5f5f;
 }
@@ -123,26 +200,13 @@
   outline: none;
 }
 
-.header-title {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 14px;
-  font-weight: bold;
-  color: #333;
-  pointer-events: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 60%;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-}
-
-/* Content */
+/* ================================
+   Area 6: Content & Overlays
+   ================================
+   6.1: Window content wrapper
+   6.2: Inner content area
+   6.3: Loading overlay
+*/
 .window-content {
   position: relative;
   height: calc(100% - 30px);
@@ -160,7 +224,6 @@
   z-index: 100;
 }
 
-/* Loading Overlay */
 .loading-overlay {
   position: absolute;
   top: 0;
@@ -185,7 +248,11 @@
   pointer-events: none;
 }
 
-/* Resize handles */
+/* ================================
+   Area 7: Resize Handles
+   ================================
+   7.1: Positioning and cursors for all handles
+*/
 .resize-handle {
   position: absolute;
   background: transparent;
@@ -261,19 +328,23 @@
   left: 0;
   width: 5px;
   margin-top: 5px;
-  height: 96.5%;
+  height: calc(100% - 16px);
   cursor: ew-resize;
 }
 .resize-right {
   top: 0;
   right: 0;
   width: 5px;
-  margin-top: 2%;
+  margin-top: 11px;
   height: calc(100% - 24px);
   cursor: ew-resize;
 }
 
-/* Fullscreen state */
+/* ================================
+   Area 8: Fullscreen State
+   ================================
+   8.1: Fullscreen layout & hide handles
+*/
 .draggable-window.fullscreen {
   position: flex;
   border-radius: 0;
@@ -284,14 +355,12 @@
   height: 100vh !important;
   margin: 0;
   transform: none !important;
-
   transition:
     left 0.4s cubic-bezier(0.215, 0.61, 0.355, 1),
     top 0.4s cubic-bezier(0.215, 0.61, 0.355, 1),
     width 0.4s cubic-bezier(0.215, 0.61, 0.355, 1),
     height 0.4s cubic-bezier(0.215, 0.61, 0.355, 1),
     transform 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
-
   z-index: 100;
 }
 

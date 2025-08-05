@@ -77,9 +77,9 @@ const DraggableWindow = forwardRef(
 
     const [currentWidth, setCurrentWidth] = useState(windowWidth);
     const [currentHeight, setCurrentHeight] = useState(windowHeight);
-    const [currentX, setCurrentX] = useState(parseCoord(initialX, 10));
+    const [currentX, setCurrentX] = useState(parseCoord(initialX, 8));
     const [currentY, setCurrentY] = useState(
-      Math.max(parseCoord(initialY, 10), 26)
+      Math.max(parseCoord(initialY, 10), 34)
     );
     const [isUserDragging, setIsUserDragging] = useState(false);
     const [isUserResizing, setIsUserResizing] = useState(false);
