@@ -4,6 +4,11 @@ Welcome to **WebOS**! This project brings a desktop-like experience into your we
 
 [Visit the Website](https://htdguide.com)
 
+<img width="1792" alt="Screenshot 2025-05-21 at 7 35 52 PM" src="https://github.com/user-attachments/assets/59176430-205d-473a-b40b-c3640fe7f782" />
+<img width="1792" alt="Screenshot 2025-05-21 at 7 36 04 PM" src="https://github.com/user-attachments/assets/328ccca4-87a1-4c31-9f12-348607e8531b" />
+<img width="1792" alt="Screenshot 2025-05-21 at 7 37 13 PM" src="https://github.com/user-attachments/assets/bd8fba26-3958-4d2d-9229-43df9086a95f" />
+
+
 ---
 
 ## **Explore More**
