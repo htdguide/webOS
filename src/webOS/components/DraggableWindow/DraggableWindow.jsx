@@ -1,15 +1,14 @@
 /**
  * DraggableWindow.jsx defines a window component that can be dragged, resized,
- * focused, and toggled fullscreen. Resize‐handles are now completely hidden
- * whenever the window is in fullscreen mode, so no resizing is possible and
- * no resize cursor ever appears.
+ * focused, and toggled fullscreen. Windows smoothly scale up when entering
+ * fullscreen, and siblings slide out of view to the left.
  *
  * Areas:
  * 1: Imports & Constants (1.1, 1.2)
- * 2: Component Definition & Hooks (2.1 … 2.5)
+ * 2: Component Definition & Hooks (2.1 … 2.6)
  * 3: Effects & Handlers (3.1 … 3.7)
  * 4: Imperative API (4.1)
- * 5: Render & Dynamic Z-Index (5.1 … 5.4)
+ * 5: Render, Dynamic Z-Index & Fullscreen Sliding (5.1 … 5.7)
  */
 
 // ================================
@@ -29,8 +28,7 @@ import './DraggableWindow.css';
 import { useLogger } from '../Logger/Logger.jsx';
 import { useFocus } from '../../contexts/FocusControl/FocusControl.jsx';
 import { FullscreenSpace } from '../FullScreenSpace/FullScreenSpace.jsx';
-import { useDraggableWindowContext } from '../../contexts/DraggableWindowProvider/DraggableWindowProvider.jsx';
-import { useStateManager } from '../../stores/StateManager/StateManager.jsx';  // 1.1.1
+import { useStateManager } from '../../stores/StateManager/StateManager.jsx';
 
 // 1.2: Define corner handles for resizing
 const CORNER_HANDLES = ['br', 'tr', 'bl', 'tl'];
@@ -55,12 +53,14 @@ const DraggableWindow = forwardRef(
     const { focusedComponent, updateFocus } = useFocus();
     const isFocused = focusedComponent === windowId;
 
-    // 2.3: Fullscreen context
-    const { isFullscreen, fullscreenWindowId, enterFullscreen, exitFullscreen } =
-      useContext(FullscreenSpace);
-    const { enableFullscreenForWrap, disableFullscreenForWrap } =
-      useDraggableWindowContext();
-    const isThisFullscreen = isFullscreen && fullscreenWindowId === wrapId;
+    // 2.3: Fullscreen context — compare against this windowId
+    const {
+      isFullscreen,
+      fullscreenWindowId,
+      enterFullscreen,
+      exitFullscreen,
+    } = useContext(FullscreenSpace);
+    const isThisFullscreen = isFullscreen && fullscreenWindowId === windowId;
 
     // 2.4: StateManager hook for dock visibility
     const { editStateValue } = useStateManager();
@@ -74,7 +74,6 @@ const DraggableWindow = forwardRef(
         : typeof val === 'number'
         ? val
         : parseInt(val, 10) || def;
-
     const [currentWidth, setCurrentWidth] = useState(windowWidth);
     const [currentHeight, setCurrentHeight] = useState(windowHeight);
     const [currentX, setCurrentX] = useState(parseCoord(initialX, 8));
@@ -87,6 +86,9 @@ const DraggableWindow = forwardRef(
     const [scaleTransform, setScaleTransform] = useState({
       tx: 0, ty: 0, sx: 1, sy: 1,
     });
+
+    // 2.6: Detect when another window (sibling) is fullscreen
+    const isOtherFullscreen = isFullscreen && fullscreenWindowId !== windowId;
 
 
     // ================================
@@ -188,9 +190,9 @@ const DraggableWindow = forwardRef(
     );
 
 
-    // ================================
-    // Area 5: Render & Dynamic Z-Index
-    // ================================
+    // =============================================================
+    // Area 5: Render, Dynamic Z-Index & Fullscreen Sliding
+    // =============================================================
     // 5.1: Compute classes & z-index
     const noTransition =
       isUserDragging ||
@@ -199,11 +201,22 @@ const DraggableWindow = forwardRef(
       'draggable-window',
       isFocused && 'focused',
       isThisFullscreen && 'fullscreen',
+      isOtherFullscreen && 'other-fullscreen',
       noTransition && 'no-transition',
     ]
       .filter(Boolean)
       .join(' ');
     const dynamicZ = isThisFullscreen ? 1000 : isFocused ? 101 : 100;
+
+    // 5.2: Determine transform & transition
+    const transformStyle = isThisFullscreen
+      ? `translate(${scaleTransform.tx}px, ${scaleTransform.ty}px) scale(${scaleTransform.sx}, ${scaleTransform.sy})`
+      : isOtherFullscreen
+        ? 'translateX(-100vw)'
+        : 'none';
+    const transitionStyle = isOtherFullscreen
+      ? 'transform 0.4s cubic-bezier(0.215, 0.61, 0.355, 1)'
+      : undefined;
 
     return (
       <div
@@ -214,9 +227,8 @@ const DraggableWindow = forwardRef(
           height: `${currentHeight}px`,
           left: `${currentX}px`,
           top: `${clampedY}px`,
-          transform: isThisFullscreen
-            ? `translate(${scaleTransform.tx}px, ${scaleTransform.ty}px) scale(${scaleTransform.sx}, ${scaleTransform.sy})`
-            : 'none',
+          transform: transformStyle,
+          transition: transitionStyle,
           zIndex: dynamicZ,
           minWidth:
             minWindowWidth != null
@@ -247,7 +259,7 @@ const DraggableWindow = forwardRef(
         onKeyDown={markFocused}
         onTouchStart={markFocused}
       >
-        {/* Header */}
+        {/* 5.3: Header */}
         <div
           className="window-header"
           onMouseDown={() => {
@@ -261,38 +273,35 @@ const DraggableWindow = forwardRef(
           }}
         >
           <div className="header-left">
+            {/* 5.4: Close button */}
             <button
               className="close-button"
               onClick={(e) => {
                 e.stopPropagation();
                 if (isThisFullscreen) {
                   exitFullscreen();
-                  disableFullscreenForWrap(wrapId);
                   editStateValue('dock', 'dockVisible', 'true');
                 }
                 onClose?.();
               }}
             />
+            {/* 5.5: Fullscreen toggle button */}
             <button
               className="resize-button"
               onClick={(e) => {
                 e.stopPropagation();
                 if (!isThisFullscreen) {
-                  // → enter fullscreen & hide dock
                   const rect = windowRef.current.getBoundingClientRect();
                   const tx = -rect.left, ty = -rect.top;
                   const sx = window.innerWidth / rect.width;
                   const sy = window.innerHeight / rect.height;
                   setScaleTransform({ tx, ty, sx, sy });
                   setTimeout(() => {
-                    enterFullscreen(wrapId);
-                    enableFullscreenForWrap(wrapId);
+                    enterFullscreen(windowId);
                     editStateValue('dock', 'dockVisible', 'false');
                   }, 0);
                 } else {
-                  // → exit fullscreen & show dock
                   exitFullscreen();
-                  disableFullscreenForWrap(wrapId);
                   editStateValue('dock', 'dockVisible', 'true');
                 }
               }}
@@ -302,7 +311,7 @@ const DraggableWindow = forwardRef(
           <div className="header-right" />
         </div>
 
-        {/* Content */}
+        {/* 5.6: Content */}
         <div className="window-content">
           {iframeSrc ? (
             <iframe
@@ -323,7 +332,7 @@ const DraggableWindow = forwardRef(
           )}
         </div>
 
-        {/* 5.4: ONLY render resize handles if NOT fullscreen */}
+        {/* 5.7: ONLY render resize handles if NOT fullscreen */}
         {!isThisFullscreen &&
           ['br','tr','bl','tl','top','bottom','left','right'].map((pos) => (
             <div

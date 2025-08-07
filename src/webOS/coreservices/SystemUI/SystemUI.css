@@ -1,38 +1,62 @@
-/* desktop-monitor.css */
+/* desktop-monitor.css
+ *
+ * Styles for the desktop “monitor” container. We’ve added CSS variables
+ * and made its transform timing match the windows’ slide.
+ *
+ * Areas:
+ * 0: CSS Variables (0.1)
+ * 1: Base Monitor Styles (1.1, 1.2)
+ * 2: Slide-Out State (2.1, 2.2, 2.3)
+ */
 
-/* The monitor (desktop container) */
-.desktop-monitor {
+/* ================================
+   Area 0: CSS Variables
+   ================================
+   0.1: Shared slide timing & easing
+*/
+:root {
+    --slide-duration: 0.5s;
+    --slide-easing: ease-out;
+    /* Optional delay for fade-out (if used) */
+    --fade-delay: 0.2s;
+  }
+  
+  /* ================================
+     Area 1: Base Monitor Styles
+     ================================
+     1.1: Container dimensions & look
+     1.2: Default transform transition
+  */
+  .desktop-monitor {
     width: 100vw;
     height: 100vh;
-    background-color: #2e2e2e;          /* Monitor background */
-    opacity: 1;
-    position: relative;                  /* So internal absolutely positioned elements use this as reference */
+    background-color: #2e2e2e;
+    position: relative;
     overflow: hidden;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     z-index: 1;
-
-    /* Only animate transform by default; no opacity transition */
-    transition: transform 0.5s ease;
-}
-
-/* When any window is fullscreen, slide the desktop away */
-.desktop-monitor.slide-left {
-    /* 1) Slide off screen */
+    /* sync slide timing with windows */
+    transition: transform var(--slide-duration) var(--slide-easing);
+  }
+  
+  /* ================================
+     Area 2: Slide-Out State
+     ================================
+     2.1: Slide monitor off-screen
+     2.2: Fade out background
+     2.3: Restore inner clicks if needed
+  */
+  .desktop-monitor.slide-left {
     transform: translateX(-100vw);
-
-    /* 2) Fade-out background after 1s delay, over 1s */
     opacity: 0;
-
-    /* 3) Disable pointer events */
     pointer-events: none;
-
-    /* Animate both transform and opacity on slide-out */
+    /* both transform and opacity use the same slide timing */
     transition:
-        transform 0.5s ease,
-        opacity 0.5s ease-out 0.2s;
-}
-
-/* If you still want elements INSIDE the desktop to be clickable */
-.desktop-monitor.slide-left * {
+      transform var(--slide-duration) var(--slide-easing),
+      opacity   var(--slide-duration) var(--slide-easing) var(--fade-delay);
+  }
+  
+  .desktop-monitor.slide-left * {
     pointer-events: auto;
-}
+  }
+  

@@ -14,15 +14,23 @@ export const VideoSyncContext = createContext({
 
 
 // ── Area 2: WallpaperSrc Provider ──────────────────────────────────────────────
-// 2.1: Initialize refs and state for loading and stream
 export function WallpaperSrc({ children }) {
+  // 2.1: Safari detection and early exit
+  // - Detect if browser is Safari; if so, skip video logic entirely
+  const isSafari =
+    typeof navigator !== 'undefined' &&
+    /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  // 2.2: Initialize refs and state
   const videoRef = useRef(null);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [mediaStream, setMediaStream] = useState(null);
 
-  // 2.2: On load, play hidden video and capture its stream if supported
+  // 2.3: Handle loadeddata & timeupdate events
   useEffect(() => {
+    if (isSafari) return; // skip all video setup on Safari
+
     const vid = videoRef.current;
     if (!vid) return;
 
@@ -46,30 +54,32 @@ export function WallpaperSrc({ children }) {
       vid.removeEventListener('loadeddata', onLoaded);
       vid.removeEventListener('timeupdate', onTimeUpdate);
     };
-  }, [mediaStream]);
+  }, [mediaStream, isSafari]);
 
-  // 2.3: Provide context and render hidden master video offscreen
+  // 2.4: Provide context and conditionally render hidden master video
   return (
     <VideoSyncContext.Provider value={{ isVideoLoaded, currentTime, mediaStream }}>
       {children}
-      <video
-        ref={videoRef}
-        src={wallpaperVideoSrc}
-        muted
-        autoPlay
-        loop
-        playsInline
-        webkit-playsinline="true"
-        preload="auto"
-        style={{
-          position: 'absolute',
-          top: '-9999px',
-          left: '-9999px',
-          width: 1,
-          height: 1,
-          visibility: 'hidden',
-        }}
-      />
+      {!isSafari && (
+        <video
+          ref={videoRef}
+          src={wallpaperVideoSrc}
+          muted
+          autoPlay
+          loop
+          playsInline
+          webkit-playsinline="true"
+          preload="auto"
+          style={{
+            position: 'absolute',
+            top: '-9999px',
+            left: '-9999px',
+            width: 1,
+            height: 1,
+            visibility: 'hidden',
+          }}
+        />
+      )}
     </VideoSyncContext.Provider>
   );
 }
