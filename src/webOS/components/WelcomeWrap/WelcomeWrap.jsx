@@ -1,6 +1,12 @@
 // =================================================================================
-// Chapter 1: Imports & Dependencies
+// Area 1: Constants, Imports & Dependencies
 // =================================================================================
+
+// 1.1: Timing constants
+// how long each welcome message displays (in milliseconds)
+const MESSAGE_DISPLAY_MS = 1800;
+// delay before first message appears (in seconds)
+const INITIAL_DELAY_SEC = 1;
 
 import React, { useEffect, useState } from 'react';
 import messages from './messages';
@@ -8,26 +14,27 @@ import './WelcomeWrap.css';
 import { useStateManager } from '../../stores/StateManager/StateManager';
 
 // =================================================================================
-// Chapter 2: Component Definition & State Manager Setup
+// Area 2: Component Definition & State Setup
 // =================================================================================
 
 const WelcomeWrap = () => {
-  // Initialize state manager hooks
+  // 2.1: State manager hooks
   const { state, editStateValue, refreshState } = useStateManager();
 
-  // Determine if welcome screen is enabled in global state
+  // 2.2: Check if welcome screen is enabled
   const welcomeEnabledStr =
     state.groups.welcomeWrap && state.groups.welcomeWrap.welcomeEnabled;
   const welcomeEnabled = welcomeEnabledStr === "false" ? false : true;
   if (!welcomeEnabled) return null;
 
-  // Timing configuration for messages and animations
-  const totalDuration = 10;
-  const initialDelay = 1;
+  // 2.3: Timing configuration
   const messageCount = messages.length;
-  const messageDuration = (totalDuration - initialDelay) / messageCount;
+  // 2.3.1: per-message duration in seconds
+  const messageDuration = MESSAGE_DISPLAY_MS / 1000;
+  // 2.3.2: total seconds until switching to loading
+  const totalDuration = INITIAL_DELAY_SEC + messageCount * messageDuration;
 
-  // Local UI state
+  // 2.4: Local UI state flags
   const [showWelcome, setShowWelcome] = useState(true);
   const [showLoading, setShowLoading] = useState(false);
   const [messageIndex, setMessageIndex] = useState(-1);
@@ -36,11 +43,11 @@ const WelcomeWrap = () => {
   const [fadeHello, setFadeHello] = useState(false);
 
   // =================================================================================
-  // Chapter 3: Mount Effect: Hide UI on Mount
+  // Area 3: Mount Effect: Hide UI on Mount
   // =================================================================================
 
   useEffect(() => {
-    // Hide dock, desktop icons, and menubar immediately
+    // 3.1: Hide dock, icons, menubar immediately
     editStateValue("dock", "dockVisible", "false");
     editStateValue("desktop", "iconVisible", "false");
     editStateValue("desktop", "menubarVisible", "false");
@@ -48,32 +55,32 @@ const WelcomeWrap = () => {
   }, []);
 
   // =================================================================================
-  // Chapter 4: Effect: Show Loading and Fade Welcome
+  // Area 4: Effect: Show Loading and Fade Welcome
   // =================================================================================
 
   useEffect(() => {
-    // After totalDuration seconds, transition to loading screen
+    // 4.1: After totalDuration (sec), show loading and fade out welcome
     const t = setTimeout(() => {
       setShowLoading(true);
       setFadeWelcome(true);
-      // Remove welcome screen after fade-out
+      // remove welcome after fade completes (1s)
       setTimeout(() => setShowWelcome(false), 1000);
     }, totalDuration * 1000);
     return () => clearTimeout(t);
   }, [totalDuration]);
 
   // =================================================================================
-  // Chapter 5: Effect: Cycle Welcome Messages
+  // Area 5: Effect: Cycle Welcome Messages
   // =================================================================================
 
   useEffect(() => {
     if (!showWelcome) return;
-    // Start cycling messages after initial delay
+    // 5.1: first message after INITIAL_DELAY_SEC
     if (messageIndex === -1) {
-      const t = setTimeout(() => setMessageIndex(0), initialDelay * 1000);
+      const t = setTimeout(() => setMessageIndex(0), INITIAL_DELAY_SEC * 1000);
       return () => clearTimeout(t);
     }
-    // Advance to next message until all shown
+    // 5.2: advance until the last message
     if (messageIndex < messageCount - 1) {
       const t = setTimeout(
         () => setMessageIndex(i => i + 1),
@@ -81,35 +88,34 @@ const WelcomeWrap = () => {
       );
       return () => clearTimeout(t);
     }
-  }, [showWelcome, messageIndex, messageCount, messageDuration, initialDelay]);
+  }, [showWelcome, messageIndex, messageCount, messageDuration]);
 
   // =================================================================================
-  // Chapter 6: Handler: Hello Animation End and Restore UI
+  // Area 6: Handler: Hello Animation End and Restore UI
   // =================================================================================
 
   const handleHelloAnimationEnd = () => {
-    // Trigger fade-out of the SVG “hello”
     setFadeHello(true);
+    // 6.1: wait 1s, restore UI, then fade loading
     setTimeout(() => {
-      // Restore dock, desktop icons, and menubar
       editStateValue("dock", "dockVisible", "true");
       editStateValue("desktop", "iconVisible", "true");
       editStateValue("desktop", "menubarVisible", "true");
-      // Disable further welcome screens
-      editStateValue("welcomeWrap", "welcomeEnabled", "false");
       refreshState();
-
-      // Fade out loading screen and then hide it
       setFadeLoading(true);
-      setTimeout(() => setShowLoading(false), 1000);
+      // 6.2: after fade, hide loading & disable future welcomes
+      setTimeout(() => {
+        setShowLoading(false);
+        editStateValue("welcomeWrap", "welcomeEnabled", "false");
+        refreshState();
+      }, 1000);
     }, 1000);
   };
 
-  // Prevent pointer-events during welcome/loading phases
   const isBlocking = showWelcome || showLoading;
 
   // =================================================================================
-  // Chapter 7: Rendering: Conditional Screens and Animations
+  // Area 7: Rendering
   // =================================================================================
 
   return (
@@ -127,12 +133,11 @@ const WelcomeWrap = () => {
           )}
         </div>
       )}
-
       {showLoading && (
         <div className={`loading-screen ${fadeLoading ? 'fade-out' : ''}`}>
           <div className="loading-animation">
             <div className={`hello__div ${fadeHello ? 'fade-out' : ''}`}>
-              <svg
+<svg
                 className="hello__svg"
                 viewBox="0 0 1230.94 414.57"
                 onAnimationEnd={handleHelloAnimationEnd}

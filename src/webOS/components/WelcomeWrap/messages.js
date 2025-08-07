@@ -2,8 +2,7 @@
 const messages = [
     "Kia Ora",
     "webOS is here",
-    "developed by Nikita Mogilevskii",
-    "Have fun!"
+    "developed by Nikita Mogilevskii"
   ];
   
   export default messages;

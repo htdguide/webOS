@@ -1,17 +1,27 @@
 // TerminalInput.jsx
-// This file handles the command input for the terminal.
-// It includes features like command history, autocomplete, and an instant cursor update using flushSync.
-// When the Tab key is pressed, flushSync forces the state update (input value and autocomplete index)
-// to occur immediately, eliminating any delay in updating the cursor position.
-// Updated to only autocomplete the argument part (leaving the command intact) when appropriate,
-// to append a trailing space after a successful autocomplete, and to fix the issue where repeated Tab
-// presses on an empty or single-token input were appending multiple words.
+// Handles terminal input, history, autocomplete, and custom cursor.
+// Now displays a dynamic prompt prefix and always keeps the caret visible.
+//
+// Areas:
+// 1: Imports
+// 2: Component & State/Refs
+// 3: Effects
+// 4: Caret Position
+// 5: Key Handlers
+// 6: Render
 
+/* ====================================================
+   Area 1: Imports
+   ==================================================== */
+// 1.1: React hooks, draggable window context, flushSync, and styles
 import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { useDraggableWindow } from '../../../components/DraggableWindow/DraggableWindowWrap';
 import { flushSync } from 'react-dom';
 import '../Noterminal.css';
 
+/* ====================================================
+   Area 2: Component & State/Refs
+   ==================================================== */
 function TerminalInput({
   onCommandSubmit,
   onCtrlC,
@@ -19,102 +29,115 @@ function TerminalInput({
   fontSize,
   fontFamily,
   fontColor,
-  autocompleteCommands, // Static list of commands from the active app.
-  getDynamicAutocompleteSuggestions, // Optional function to get dynamic suggestions based on current input.
+  autocompleteCommands,
+  getDynamicAutocompleteSuggestions,
+  promptText = '', // NEW: app command shown before '>'
 }) {
-  // State for the current command input.
+  // 2.1: State for input value, history, indices, and caret metrics
   const [currentInput, setCurrentInput] = useState('');
-  // State to store command history.
   const [commandHistory, setCommandHistory] = useState([]);
-  // Index for navigating through command history (null means not browsing history).
   const [historyIndex, setHistoryIndex] = useState(null);
-  // Index for cycling through autocomplete suggestions.
   const [autocompleteIndex, setAutocompleteIndex] = useState(0);
-
-  const inputRef = useRef(null);
-  const dummyRef = useRef(null);
-  const promptRef = useRef(null);
-  // Ref for the cached canvas element.
-  const canvasRef = useRef(null);
   const [cursorLeft, setCursorLeft] = useState(10);
   const [cursorWidth, setCursorWidth] = useState(7);
 
-  // Retrieve the focused state from the draggable window provider.
+  // Refs for DOM nodes and canvas
+  const inputRef = useRef(null);
+  const dummyRef = useRef(null);
+  const promptRef = useRef(null);
+  const canvasRef = useRef(null);
+
+  // Draggable window focus state
   const { isWindowFocused } = useDraggableWindow();
 
-  // Initialize the canvas once for measuring text widths.
+  /* ====================================================
+     Area 3: Effects
+     ==================================================== */
+  // 3.1: Create canvas for text measurement
   useEffect(() => {
     if (!canvasRef.current) {
       canvasRef.current = document.createElement('canvas');
     }
   }, []);
 
-  // Focus the input when the window becomes focused.
+  // 3.2: Focus input on mount
   useEffect(() => {
-    if (isWindowFocused && inputRef.current) {
-      inputRef.current.focus();
+    inputRef.current?.focus();
+  }, []);
+
+  // 3.3: Refocus input when window becomes focused
+  useEffect(() => {
+    if (isWindowFocused) {
+      inputRef.current?.focus();
     }
   }, [isWindowFocused]);
 
-  // Initially focus the input when the component mounts.
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, []);
-
-  // Function to update the caret (cursor) position based on the current input.
+  /* ====================================================
+     Area 4: Caret Position
+     ==================================================== */
+  // 4.1: Compute cursor position based on text & prompt width
   const updateCaretIndex = () => {
-    if (inputRef.current && promptRef.current) {
-      const textToMeasure = currentInput.slice(0, inputRef.current.selectionStart);
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
-      context.font = `${fontSize} ${fontFamily}`;
-      const textWidth = context.measureText(textToMeasure).width;
-      const scrollLeft = inputRef.current.scrollLeft || 0;
-      const promptWidth = promptRef.current.offsetWidth;
-      const promptMarginRight = 5;
-      setCursorLeft(promptWidth + promptMarginRight + (textWidth - scrollLeft));
+    const inputEl = inputRef.current;
+    const promptEl = promptRef.current;
+    if (inputEl && promptEl && canvasRef.current) {
+      const pos = inputEl.selectionStart ?? 0;
+      const text = currentInput.slice(0, pos);
+      const ctx = canvasRef.current.getContext('2d');
+      ctx.font = `${fontSize} ${fontFamily}`;
+      const textWidth = ctx.measureText(text).width;
+      const scroll = inputEl.scrollLeft || 0;
+      const promptWidth = promptEl.offsetWidth;
+      const left = promptWidth + 5 + (textWidth - scroll);
+      setCursorLeft(left);
+
+      // 4.3: Ensure the caret remains visible within the input scroll
+      const relative = textWidth;
+      if (relative < scroll) {
+        inputEl.scrollLeft = Math.max(0, relative - 10);
+      } else if (relative > scroll + inputEl.clientWidth - 20) {
+        inputEl.scrollLeft = relative - inputEl.clientWidth + 20;
+      }
     }
   };
 
-  // Update the caret width based on a dummy element that measures text width.
+  // 4.2: Measure width of a single character for cursor width
   useLayoutEffect(() => {
     if (dummyRef.current) {
       setCursorWidth(dummyRef.current.offsetWidth);
     }
   }, [fontSize, fontFamily]);
 
+  /* ====================================================
+     Area 5: Key Handlers
+     ==================================================== */
   const handleKeyDown = (e) => {
-    // Handle Ctrl+C to exit an active app.
+    // 5.1.a: Ctrl+C to clear or exit
     if (e.ctrlKey && e.key.toLowerCase() === 'c') {
       e.preventDefault();
-      if (onCtrlC) onCtrlC();
+      onCtrlC?.();
       setCurrentInput('');
       setHistoryIndex(null);
       return;
     }
-    // Handle ArrowUp for command history navigation.
+    // 5.1.b: Navigate history up
     if (e.key === 'ArrowUp') {
       e.preventDefault();
-      if (commandHistory.length > 0) {
-        let newIndex = historyIndex === null ? commandHistory.length - 1 : historyIndex - 1;
-        if (newIndex < 0) newIndex = 0;
-        setHistoryIndex(newIndex);
-        setCurrentInput(commandHistory[newIndex]);
+      if (commandHistory.length) {
+        const idx = historyIndex === null
+          ? commandHistory.length - 1
+          : Math.max(0, historyIndex - 1);
+        setHistoryIndex(idx);
+        setCurrentInput(commandHistory[idx]);
       }
       return;
     }
-    // Handle ArrowDown for command history navigation.
+    // 5.1.c: Navigate history down
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      if (commandHistory.length > 0) {
-        if (historyIndex === null) {
-          return;
-        } else if (historyIndex < commandHistory.length - 1) {
-          const newIndex = historyIndex + 1;
-          setHistoryIndex(newIndex);
-          setCurrentInput(commandHistory[newIndex]);
+      if (commandHistory.length && historyIndex !== null) {
+        if (historyIndex < commandHistory.length - 1) {
+          setHistoryIndex(historyIndex + 1);
+          setCurrentInput(commandHistory[historyIndex + 1]);
         } else {
           setHistoryIndex(null);
           setCurrentInput('');
@@ -122,57 +145,37 @@ function TerminalInput({
       }
       return;
     }
-    // Handle Tab key for autocomplete.
+    // 5.1.d: Autocomplete on Tab
     if (e.key === 'Tab') {
       e.preventDefault();
-      
-      // Use trimmed input to determine tokens.
-      const trimmedInput = currentInput.trim();
-      const tokens = trimmedInput ? trimmedInput.split(/\s+/) : [];
-      let prefix = "";
-      let lastToken = "";
-      
-      if (tokens.length === 0) {
-        // If input is empty, both prefix and lastToken are empty.
-        prefix = "";
-        lastToken = "";
-      } else if (tokens.length === 1) {
-        // Single token: replace the entire input.
-        prefix = "";
+      const trimmed = currentInput.trim();
+      const tokens = trimmed ? trimmed.split(/\s+/) : [];
+      let prefix = '', lastToken = '';
+      if (tokens.length === 1) {
         lastToken = tokens[0];
-      } else {
-        // Multiple tokens: preserve everything before the last token.
-        const lastTokenText = tokens[tokens.length - 1];
-        // Use lastIndexOf to preserve spacing.
-        const lastTokenStart = currentInput.lastIndexOf(lastTokenText);
-        prefix = currentInput.substring(0, lastTokenStart);
-        lastToken = currentInput.substring(lastTokenStart);
+      } else if (tokens.length > 1) {
+        const lt = tokens[tokens.length - 1];
+        const pos = currentInput.lastIndexOf(lt);
+        prefix = currentInput.substring(0, pos);
+        lastToken = currentInput.substring(pos);
       }
-      
-      // Use dynamic suggestions if provided; otherwise, fallback to static autocompleteCommands.
-      const dynamicSuggestions = getDynamicAutocompleteSuggestions
-        ? getDynamicAutocompleteSuggestions(currentInput)
-        : [];
-      const suggestions = dynamicSuggestions.length > 0
-        ? dynamicSuggestions
-        : autocompleteCommands.filter((cmd) =>
-            cmd.toLowerCase().startsWith(lastToken.toLowerCase())
+      const dyn = getDynamicAutocompleteSuggestions(currentInput) || [];
+      const options = dyn.length
+        ? dyn
+        : autocompleteCommands.filter(c =>
+            c.toLowerCase().startsWith(lastToken.toLowerCase())
           );
-      
-      if (suggestions.length > 0) {
-        // Cycle through suggestions using the autocompleteIndex.
-        const suggestion = suggestions[autocompleteIndex % suggestions.length];
+      if (options.length) {
+        const pick = options[autocompleteIndex % options.length];
         flushSync(() => {
-          // Replace only the last token with the suggestion (plus a trailing space)
-          // while preserving the earlier part of the input.
-          setCurrentInput(prefix + suggestion + ' ');
+          setCurrentInput(prefix + pick + ' ');
           setAutocompleteIndex(autocompleteIndex + 1);
         });
         updateCaretIndex();
       }
       return;
     }
-    // On Enter, submit the command.
+    // 5.1.e: Enter to submit command
     if (e.key === 'Enter') {
       e.preventDefault();
       if (currentInput.trim()) {
@@ -186,19 +189,21 @@ function TerminalInput({
     }
   };
 
-  // Update the caret position on selection changes.
-  const handleSelect = () => {
-    updateCaretIndex();
-  };
+  // 5.2: Update caret on selection or keyup
+  const handleSelect = () => updateCaretIndex();
+  const handleKeyUp = () => updateCaretIndex();
 
-  const handleKeyUp = () => {
-    updateCaretIndex();
-  };
-
+  /* ====================================================
+     Area 6: Render
+     ==================================================== */
   return (
     <div className="terminal-input-wrapper">
-      <span ref={promptRef} className="terminal-prompt" style={{ color: fontColor }}>
-        {'>'}
+      <span
+        ref={promptRef}
+        className="terminal-prompt"
+        style={{ color: fontColor }}
+      >
+        {promptText ? `${promptText} >` : '>'}
       </span>
       <input
         ref={inputRef}
@@ -207,12 +212,12 @@ function TerminalInput({
         value={currentInput}
         onChange={(e) => {
           setCurrentInput(e.target.value);
-          // Reset the autocomplete index when the user types.
           setAutocompleteIndex(0);
           updateCaretIndex();
         }}
         onFocus={() => {
-          if (onInputFocus) onInputFocus();
+          onInputFocus?.();
+          updateCaretIndex();
         }}
         onSelect={handleSelect}
         onKeyDown={handleKeyDown}
@@ -220,7 +225,6 @@ function TerminalInput({
         autoFocus
         style={{ caretColor: 'transparent' }}
       />
-      {/* Dummy element for measuring the width of "M" for the cursor width */}
       <span
         ref={dummyRef}
         style={{
@@ -235,7 +239,6 @@ function TerminalInput({
       >
         M
       </span>
-      {/* Custom blinking cursor */}
       <div
         className="terminal-cursor"
         style={{
