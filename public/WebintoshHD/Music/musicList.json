@@ -1,10 +1,16 @@
 [
     {
       "id": 1,
+      "title": "I Remember",
+      "artist": "deadmau5 & Kaskade",
+      "src": "/WebintoshHD/Music/deadmau5 & Kaskade - I Remember.mp3",
+      "backupArt": "/WebintoshHD/Pictures/deadmau5IRemember.webp"
+    },
+    {
+      "id": 2,
       "title": "Busy Earnin'",
       "artist": "Jungle",
       "src": "/WebintoshHD/Music/Jungle - Busy Earnin'.mp3",
       "backupArt": "/WebintoshHD/Pictures/JungleCover.jpg"
     }
   ]
-  
