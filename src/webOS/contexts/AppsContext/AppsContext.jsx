@@ -19,6 +19,10 @@ import quakeIcon from '../../media/icons/quake3.png';
 import Quake3 from '../../initialapps/Quake3/Quake3.jsx';
 import missionControlIcon from '../../media/icons/missioncontrol.png';
 import MissionControlOpener from '../../initialapps/MissionControlOpener/MissionControlOpener.jsx';
+import daedalOS from '../../initialapps/DaedalOS/DaedalOS.jsx';
+import daedalOSicon from '../../media/icons/daedalOS.jpg';
+import sot from '../../media/icons/sot.png';
+import PSX from '../../initialapps/PSX/PSX.jsx';
 
 /**
  * The initial list of apps.
@@ -44,6 +48,15 @@ const initialAppsList = [
     indock: false,
     available: true,
   },
+    {
+    id: 'daedalos',
+    name: 'daedalOS',
+    icon: daedalOSicon,
+    component: daedalOS,
+    priority: 7,
+    indock: false,
+    available: true,
+  },
   {
     id: 'quake3',
     name: 'Quake3',
@@ -63,6 +76,16 @@ const initialAppsList = [
     indock: false,
     available: true,
   },
+    {
+    id: 'summeroftech',
+    name: 'SoT',
+    icon: sot,
+    link: 'http://summeroftech.co.nz',
+    component: null,
+    priority: 3,
+    indock: false,
+    available: true,
+  },
   {
     id: 'github',
     name: 'Github',
@@ -79,9 +102,9 @@ const initialAppsList = [
     icon: awaiIcon,
     link: 'https://applywithai.com',
     component: null,
-    priority: 3,
-    indock: false,
-    available: true,
+    priority: 6,
+    indock: true,
+    available: false,
   },
   {
     id: 'finder',
@@ -118,16 +141,7 @@ const initialAppsList = [
     priority: 5,
     indock: true,
     available: false,
-  },
-  {
-    id: 'psx',
-    name: 'PSX',
-    icon: psxIcon,
-    component: null,
-    priority: 6,
-    indock: true,
-    available: false,
-  },
+  }
 ];
 
 export const AppsContext = createContext({
