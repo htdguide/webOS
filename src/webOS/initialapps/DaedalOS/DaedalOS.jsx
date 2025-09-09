@@ -44,7 +44,7 @@ function daedalOS({ onClose: parentOnClose }) {
     // open draggable window once
     const windowId = openDraggableWindow({
       id: 'daedalOS',            // stable id to dedupe in StrictMode
-      title: 'daedalOS',
+      title: 'dustinbrett.com',
       windowWidth,
       windowHeight,
       minWindowWidth,
