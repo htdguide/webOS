@@ -1,4 +1,9 @@
 /* Notification.css */
+/* Styles for macOS-style layered notifications */
+
+/* ------------------------------------------------------------
+   Container layout
+------------------------------------------------------------ */
 .notification-container {
   position: absolute;
   top: 40px;
@@ -10,7 +15,10 @@
   pointer-events: none;
 }
 
-.notification {
+/* ------------------------------------------------------------
+   Individual notification item
+------------------------------------------------------------ */
+.notification-item {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(10px);
   border-radius: 12px;
@@ -19,14 +27,16 @@
   max-width: 300px;
   display: flex;
   align-items: center;
-  font-family: -apple-system, BlinkMacSystemFont, 'San Francisco',
-    'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "San Francisco",
+    "Helvetica Neue", Helvetica, Arial, sans-serif;
   pointer-events: auto;
   cursor: pointer;
-  transition: transform 0.3s ease; /* removed opacity transition */
   user-select: none;
 }
 
+/* ------------------------------------------------------------
+   Icon appearance
+------------------------------------------------------------ */
 .notification-icon {
   width: 40px;
   height: 40px;
@@ -35,11 +45,10 @@
   object-fit: cover;
 }
 
+/* ------------------------------------------------------------
+   Message text
+------------------------------------------------------------ */
 .notification-message {
   font-size: 14px;
   color: #333;
-}
-
-.notification:hover {
-  transform: scale(1.05);
 }
