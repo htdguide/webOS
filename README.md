@@ -1,34 +1,39 @@
 # webOS
 
-Welcome to **WebOS**! This project brings a desktop-like experience into your web browser using modern web technologies.
+Welcome to **webOS**! This project brings a desktop-like experience into your web browser using modern web technologies.
 
 <div id="top"></div>
 
 <div align="center">
-
+<a href="https://htdguide.com" target="_blank" rel="noopener noreferrer"> 
+   <img alt="btn" src="https://github.com/user-attachments/assets/3af021eb-292c-46cb-9218-455c5175566b" width="406"/>
+</a>
+   
 ![last-commit](https://img.shields.io/github/last-commit/htdguide/webOS?style=flat&logo=git&logoColor=white&color=0080ff)
 ![repo-top-language](https://img.shields.io/github/languages/top/htdguide/webOS?style=flat&color=0080ff)
 ![repo-language-count](https://img.shields.io/github/languages/count/htdguide/webOS?style=flat&color=0080ff)
 
 *Built with the tools and technologies:*
 
-![JSON](https://img.shields.io/badge/JSON-000000.svg?style=flat&logo=JSON&logoColor=white)
-![Markdown](https://img.shields.io/badge/Markdown-000000.svg?style=flat&logo=Markdown&logoColor=white)
-![npm](https://img.shields.io/badge/npm-CB3837.svg?style=flat&logo=npm&logoColor=white)
-![.ENV](https://img.shields.io/badge/.ENV-ECD53F.svg?style=flat&logo=dotenv&logoColor=black)
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E.svg?style=flat&logo=JavaScript&logoColor=black)
-![Vitest](https://img.shields.io/badge/Vitest-6E9F18.svg?style=flat&logo=Vitest&logoColor=white)
-
-![GNU Bash](https://img.shields.io/badge/GNU%20Bash-4EAA25.svg?style=flat&logo=GNU-Bash&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB.svg?style=flat&logo=React&logoColor=black)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E.svg?style=flat&logo=JavaScript&logoColor=black)
+![WebAssembly](https://img.shields.io/badge/WebAssembly-654FF0.svg?style=flat&logo=webassembly&logoColor=white)
+![C++](https://img.shields.io/badge/C%2B%2B-00599C.svg?style=flat&logo=c%2B%2B&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-000000.svg?style=flat&logo=openai&logoColor=white)
+
+
+
 ![Docker](https://img.shields.io/badge/Docker-2496ED.svg?style=flat&logo=Docker&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF.svg?style=flat&logo=GitHub-Actions&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-646CFF.svg?style=flat&logo=Vite&logoColor=white)
-![ESLint](https://img.shields.io/badge/ESLint-4B32C3.svg?style=flat&logo=ESLint&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-6E9F18.svg?style=flat&logo=Vitest&logoColor=white)
+![JSON](https://img.shields.io/badge/JSON-000000.svg?style=flat&logo=JSON&logoColor=white)
+![npm](https://img.shields.io/badge/npm-CB3837.svg?style=flat&logo=npm&logoColor=white)
+![.ENV](https://img.shields.io/badge/.ENV-ECD53F.svg?style=flat&logo=dotenv&logoColor=black)
+
+
 
 </div>
-
-[Visit the Website](https://htdguide.com)
 
 ---
 
