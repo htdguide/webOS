@@ -21,8 +21,10 @@ import missionControlIcon from '../../media/icons/missioncontrol.png';
 import MissionControlOpener from '../../initialapps/MissionControlOpener/MissionControlOpener.jsx';
 import daedalOS from '../../initialapps/DaedalOS/DaedalOS.jsx';
 import daedalOSicon from '../../media/icons/daedalOS.jpg';
-import sot from '../../media/icons/sot.png';
+import halflife from '../../media/icons/HalfLife.png';
 import PSX from '../../initialapps/PSX/PSX.jsx';
+import HalfLife from '../../initialapps/Half-Life/HalfLife.jsx';
+
 
 /**
  * The initial list of apps.
@@ -77,11 +79,10 @@ const initialAppsList = [
     available: true,
   },
     {
-    id: 'summeroftech',
-    name: 'SoT',
-    icon: sot,
-    link: 'http://summeroftech.co.nz',
-    component: null,
+    id: 'halflife',
+    name: 'Half-Life',
+    icon: halflife,
+    component: HalfLife,
     priority: 3,
     indock: false,
     available: true,

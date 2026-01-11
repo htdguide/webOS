@@ -1,0 +1,251 @@
+<!--
+This file boots the Xash3D Emscripten build with a single hardcoded data source: dayone.zip.
+Areas:
+- Part 1: Page + CSS
+- Part 2: Canvas focus + input wiring (keyboard/mouse)
+- Part 3: Emscripten Module hooks (canvas/status/log)
+- Part 4: ZIP fetch + mount + filesystem setup + delayed run
+-->
+
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Xash3D</title>
+
+    <style>
+      /* Part 1: Page + CSS */
+      /* 1.1: Fullscreen minimal canvas */
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+      }
+
+      /* 1.2: Canvas must have no border/padding for correct coords */
+      #canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        border: 0;
+        padding: 0;
+        background: #000;
+        outline: none;
+
+        /* Avoid browser gestures interfering on touch devices */
+        touch-action: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Part 1.3: Only canvas -->
+    <!-- tabindex enables focus so keyboard events reach the canvas -->
+    <canvas id="canvas" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
+
+    <script>
+      /* Part 2: Canvas focus + input wiring */
+      /* 2.1: Force focus so keyboard works */
+      function focusCanvas() {
+        var c = document.getElementById("canvas");
+        if (!c) return;
+        // Focus the canvas (required for keyboard input in many browsers)
+        try { c.focus({ preventScroll: true }); } catch (_) { try { c.focus(); } catch (_) {} }
+      }
+
+      /* 2.2: Keep focus on interactions */
+      function installFocusHandlers() {
+        var c = document.getElementById("canvas");
+        if (!c) return;
+
+        // Focus on any pointer or click interaction
+        c.addEventListener("pointerdown", function () { focusCanvas(); }, { passive: true });
+        c.addEventListener("mousedown", function () { focusCanvas(); }, { passive: true });
+        c.addEventListener("touchstart", function () { focusCanvas(); }, { passive: true });
+
+        // Also focus when page becomes visible again
+        document.addEventListener("visibilitychange", function () {
+          if (!document.hidden) focusCanvas();
+        });
+
+        // Initial focus after first layout
+        window.addEventListener("load", function () { focusCanvas(); });
+      }
+
+      installFocusHandlers();
+
+      /* Part 3: Emscripten Module hooks */
+      /* 3.1: Globals */
+      var mounted = false;
+      var mfs;
+
+      /* 3.2: Minimal log */
+      function log() {
+        try { console.log.apply(console, arguments); } catch (_) {}
+      }
+
+      /* 3.3: Minimal error handler */
+      window.onerror = function (event) {
+        try {
+          if (mounted && typeof FS !== "undefined" && FS && FS.syncfs) {
+            FS.syncfs(false, function (err) { log("Saving IDBFS:", err); });
+          }
+        } catch (_) {}
+        log("Exception:", event);
+      };
+
+      /* 3.4: Emscripten Module config */
+      var Module = {
+        preRun: [],
+        postRun: [],
+        print: function (text) { if (text) log(text); },
+        printErr: function (text) { if (text) log(text); },
+
+        canvas: (function () {
+          var canvas = document.getElementById("canvas");
+
+          canvas.addEventListener(
+            "webglcontextlost",
+            function (e) {
+              alert("WebGL context lost. Reload the page.");
+              e.preventDefault();
+            },
+            false
+          );
+
+          // Ensure focus when the runtime attaches events
+          setTimeout(focusCanvas, 0);
+
+          return canvas;
+        })(),
+
+        setStatus: function (text) {
+          if (text) log("STATUS:", text);
+        },
+
+        totalDependencies: 0,
+        monitorRunDependencies: function (left) {
+          this.totalDependencies = Math.max(this.totalDependencies, left);
+          if (left) this.setStatus("Preparing... (" + (this.totalDependencies - left) + "/" + this.totalDependencies + ")");
+        }
+      };
+
+      /* Part 4: ZIP fetch + mount + filesystem setup + delayed run */
+      /* 4.1: Make BrowserFS to work on ES5 browsers */
+      if (!ArrayBuffer["isView"]) {
+        ArrayBuffer.isView = function (a) {
+          return a !== null && typeof a === "object" && a["buffer"] instanceof ArrayBuffer;
+        };
+      }
+
+      /* 4.2: Setup minimal FS mount points */
+      function setupFS() {
+        FS.mkdir("/rodir");
+        FS.mkdir("/xash");
+
+        // RAM only
+        FS.chdir("/xash/");
+
+        try {
+          mfs = new BrowserFS.FileSystem.MountableFileSystem();
+          BrowserFS.initialize(mfs);
+        } catch (e) {
+          mfs = undefined;
+          log("Failed to initialize BrowserFS:", e);
+        }
+      }
+
+      /* 4.3: Mount dayone.zip to /rodir */
+      function mountZIP(data) {
+        var Buffer = BrowserFS.BFSRequire("buffer").Buffer;
+        mfs.mount("/zip", new BrowserFS.FileSystem.ZipFS(Buffer.from(data)));
+        FS.mount(new BrowserFS.EmscriptenFS(), { root: "/zip" }, "/rodir");
+      }
+
+      /* 4.4: Fetch dayone.zip and mount it */
+      function fetchAndMountDayOne(cb) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "dayone.zip", true);
+        xhr.responseType = "arraybuffer";
+
+        xhr.onerror = function () {
+          throw new Error("NetworkError while loading dayone.zip");
+        };
+
+        xhr.onload = function () {
+          if (xhr.status === 200 || xhr.status === 304 || xhr.status === 206 || (xhr.status === 0 && xhr.response)) {
+            setupFS();
+            mountZIP(xhr.response);
+            cb();
+          } else {
+            throw new Error(xhr.statusText + " : " + (xhr.responseURL || "dayone.zip"));
+          }
+        };
+
+        xhr.send(null);
+      }
+
+      /* 4.5: Hook engine loading so it only starts after ZIP is ready */
+      function skipRunUntilZipReady() {
+        var savedRun = Module.run || run;
+
+        // Halt immediate run
+      Module.arguments = [
+        "-console",
+        "+viewsize", "120",
+
+        "+autosave", "0",
+        "+sv_background", "0",
+        "+cl_showfps", "0",
+        "+con_notifytime", "0",
+        "+map", "c0a0"
+      ];
+
+
+        Module.run = function () {};
+        if (typeof run === "function") run = function () {};
+
+        // Required env vars (same as original behavior)
+        window.ENV = window.ENV || [];
+        ENV.XASH3D_GAMEDIR = "valve";
+        ENV.XASH3D_RODIR = "/rodir";
+
+        // Load extra scripts required by Xash3D
+        function loadModule(name) {
+          var s = document.createElement("script");
+          s.src = name + ".js";
+          document.body.appendChild(s);
+        }
+        loadModule("server");
+        loadModule("client");
+        loadModule("menu");
+
+        // Make sure canvas is focusable before starting
+        focusCanvas();
+
+        // Fetch + mount ZIP, then resume engine run
+        fetchAndMountDayOne(function () {
+          Module.run = savedRun;
+          if (typeof run !== "undefined") run = savedRun;
+
+          // Focus right before and right after starting (helps on Safari/Chromium)
+          focusCanvas();
+          savedRun();
+          setTimeout(focusCanvas, 0);
+          setTimeout(focusCanvas, 250);
+        });
+      }
+
+      Module.preInit = [skipRunUntilZipReady];
+    </script>
+
+    <!-- Part 4.6: Dependencies + main engine js -->
+    <script src="browserfs.min.js"></script>
+    <script src="xash.js"></script>
+  </body>
+</html>
