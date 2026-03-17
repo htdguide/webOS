@@ -48,10 +48,10 @@ webOS is a comprehensive platform that enables the development of interactive, d
 
 This project empowers developers to build sophisticated web environments with ease. The core features include:
 
-- 🌐 **Device & Window Management:** Provides device-aware UI, multi-desktop support, and flexible window controls for a desktop-like experience.
-- 🚀 **Modular UI Components:** Supports mini-apps, notifications, wallpapers, and system controls for a rich user interface.
-- 🧩 **Extensible Architecture:** Facilitates easy integration of new features, apps, and system services within a cohesive environment.
-- 🛠️ **WebAssembly C++ modules** C++ apps running with native performance thanks to WebAssembly.
+- **Device & Window Management:** Provides device-aware UI, multi-desktop support, and flexible window controls for a desktop-like experience.
+- **Modular UI Components:** Supports mini-apps, notifications, wallpapers, and system controls for a rich user interface.
+- **Extensible Architecture:** Facilitates easy integration of new features, apps, and system services within a cohesive environment.
+- **WebAssembly C++ modules** C++ apps running with native performance thanks to WebAssembly.
 
 ---
 
